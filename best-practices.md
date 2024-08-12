@@ -497,6 +497,7 @@ fn setup_foo(&self) {
 ## Comment discipline
 
 <!-- ## Further reading -->
+<!-- TODO(kcza): flesh this out -->
 <!-- Check out  Effective Go and  Google’s style guidelines. If you find yourself in a situation which isn’t covered by this document, refer to these. If you feel this situation is common-enough, message Ed Jones to discuss adding it to this document. -->
 
 # (Admin, to be removed once stable)
@@ -583,4 +584,5 @@ fn setup_foo(&self) {
 | Ed    | no   | Builder creation: prefer Foo::builder() to FooBuilder::new() (also have no public ::new() on the builder) |
 | Ed    | no   | Local helper types should be put behind a comment at the end, after an explicit return? |
 | Ed    | no   | Prefer `.collect()` to `Foo::from_iter` |
+| Ed    | no   | Functions upon which functions depend should come after |
 <!-- TODO(kcza): function dependencies AFTER -->
