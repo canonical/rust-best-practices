@@ -13,6 +13,85 @@ This document covers:
 # Preconditions
 All new code should abide by cargo fmt, cargo clippy, and cargo clippy --tests. If your crate uses features, be careful to ensure that clippy is definitely being run on your code.
 
+# Cosmetic discipline
+
+## Spacing
+
+Use blank lines semantically, rather than aesthetically. They should be used consistently, regardless of the size of a section of code, to delimit sections of strongly-associated code. There are no hard and fast rules for this strong association, but the following heuristics are quite effective.
+
+- If a variable is declared and only used in the block of code which follows it, that declaration and block are strongly associated. Do not put a blank line here.
+- If a variable is used in multiple blocks of code, not just the one which follows it, that declaration is not strongly associated with the block immediately after it. Put a newline here.
+- If a variable is declared and then checked, the declaration and check are strongly associated and must not be separated by a blank line. If the check contains more than three lines, the declaration and check start to form their own strongly associated block so require a blank line after.
+
+✅ Do this:
+```rust
+let x = foo();
+if !x.is_valid() {
+    return Err(Error::Invalid);
+}
+println!(“{x}”);
+
+let y = baz();
+if !y.is_valid() {
+    return Err(Error::Invalid);
+}
+return Ok(y);
+```
+
+⚠️ Avoid this:
+```rust
+let x = foo();
+
+if !x.is_valid() {
+    return Err(Error::Invalid);
+}
+
+println!(“{x}”);
+let y = baz();
+if !y.is_valid() {
+    return Err(Error::Invalid);
+}
+
+return Ok(y);
+```
+
+## Grouping
+
+Don’t interleave unrelated code. Remember, to a new reader, this will look deliberate and they will be confused about how variables relate. Keep it clean and group together strongly intradependent sections of code.
+
+This is particularly significant where closures are used—if a closure is defined half-way through a function, does not capture anything and then is only used at the end, the reader will have to keep many things in mind for no good reason. If values are captured, declare closures close to where they’re needed. If no captures are required, consider defining them at the top of the highest possible scope to make it obvious that no closures are needed. Also, consider whether a closure is required at all, as Go doesn’t use many functional-style constructs, code may feel more Go-like with a simpler, more top-to-bottom flow control pattern. Logic should feel clean and be easy to follow.
+
+The following snippets assume that functions foo, bar and baz are free of side-effects.
+
+✅ Do this:
+```rust
+let x = foo();
+let b = baz();;
+if !b.is_valid() {
+    return Err(Error::Invalid)
+}
+let z = x + b;
+
+let y = bar();
+if !y.is_valid() {
+    return Err(Error::Invalid)
+}
+```
+
+⚠️ Avoid this:
+```rust
+let x = foo()
+let check = |x| {
+    if !x.valid() {
+        return Err(Error::Invalid)
+    }
+    Ok(x)
+};
+let y = bar();
+let z = x + check(baz())?;
+check(y)?;
+```
+
 # Naming discipline
 
 ## Pattern match variable naming
@@ -429,7 +508,8 @@ fn setup_foo(&self) {
 | Ed    | yes  | if let Some(x) = x (pattern matched must be the same as the value being matched, or share the first letter, same true for match) |
 | Ed    | yes  | impl ordering (unsafe then impl StandardTrait for T, impl NonStandardTrait for T, more general first |
 | Ed    | yes  | derive ordering: Clone then Copy then standard (what order?) then non-standard in alphabetical order (or dependency order?) |
-| Ed    | no   | Semantic newlines |
+| Ed    | yes  | Semantic newlines |
+| Ed    | yes  | Code grouping |
 | Ed    | yes  | Forbid struct construction with Self::XXX {...}, for associated types, use the type name explicitly. NB: this is not enums! |
 | Ed    | yes  | Forbid use XXX::* unless XXX is an enum, and even then, this must be local (definitely do this if rustfmt would start awkwardly wrapping?) |
 | Ed    | yes  | Forbid use of use super::... except for use super::* in unit tests |
