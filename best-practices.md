@@ -7,7 +7,7 @@ If you spot any of the problems detailed here in our existing code-bases or patc
 
 _Disclaimer: this is not a complete list, more items can and likely will be added in future._
 
-This document covers:
+# Table of Contents
 <!-- TOC HERE -->
 
 # Preconditions
@@ -59,9 +59,9 @@ return Ok(y);
 
 Don’t interleave unrelated code. Remember, to a new reader, this will look deliberate and they will be confused about how variables relate. Keep it clean and group together strongly intradependent sections of code.
 
-This is particularly significant where closures are used—if a closure is defined half-way through a function, does not capture anything and then is only used at the end, the reader will have to keep many things in mind for no good reason. If values are captured, declare closures close to where they’re needed. If no captures are required, consider defining them at the top of the highest possible scope to make it obvious that no closures are needed. Also, consider whether a closure is required at all, as Go doesn’t use many functional-style constructs, code may feel more Go-like with a simpler, more top-to-bottom flow control pattern. Logic should feel clean and be easy to follow.
+This is particularly significant where closures are used—if a closure is defined half-way through a function, does not capture anything and then is only used at the end, the reader will have to keep many things in mind for no good reason. If values are captured, declare closures close to where they’re needed. If no captures are required, consider defining them at the top of the highest possible scope to make it obvious that no closures are needed. Also, consider whether a closure is required at all—code may feel cleaner with a simpler, more top-to-bottom flow control pattern. Logic should feel clean and be easy to follow.
 
-The following snippets assume that functions foo, bar and baz are free of side-effects.
+_The following snippets assume that functions `foo`, `bar` and `baz` are free of side-effects._
 
 ✅ Do this:
 ```rust
@@ -93,6 +93,25 @@ check(y)?;
 ```
 
 # Naming discipline
+
+## Name content
+
+Naming is one of the three hardest problems in programming (along with off-by-one errors). Every variable, every function, every type and every concept requires a good name which fits into a good naming scheme. There is no one optimal way to come up with a good name, however when attempting to do so, the first place to look is for similar names in your project and try to mimic these. This should result in a name which intuitively feels like it belongs among the rest of the code. Even doing this has its pitfalls, so ideally your name should:
+- **say what it means**—make the name fit conceptually into the surrounding context. If a reader sees `fn is_in(a: &str, b: &str)`, the order is not as obvious as if they were to see `fn is_in(haystach: &str, needle: &str)`.
+- **have a consistent word order**—inconsistency makes an API look dishevelled, unplanned and hence unprofessional. If the rest of the API uses `verb_noun` then unless there is a very good reason not to, the next function should be of the form `verb_noun`.
+- **be concise**—a long name can almost always be shortened. More characters implies a need to disambiguate, so if no such need exists, reduce the cognitive load on the next reader by reducing the amount they must read. Of course, don’t take this too far—the next reader must not be expected to look elsewhere to understand the full meaning of a name, as may occur if nonstandard acronyms or abbreviations are used.
+- **comprise simple words**—a long word can often be replaced by a shorter one. A concise name will comprise the smallest list of the smallest words which do not lose the subject’s meaning. Remember: [thesaurus.com][thesaurus] and [dictionary.com][dictionary] are your friends!
+- **comprise correct words**—if there is any disagreement over the implications of chosen words, then there will be some reader who gets the wrong idea. It’s better to spend more time discussing internally than to confuse a user. (Example: in Starlark, a 20-minute discussion was needed on the choice between `NOT_SAFE` vs `UNSAFE` as an empty value of a set of safety flags, where each flag had a name like `FOO_SAFE`.)
+- **be unified**—there should be one and only one name for concepts used. If more are used haphazardly, it implies a difference where there is none and thus muddies the water.
+- **avoid including types**—type names should be omitted unless required to discriminate between two variables of different types which roughly hold the same value. Some examples: in a finder function `needleStr` and `haystackStr` can be more concisely expressed as `needle` and `haystack`.
+
+Canonical policy dictates that names should use UK spelling and not US or other spelling.
+
+Good names with the help of concise doc comments do a good job of explaining a good API. However, if after much consideration, there don’t seem to be any good names, this is likely caused by the API not being good. If an API cannot be easily and intuitively explained, it is not a good API and it’s time for a refactor.
+
+A good, semantically and behaviorally consistent API hidden behind a layer of bad naming is hard to distinguish from a bad API. Time spent getting the right naming will pay off.
+
+Great care should be taken over all names, but extreme care should be taken over publicly exposed ones. These names do not have the luxury of being able to be tweaked without consequence later—any appreciation for a slightly better name an external user may have will be completely overshadowed by their irritation of having to deal with a breaking change.
 
 ## Pattern match variable naming
 
@@ -381,7 +400,43 @@ pub use foo::Foo;
 pub use bar::Bar;
 ```
 
-## Associated type value construction
+## When to use `Self`
+
+Use `Self` wherever possible (i.e. it doesn’t conflict with the next section).
+This keyword helps reduce the number of types the reader must keep in their head and hence the difficulty of reading code which relates to the type in of the current `impl` block.
+By maximising the use of `Self` it also highlights where it _isn’t_ possible to use it, for example when the return type of a function has a slightly different set of generic parameters.
+
+✅ Do this:
+
+```rust
+impl Node {
+    pub fn new(parent: &Self) -> Self {
+        Self(..)
+    }
+}
+
+impl PartialOrd for Node {
+    fn cmp(&self, other: &Self) -> Ordering;
+}
+```
+
+⚠️ Avoid this:
+
+```rust
+impl Node {
+    pub fn new(parent: &Node) -> Node {
+        Foo(..)
+    }
+}
+
+impl PartialOrd<Rhs=Node> for Node { // NB: Rhs=Self is also the default for PartialOrd.
+    fn cmp(&self, other: &Node) -> Ordering;
+}
+```
+
+## When not to use `Self`
+
+Do not use `Self` when constructing associated types.
 
 Traits often include type fields as part of the interface they describe. These types may be referred to with Self::AssociatedType.  Do not use these to construct values as it prevents the next reader from understanding which type is in use and which fields and methods are available. Use these Self::* types to define interfaces, but use concrete types to define implementations.
 
@@ -494,7 +549,19 @@ fn setup_foo(&self) {
 }
 ```
 
-## Comment discipline
+# Comment and Doc discipline
+
+## First-sentence form
+
+When wrapped, the first sentence of a doc comment should be at most two lines.
+It should clearly and concisely explain the whole of the golden path of a function.
+After reading this first sentence, it should be clear _when_ to use the given function/type—don’t fall into the trap of just explaining _what_ the given item does!
+
+## Definite vs. Indefinite articles
+
+When referring to parameters, be concrete and specific.
+Where possible, refer parameters by their name and if an article must be used (i.e. ‘a’/’an’ and ‘the’), always prefer the definite article, ‘the.’
+Leave no room for ambiguity and hence misunderstanding.
 
 <!-- ## Further reading -->
 <!-- TODO(kcza): flesh this out -->
@@ -502,87 +569,91 @@ fn setup_foo(&self) {
 
 # (Admin, to be removed once stable)
 
-| who’s | done | what |
-|-------|------|------|
-| Ed    | yes  | all function calls which return () should end with ; |
-| Ed    | yes  | all explicit return statements must end with ; |
-| Ed    | yes  | if let Some(x) = x (pattern matched must be the same as the value being matched, or share the first letter, same true for match) |
-| Ed    | yes  | impl ordering (unsafe then impl StandardTrait for T, impl NonStandardTrait for T, more general first |
-| Ed    | yes  | derive ordering: Clone then Copy then standard (what order?) then non-standard in alphabetical order (or dependency order?) |
-| Ed    | yes  | Semantic newlines |
-| Ed    | yes  | Code grouping |
-| Ed    | yes  | Forbid struct construction with Self::XXX {...}, for associated types, use the type name explicitly. NB: this is not enums! |
-| Ed    | yes  | Forbid use XXX::* unless XXX is an enum, and even then, this must be local (definitely do this if rustfmt would start awkwardly wrapping?) |
-| Ed    | yes  | Forbid use of use super::... except for use super::* in unit tests |
-| Ed    | no   | Struct population must not mix computed and assigned/renamed fields |
-| Ed    | no   | Use a consistent order for naming |
-| Ed    | no   | thiserror message forms |
-| Ed    | no   | panic!() message forms |
-| Ed    | no   | .expect() message forms |
-| Ed    | no   | One-block declarations: consts then statics then lazy_statics (?) then lets. |
-| Ed    | no   | Unsafe functions / functions containing unsafe must list preconditions (to what extent does clippy help with this?) |
-| Ed    | yes  | Generic type parameters must be one letter |
-| Ed    | yes  | Generic lifetime names must not contain underscores |
-| Ed    | yes  | Generic lifetime names must have a meaningful name if one exists (if long-lived?) |
-| Ed    | no   | Function doc’s first sentence must be no more than 160 chars (wrapped) |
-| Ed    | no   | Comments must be no wider than 80 characters from their leftmost point |
-| Ed    | yes  | impl LocalTrait for ForeignType order: std first, then non-std but popular, then others in a reasonable order |
-| Ed    | no   | Use Self as reasonably possible (in function return types, value construction Self{}/Self()/Self) |
-| Ed    | no   | No use of declarations in format-like macros (the key=value part at the end), prefer local lets |
-| Ed    | no   | Use `.map(\|_\| ())` rather than `.map(drop)` |
-| Ed    | no   | If a where clause exists, all type bounds must be within it (no mixing) |
-| Ed    | no   | Clippy lints to turn on: no broken links, |
-| Ed    | no   | Prefer scoping to drop (avoid all drop calls?) |
-| Ed    | no   | Always use clap-derive not the old API |
-| Ed    | no   | Prefer iterator combinators if infallible, consider avoiding if fallible |
-| Ed    | no   | No method calls on struct literals |
-| Ed    | no   | Scoped mutability—names must match: let x = { let mut x = …; …; x} |
-| Ed    | no   | Prefer Foo::new() or equivalent to Foo{} |
-| Ed    | no   | All imports must be in one block (until rustfmt stabilises its many sorted blocks) |
-| Ed    | yes   | Imports must be nested (no Java-style repetition) |
-| Ed    | no   | Error type must be defined in lib.rs or error.rs in crate root |
-| Ed    | no   | Always declare Result<T>, this must be done immediately below the error type |
-| Ed    | no   | Don’t use mod.rs, use foo.rs next to foo/ to help code editors! |
-| Ed    | no   | Constructing boxed errors? |
-| Ed    | no   | When using builders, provide a MyType::builder() -> MyTypeBuilder? |
-| Ed    | no   | MyTypeBuilder must have a .build() -> MyType (duh) |
-| Ed    | no   | Prefer builders by value? (avoid awkwardly relying on clone() calls getting optimised away) |
-| Ed    | no   | Use explicit Ok(()) explicitly rather than Ok(returns_unit()) (split into two lines) |
-| Ed    | no   | No method calls on (curly brace?) macro results? |
-| Ed    | no   | Prefer explicit matches (avoid catch-all _ => () cases) |
-| Ed    | no   | Start by defining the error states (the error path must be first-class, even if not optimised) |
-| Ed    | no   | Leverage the type system to uphold invariants and prevent misuse |
-| Ed    | no   | Minimise use of unsafe and scope as closely as possible to where you actually need unsafe |
-| Ed    | no   | Use rustfmt, but use THESE SPECIFIC (insert here) settings, do not use #[rustfmt::skip]! |
-| Ed    | no   | Prefer let xxx: Foo to turbofish to add type annotations on the last thing in a chain (unless really annoying!) i.e. prefer to signpost what the goal of a large chain is, also can be slightly more reliable in some cases |
-| Ed    | no   | For locally-written Serde, use an explicit return and put the helper types at the end of the function, don’t write macro helpers for the helper types! (Type names don’t need to be crate-level unique, just distinct enough but within reason e.g. no type shadowing)
-| Ed    | no   | Shadowing: two levels of variable shadowing okay, type shadowing is never okay! |
-| Ed    | no   | In mod.rs equivalent, put all mods first, then all pub uses then pub(crate) uses all uses in separate blocks (grouped nicely) then #[cfg(..)] after all |
-| Ed    | no   | All use statements must come before all code |
-| Ed    | no   | When read from top-to-bottom, try to make this feel like a tour of the API (guide the reader) |
-| Ed    | no   | Redundant type annotations—does clippy prevent let foo: Foo = (...).collect::<Foo>();? |
-| Ed    | no   | No .map(Self) at the end of a chain (e.g. to construct Result<Self> |
-| Ed    | no   | No let x = &expr unless indexing/slicing |
-| Ed    | no   | Use `vec![]` rather than Vec::new(), use Foo::new() rather than Foo::with_capacity(0) (for which Foo? yes: Vec, HashMap, BTreeMap) |
-| Ed    | no   | Don’t pattern-match on pointer parameters i.e. don’t `.map(\|&x\| x)`, use `.map(\|x\| *x)` |
-| Ed    | no   | Don’t populate tuples with lots of computation. If the line breaks, put things in variables |
-| Ed    | no   | Don’t pattern-match in fn functions (like one would expect in closures) |
-| Ed    | no   | Put pub fields first in mixed structs. If this breaks Ord, write it manually |
-| Ed    | no   | Prefer pattern matching to field-access where all fields should be considered |
-| Ed    | no   | Don’t assign or compare &lit (e.g. &0, &""), put the & as close to where needed as possible and deref instead |
-| Ed    | no   | In tests, #[test] (or equivalent) should be the final attribute |
-| Ed    | no   | If hex is used, make it lowercase |
-| Ed    | no   | All public top-level items must be documented |
-| Ed    | no   | Put raw API-data unpacking structs at the end of the function they’re needed in after // serde structs |
-| Ed    | no   | Put test helper structs at the end of the function they’re used in, after // test structs |
-| Ed    | no   | Prefer to call API response structs Response (no shadowing due to independent scopes) |
-| Ed    | no   | Unpack to ensure all fields are considered |
-| Ed    | no   | advice use of `.ok().unwrap_or_else(\|\|...)` if `.unwrap_or_else(\|_\| …)` is seen |
-| Ed    | no   | which files #![...] annotations are placed in |
-| Ed    | no   | unused trait method parameters should use let _ = param rather than named _foo or annotations |
-| Ed    | no   | format! parameters which consist of a single identifier (no pathing) should be folded into the format string |
-| Ed    | no   | Builder creation: prefer Foo::builder() to FooBuilder::new() (also have no public ::new() on the builder) |
-| Ed    | no   | Local helper types should be put behind a comment at the end, after an explicit return? |
-| Ed    | no   | Prefer `.collect()` to `Foo::from_iter` |
-| Ed    | no   | Functions upon which functions depend should come after |
+| who’s | done      | what |
+|-------|-----------|------|
+| Ed    | yes       | all function calls which return () should end with ; |
+| Ed    | yes       | all explicit return statements must end with ; |
+| Ed    | yes       | if let Some(x) = x (pattern matched must be the same as the value being matched, or share the first letter, same true for match) |
+| Ed    | yes       | impl ordering (unsafe then impl StandardTrait for T, impl NonStandardTrait for T, more general first |
+| Ed    | yes       | derive ordering: Clone then Copy then standard (what order?) then non-standard in alphabetical order (or dependency order?) |
+| Ed    | yes       | Semantic newlines |
+| Ed    | yes       | Code grouping |
+| Ed    | yes       | Forbid struct construction with Self::XXX {...}, for associated types, use the type name explicitly. NB: this is not enums! |
+| Ed    | yes       | Forbid use XXX::* unless XXX is an enum, and even then, this must be local (definitely do this if rustfmt would start awkwardly wrapping?) |
+| Ed    | yes       | Forbid use of use super::... except for use super::* in unit tests |
+|       |           | Struct population must not mix computed and assigned/renamed fields |
+|       |           | Use a consistent order for naming |
+|       |           | thiserror message forms |
+|       |           | panic!() message forms |
+|       |           | .expect() message forms |
+|       |           | One-block declarations: consts then statics then lazy_statics (?) then lets. |
+|       |           | Unsafe functions / functions containing unsafe must list preconditions (to what extent does clippy help with this?) |
+| Ed    | yes       | Generic type parameters must be one letter |
+| Ed    | yes       | Generic lifetime names must not contain underscores |
+| Ed    | yes       | Generic lifetime names must have a meaningful name if one exists (if long-lived?) |
+| Ed    | yes       | Function doc’s first sentence must be no more than 160 chars (wrapped) |
+| Ed    | yes       | Definite vs indefinite articles in docs |
+| Ed    | REJECTED  | Comments must be no wider than 80 characters from their leftmost point |
+| Ed    | yes       | impl LocalTrait for ForeignType order: std first, then non-std but popular, then others in a reasonable order |
+| Ed    | yes       | Use Self as reasonably possible (in function return types, value construction Self{}/Self()/Self) |
+|       |           | No use of declarations in format-like macros (the key=value part at the end), prefer local lets |
+|       |           | Use `.map(\|_\| ())` rather than `.map(drop)` |
+|       |           | If a where clause exists, all type bounds must be within it (no mixing) |
+|       |           | Clippy lints to turn on: no broken links, |
+|       |           | Prefer scoping to drop (avoid all drop calls?) |
+|       |           | Always use clap-derive not the old API |
+|       |           | Prefer iterator combinators if infallible, consider avoiding if fallible |
+|       |           | No method calls on struct literals |
+|       |           | Scoped mutability—names must match: let x = { let mut x = …; …; x} |
+|       |           | Prefer Foo::new() or equivalent to Foo{} |
+|       |           | All imports must be in one block (until rustfmt stabilises its many sorted blocks) |
+| Ed    | yes       | Imports must be nested (no Java-style repetition) |
+|       |           | Error type must be defined in lib.rs or error.rs in crate root |
+|       |           | Always declare Result<T>, this must be done immediately below the error type |
+|       |           | Don’t use mod.rs, use foo.rs next to foo/ to help code editors! |
+|       |           | Constructing boxed errors? |
+|       |           | When using builders, provide a MyType::builder() -> MyTypeBuilder? |
+|       |           | MyTypeBuilder must have a .build() -> MyType (duh) |
+|       |           | Prefer builders by value? (avoid awkwardly relying on clone() calls getting optimised away) |
+|       |           | Use explicit Ok(()) explicitly rather than Ok(returns_unit()) (split into two lines) |
+|       |           | No method calls on (curly brace?) macro results? |
+|       |           | Prefer explicit matches (avoid catch-all _ => () cases) |
+|       |           | Start by defining the error states (the error path must be first-class, even if not optimised) |
+|       |           | Leverage the type system to uphold invariants and prevent misuse |
+|       |           | Minimise use of unsafe and scope as closely as possible to where you actually need unsafe |
+|       |           | Use rustfmt, but use THESE SPECIFIC (insert here) settings, do not use #[rustfmt::skip]! |
+|       |           | Prefer let xxx: Foo to turbofish to add type annotations on the last thing in a chain (unless really annoying!) i.e. prefer to signpost what the goal of a large chain is, also can be slightly more reliable in some cases |
+|       |           | For locally-written Serde, use an explicit return and put the helper types at the end of the function, don’t write macro helpers for the helper types! (Type names don’t need to be crate-level unique, just distinct enough but within reason e.g. no type shadowing)
+|       |           | Shadowing: two levels of variable shadowing okay, type shadowing is never okay! |
+|       |           | In mod.rs equivalent, put all mods first, then all pub uses then pub(crate) uses all uses in separate blocks (grouped nicely) then #[cfg(..)] after all |
+|       |           | All use statements must come before all code |
+|       |           | When read from top-to-bottom, try to make this feel like a tour of the API (guide the reader) |
+|       |           | Redundant type annotations—does clippy prevent let foo: Foo = (...).collect::<Foo>();? |
+|       |           | No .map(Self) at the end of a chain (e.g. to construct Result<Self> |
+|       |           | No let x = &expr unless indexing/slicing |
+|       |           | Use `vec![]` rather than Vec::new(), use Foo::new() rather than Foo::with_capacity(0) (for which Foo? yes: Vec, HashMap, BTreeMap) |
+|       |           | Don’t pattern-match on pointer parameters i.e. don’t `.map(\|&x\| x)`, use `.map(\|x\| *x)` |
+|       |           | Don’t populate tuples with lots of computation. If the line breaks, put things in variables |
+|       |           | Don’t pattern-match in fn functions (like one would expect in closures) |
+|       |           | Put pub fields first in mixed structs. If this breaks Ord, write it manually |
+|       |           | Prefer pattern matching to field-access where all fields should be considered |
+|       |           | Don’t assign or compare &lit (e.g. &0, &""), put the & as close to where needed as possible and deref instead |
+|       |           | In tests, #[test] (or equivalent) should be the final attribute |
+|       |           | If hex is used, make it lowercase |
+|       |           | All public top-level items must be documented |
+|       |           | Put raw API-data unpacking structs at the end of the function they’re needed in after // serde structs |
+|       |           | Put test helper structs at the end of the function they’re used in, after // test structs |
+|       |           | Prefer to call API response structs Response (no shadowing due to independent scopes) |
+|       |           | Unpack to ensure all fields are considered |
+|       |           | advice use of `.ok().unwrap_or_else(\|\|...)` if `.unwrap_or_else(\|_\| …)` is seen |
+|       |           | which files #![...] annotations are placed in |
+|       |           | unused trait method parameters should use let _ = param rather than named _foo or annotations |
+|       |           | format! parameters which consist of a single identifier (no pathing) should be folded into the format string |
+|       |           | Builder creation: prefer Foo::builder() to FooBuilder::new() (also have no public ::new() on the builder) |
+|       |           | Local helper types should be put behind a comment at the end, after an explicit return? |
+|       |           | Prefer `.collect()` to `Foo::from_iter` |
+|       |           | Functions upon which functions depend should come after |
 <!-- TODO(kcza): function dependencies AFTER -->
+
+[dictionary]: https://www.dictionary.com/
+[thesaurus]: https://www.thesaurus.com/
