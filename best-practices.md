@@ -8,7 +8,38 @@ If you spot any of the problems detailed here in our existing code-bases or patc
 _Disclaimer: this is not a complete list, more items can and likely will be added in future._
 
 # Table of Contents
-<!-- TOC HERE -->
+- [Rust best practices](#rust-best-practices)
+- [Table of Contents](#table-of-contents)
+- [Preconditions](#preconditions)
+- [Cosmetic discipline](#cosmetic-discipline)
+  - [Spacing](#spacing)
+  - [Grouping](#grouping)
+- [Naming discipline](#naming-discipline)
+  - [Name content](#name-content)
+  - [Pattern match variable naming](#pattern-match-variable-naming)
+  - [Generic type parameter naming](#generic-type-parameter-naming)
+  - [Lifetime parameter naming](#lifetime-parameter-naming)
+- [Exhaustively match to draw attention](#exhaustively-match-to-draw-attention)
+  - [Avoid numeric tuple-indexing](#avoid-numeric-tuple-indexing)
+- [Error discipline](#error-discipline)
+- [Code discipline](#code-discipline)
+  - [Don’t import all](#don’t-import-all)
+  - [Import grouping](#import-grouping)
+  - [Import form](#import-form)
+  - [Import self explicitly](#import-self-explicitly)
+  - [When to use `Self`](#when-to-use-`self`)
+  - [When not to use `Self`](#when-not-to-use-`self`)
+  - [Impl block placement](#impl-block-placement)
+  - [Impl block ordering](#impl-block-ordering)
+  - [Derive ordering](#derive-ordering)
+  - [Struct population](#struct-population)
+  - [Tuple population](#tuple-population)
+- [Function discipline](#function-discipline)
+  - [No-information returns](#no-information-returns)
+- [Comment and Doc discipline](#comment-and-doc-discipline)
+  - [First-sentence form](#first-sentence-form)
+  - [Definite vs. Indefinite articles](#definite-vs.-indefinite-articles)
+- [(Admin, to be removed once stable)](#(admin,-to-be-removed-once-stable))
 
 # Preconditions
 All new code should abide by cargo fmt, cargo clippy, and cargo clippy --tests. If your crate uses features, be careful to ensure that clippy is definitely being run on your code.
@@ -101,8 +132,7 @@ Naming is one of the three hardest problems in programming (along with off-by-on
 - **have a consistent word order**—inconsistency makes an API look dishevelled, unplanned and hence unprofessional. If the rest of the API uses `verb_noun` then unless there is a very good reason not to, the next function should be of the form `verb_noun`.
 - **be concise**—a long name can almost always be shortened. More characters implies a need to disambiguate, so if no such need exists, reduce the cognitive load on the next reader by reducing the amount they must read. Of course, don’t take this too far—the next reader must not be expected to look elsewhere to understand the full meaning of a name, as may occur if nonstandard acronyms or abbreviations are used.
 - **comprise simple words**—a long word can often be replaced by a shorter one. A concise name will comprise the smallest list of the smallest words which do not lose the subject’s meaning. Remember: [thesaurus.com][thesaurus] and [dictionary.com][dictionary] are your friends!
-- **comprise correct words**—if there is any disagreement over the implications of chosen words, then there will be some reader who gets the wrong idea. It’s better to spend more time discussing internally than to confuse a user. (Example: in Starlark, a 20-minute discussion was needed on the choice between `NOT_SAFE` vs `UNSAFE` as an empty value of a set of safety flags, where each flag had a name like `FOO_SAFE`.)
-- **be unified**—there should be one and only one name for concepts used. If more are used haphazardly, it implies a difference where there is none and thus muddies the water.
+- **comprise correct words**—if there is any disagreement over the implications of chosen words, then there will be some reader who gets the wrong idea. It’s better to spend more time discussing internally than to confuse a user. (Example: in Starlark, a 20-minute discussion was needed on the choice between `NOT_SAFE` vs `UNSAFE` as an empty value of a set of safety flags, where each flag had a name like `FOO_SAFE`.) **be unified**—there should be one and only one name for concepts used. If more are used haphazardly, it implies a difference where there is none and thus muddies the water.
 - **avoid including types**—type names should be omitted unless required to discriminate between two variables of different types which roughly hold the same value. Some examples: in a finder function `needleStr` and `haystackStr` can be more concisely expressed as `needle` and `haystack`.
 
 Canonical policy dictates that names should use UK spelling and not US or other spelling.
@@ -158,7 +188,7 @@ match state {
 
 ## Generic type parameter naming
 
-To avoid them being mistaken for concrete types, generic type parameters should have single-letter names.
+To avoid them being mistaken for concrete types, generic type parameters must have single-letter names.
 
 ## Lifetime parameter naming
 
@@ -192,7 +222,15 @@ struct QueryMatch<'a, 'b> { .. }
 struct Value<'value> { .. }
 ```
 
-# Exhaustively match to draw attention
+## Builder naming
+
+If a builder for a type `MyType` is provided, then it should have an associated function `builder()` which returns a `MyTypeBuilder`.
+The type `MyTypeBuilder` should not have a public constructor.
+In typical usage, users of `MyType` shouldn’t need to import `MyTypeBuilder`, it should be a seamless part of `MyType`.
+
+The builder `MyTypeBuilder` must also have a fallible `.build()` method, which returns a `MyType`.
+
+## Exhaustively match to draw attention
 
 Pattern matching is an excellent way to ensure that all items of data in internal structures have been considered, not only by the author of the current change, but also by the authors of any future changes. When using internal interfaces, always consider using pattern-matching to deliberately create compiler errors and thus draw attention.
 
@@ -224,6 +262,27 @@ impl Ord for MyStruct {
             .cmp(&(other.my, other.type, other.with, other.some))
     }
 }
+```
+
+## Pattern matching in parameters
+
+<!-- TODO(kcza): complete me! -->
+
+## Don’t pattern-match pointers
+
+When taking a pointer as an argument to a closure, it is possible to pattern-match the pointer to obtain the value at the other end.
+Although it may be convenient, it ultimately harms readability—it is clearer to explicitly dereference the pointer we are given.
+
+✅ Do this:
+
+```rust
+    .map(|x| *x)
+```
+
+⚠️ Avoid this:
+
+```rust
+    .map(|&x| x)
 ```
 
 ## Avoid numeric tuple-indexing
@@ -510,6 +569,539 @@ Derived items should be ordered as follows:
 - Other standard traits, ordered lexicographically
 - Third party traits, ordered lexicographically
 
+## Declaration ordering
+
+Rust provides several different types of declaration and where these are declared consecutively in the same block, they should be ordered for visual consistency.
+As this will help highlight the important information rather than appearing as alphabet soup.
+
+Declarations should be ordered as follows:
+- `const`
+- `static`
+- `lazy_static!`
+- `let`
+- `let mut`
+
+## Struct population
+
+Structs, like tuples, provide an excellent way to group together related information of different types.
+Unlike tuples however, they force values to be named avoiding any forgettable-ordering problems.
+When populating each field, there are three forms:
+- The field has its value moved in from a variable with the same name,
+- The field has its value moved in from a variable with a different name,
+- The field takes its value from the result of some computation.
+
+The first form is the cleanest for struct population as not only does it use the least characters, it also implies that the concepts being handled are very compatible, making the code easier to read.
+Wherever reasonable, we should aim for this.
+
+The second form is acceptible if the name of the field and the name of the value are similar, for example one being contained in the other.
+If it is not possible to tune naming to make this true, this is a sign of messy concepts at play.
+
+The third form can be the most problematic as large computations often draw too much attention, effectively hiding both smaller computations and the other two field-forms above.
+Drawing attention in this way indicates that the code awkwardly interleaves separate actions—the same section of code is both populating and doing detailed computation of the contents of a struct.
+To avoid some fields sticking out like a sore thumb, either all fields of a struct should be computed or none should be.
+In case of a mix, refactor computations into a new `let` declarations and use the first form above.
+This avoids the reader having to wade through alphabet soup.
+
+The order in which fields are declared must be the same as the type declaration.
+
+Each line which populates a field in a given struct must be independent.
+If there is a dependency between field declarations, for example if some shared state is mutated during their construction, `let` declarations and the first form must be used instead.
+
+✅ Do this:
+
+```rust
+struct Entry<K, V> {
+    id: u64,
+    key: K,
+    value: V,
+    pretty_date_modified: String,
+}
+
+fn get_entry(&self, key: K) -> Result<Entry<K, V>> {
+    let id = self.id_of(key)?;
+    let value = self.get(key)?;
+    let pretty_date_modified = self.date_modified(key)?
+        .format_as("yyyy-MM-dd@hh:mm:ss");
+    Entry {
+        id,
+        key,
+        value,
+        pretty_date_modified,
+    }
+}
+```
+
+⚠️ Avoid this:
+
+```rust
+struct Entry<K, V> {
+    id: u64,
+    key: K,
+    value: V,
+    pretty_date_modified: String,
+}
+
+fn get_entry(&self, key: K) -> Result<Entry<K, V>> {
+    let value_stored_at_key = self.get(key)?;
+    Entry {
+        id: self.id_of(key)?,
+        pretty_date_modified: self.date_modified(key)?
+            .format_as("yyyy-MM-dd@hh:mm:ss"),
+        key,
+        value: value_stored_at_key,
+    }
+}
+```
+
+## Tuple population
+
+Tuples are most easily read when they are short as once line-breaks occur, the structure being created starts to get harder to see.
+Keep things visually simple—if the formatter chooses to break tuple population into multiple lines, instead introduce new `let` declarations to move computation away from the tuple population.
+
+✅ Do this:
+
+```rust
+let key = some_long_computation()?
+    .something_else()
+    .another_thing();
+let value = some_other_long_computation()
+    .chained_with_something_else()?;
+(key, value)
+```
+
+⚠️ Avoid this:
+
+```rust
+(
+    some_long_computation()?
+        .something_else()
+        .another_thing(),
+    some_other_long_computation()
+        .chained_with_something_else()?,
+)
+```
+
+## Avoid loosely-scoped `let mut`
+
+In many cases, mutability is used to create a given structure which is then used immutably for the remainder of its lifetime.
+Whenever this happens, scope the mutable declarations to just where they are needed, thus forcing a compiler error if this condition is broken in future.
+Doing this also makes code simpler to read as there are fewer things which can change at any one point.
+
+```rust
+let my_structure = {
+    let mut my_structure = MyStructure{}
+    // Mutate `my_structure` as required.
+    my_structure
+};
+```
+For greatest clarity, make sure the name of the outer (immutable) and inner (mutable) declarations have the same name, here `my_structure`.
+
+If mutability is to retain some state whilst iterating through a structure, consider using a functional style instead.
+As a simple example, if presented with the following imperative code to count the number of spaces in a string
+```rust
+let mut num_spaces = 0;
+for c in my_string.chars() {
+    if c == ‘ ‘ {
+        num_speces += 1;
+    }
+}
+```
+Consider instead, using the functional style to avoid the mutation—
+```rust
+let num_spaces = my_string.chars()
+    .filter(|c| c == ‘ ‘)
+    .count();
+```
+
+## Format arg inlining
+
+Arguments to `format!`-like macros should aim to be as similar as possible to the string they are intended to produce.
+Whenever a single variable is used in a format argument, it should be inlined to avoid the reader needing to dart back and forth between the format string and its arguments (both of which may stretch over multiple lines).
+
+✅ Do this:
+
+```rust
+format!("{path}/{file}")
+```
+
+⚠️ Avoid this:
+
+```rust
+format!("{}/{}", path, file)
+```
+
+## Avoid explicit `drop` calls
+
+If a value must be dropped early, use curly-braces rather than an explicit `drop` call.
+This will highlight the non-standard lifetimes of the values in scope whilst also avoiding the reader missing the `drop` call, which may be nestled among busy-looking lines of code.
+
+Similarly, `drop` should not be used to discard values in call chains.
+If a single value is to be ignored, use the ‘toilet operator,’ `|_| ()`, i.e. a closure which takes one argument, ignores it and returns a unit.
+This form remains consistent ignoring some parts but not all of an incoming value, such as when extracting keys from key-value pairs—
+```rust
+    .map(|(key, _)| key)
+```
+There are two exceptions to this.
+
+If `|_| ...` is used and the ignored parameter is an `Error`, we should more highlight that an error is intentionally being ignored, for example by using `.ok()` on a `Result` being handled.
+
+If converting from some `Result<T>` to a `Result<()>` at the end of the last expression of a function, instead of the ignore marker, use the `?` operator and an explicit `Ok(())`.
+This highlights that we care only about side-effects, and that no information is returned in the successful case.
+
+✅ Do this:
+
+```rust
+async fn log(&self, message: String) -> Result<()> {
+    {
+        let mut file = OpenOptions::new()
+            .append(true)
+            .open(&self.log_file_path)?;
+        file.write_all(message.as_bytes())?;
+    }
+    self.transmit_log(message).await?;
+    Ok(())
+}
+```
+
+⚠️ Avoid this:
+
+```rust
+async fn log(&self, message: String) -> Result<()> {
+    let mut file = OpenOptions::new()
+        .append(true)
+        .open(&self.log_file_path)?;
+    file.write_all(message.as_bytes())?;
+    drop(file);
+    Ok(self.transmit_log(message)
+        .await
+        .map(drop))
+}
+```
+
+## Generic type parameter constraints
+
+Generic type parameter constraints should be grouped in the same place.
+If some constraints are complex enough to be placed into a `where` clause, then all constraints should be moved from angle-bracket declarations into the `where` clause also.
+
+If constraints are declared in angle brackets and that declaration is longer than 30 characters, move all constraints into a `where` clause.
+
+These rules ensure that the reader cannot miss any constraints.
+
+✅ Do this:
+
+```rust
+impl<'a, ‘b, I, T> SomeStruct<'a, 'b, I, T>
+    where
+        ‘b: ‘a,
+        I: IntoIterator<T> + ‘a,
+        T: ‘b,
+{ ... }
+```
+
+⚠️ Avoid this:
+
+```rust
+impl<'a, 'b: 'a, I: IntoIterator<T> + 'a, T: 'b> SomeStruct { ... }
+```
+
+## Prefer constructors
+
+When exposing structs, prefer to expose constructor functions or builders rather than exposing public fields.
+There are several benefits here:
+- They format more nicely in call chains
+- They allow conversions to occur implicitly
+- They allow some fields to be computed in terms of others using implementation-specific details
+Structs with all-public fields cannot benefit from any of the above and moreover, if it is later decided that any of these properties is beneficial, we face either a breaking change to fix it or extra complication to work around it.
+
+The exception here is for ‘options’ structs, which are passed to single function and which configure its behaviour.
+
+## Method calls on closing curly braces
+
+Control structures and struct literals should not have methods called upon them as they are often used as final expressions in blocks and once formatted these calls often get moved onto the line below.
+This adds an unwelcome surprise as the scope of what the reader is currently looking at will appear to increase, adding cognitive load.
+Instead, use a binding (`let some_var = ...; some_var.foo()`).
+
+When designing APIs, if a public struct will be filled by consumers for the purpose of calling a single method on it, consider instead reversing the dependency by using a free function which takes the struct as its first parameter.
+
+✅ Do this:
+
+```rust
+do_thing(Foo {
+    bar: "asdf",
+    baz: "fdsa",
+})?;
+
+let value = if some_condition {
+    value_a
+} else {
+    value b
+};
+value.to_string()
+```
+
+⚠️ Avoid this:
+
+```rust
+Foo {
+    bar: "asdf",
+    baz: "fdsa",
+}
+.do_thing()?;
+
+if some_condition {
+    value_a
+} else {
+    value_b
+}
+.to_string()
+```
+
+## Type annotations
+
+The compiler’s type inference is usually very good, but sometimes, we must give it a helping hand.
+However, we must careful of how much information we provide and where the necessary annotations are done.
+
+Provide only the minimum amount of information required to help the compiler.
+If the compiler does not complain when a type annotation is removed, then it should be removed.
+In particular, always make note of the return type of the function currently being written as often, this provides enough information to make all type annotations obselete.
+
+Let’s briefly consider collecting an iterator of `SomeLongType<...>` into a `Vec`.
+The compiler will complain that it does not know which collection type to collect into and although explicitly annotating `Vec<SomeLongType<...>>` works, the information the compiler needs is that a `Vec` is being handled, so it is better to use just `Vec<_>`.
+This has two effects:
+
+1. The code is cleaner as unnecessary information does not draw the eye
+2. The code is more maintainable as the types we handle are allowed to change (the necessary properties are still implicitly enforced at function boundaries)
+3. The coder’s wrists are less stressed
+
+In an function implementation, Rust provides three main ways to insert annotations:
+
+1. On `let` declarations, using `let foo: Type`
+2. On functions using the turbofish, `func::<T>()`
+3. On trait items using the fully-qualified syntax `<Value as Trait>::trait_item`
+
+This is also the order of preference in which these should be used.
+
+The best place to put annotations is on `let` declarations, as this not only makes it clearer what the values being handled are, but also if a `let` takes the results of a long chain of calls spanning many lines, it also makes it more obvious what’s being worked towards.
+This pattern can also provide even more information than the other two in some cases.
+
+Next, if type information must be given in the middle of the expression, the turbofish may be used.
+One place to be careful though is if `collect` being used in the middle of an expression is what requires annotation—there is often a cleaner and more efficient way to achieve the same thing.
+
+The tool of last-resort is the fully-qualified syntax which disambiguates between same-name items on the same type which come from different namespaces in scope.
+If an API you are making can cause an abundance of name-clashes, your consumers will be unhappy.
+Refactor it as best you can.
+
+✅ Do this:
+
+```rust
+let x: Vec<_> = foo.iter()
+    .filter(...)
+    .map(...)
+    ...
+    .flat_map(...)
+    .collect();
+```
+
+⚠️ Avoid this:
+
+```rust
+let x = foo.iter()
+    .filter(...)
+    .map(...)
+    ...
+    .flat_map(...)
+    .collect::<Vec<SomeExtremelyLongType<With, Generics, And<'lifetimes>>();
+```
+
+## API-specific Serde implementations
+
+Data-formats returned from remote APIs should not govern internal representation of data without good reason as we may end up with remote API changes causing significant changes across our codebases.
+To avoid this, it is good practice to declare (de)serialisation types which closely match the remote API and then explicitly map these into our own types.
+If you see `Serialize`/`Deserialize` being implemented on data which is received from or will be sent to a remote, this is a sign of a remote API bleeding into our code.
+
+Instead, define (de)serialisation types in the functions which implement the necessary API calls.
+Let’s say we have a function called `get_image_info`, which makes a web-request to get information associated with given container image name (e.g. author, description, latest version).
+To nicely transfer data from some remote format into one we govern, say `ImageInfo`, add an explicit `return` at the end and _below_ this, create a new type called `Response`, which implements `Deserialize`.
+Add a comment which says `// serde structs.` to let the reader know that everything beyond this point only relates to modelling the remote API.
+If the remote responds with a nested structure, add more types, always trying to maintain a 1:1 relationship between Rust types and the remote format—
+```rust
+async fn get_image_info(&self, name: &str) -> Result<ImageInfo> {
+    let response = self.client.get(...).await?;
+    if !response.status_code().is_success() {
+        return Err(Error::OhNo { ... })
+    }
+
+    let parsed_response: Response = serde_json::from_str(response.text());
+    let info = ImageInfo {
+        name,
+        version: response.metadata.version,
+        authors: response.metadata.authors,
+        latest_release: response.releases.last()
+            .map(|release| ...),
+    }
+    return Ok(info);
+
+    // serde structs.
+    #[derive(Deserialize)]
+    struct Response {
+        metadata: Metadata,
+        releases: Vec<Release>,
+    }
+
+    #[derive(Deserialize)]
+    struct Metadata {
+        version: String,
+        authors: Vec<String>,
+    }
+
+    #[derive(Deserialize)]
+    struct Release {
+        ...
+    }
+}
+```
+For consistency, we try to always call incoming data `Response` and outgoing data `Message`.
+Name shadowing is okay here as the scope is small and well-defined.
+
+Scoping the deserialisation in this way is extremely good practice for several reasons:
+
+Firstly, it minimises the blast radius of incoming remote API changes. If a remote API changes, we need only update the deserialisation structs and their unpacking into our internal ones—the core of our program/library remains untouched.
+
+Secondly, it minimises the amount of code which must be read—if the interaction with the remote API is functioning correctly but someone wishes to know how this function works, they know that they can stop reading past the `// serde structs.` marker.
+Conversely, if the API interaction is broken due to a data format ‘surprise,’ that same comment draws the maintainer’s eye to the place they need.
+
+Thirdly, it is often simpler to implement the Serde traits on these types! As we model the remote structure before unpacking into internal ones, less `#[serde(...)]` wrangling is required.
+
+Finally, it reduces the amount of clutter in file-level scopes.
+As the `Response` types are locally-scoped, the reader knows exactly where they are used and hence does not need to keep them in mind alongside the rest of the codebase.
+
+## Shadowing
+
+Shadowing provides an excellent way to manipulate data or change its type whilst still highlighting that the ‘same’ data is being processed, however, too many levels of shadowing make things confusing.
+In general, if shadowing with scope (i.e. within `{}`), use at most one levels of shadowing.
+```rust
+if let Some(name_override) = name_override {
+    // `name_override` is shadowed, don’t shadow it again.
+}
+```
+Shadowing and changing type in the same scope can be performed at most once per name (e.g. for `into` conversions).
+```rust
+fn init(self) -> InitedSelf {
+    let Self {
+        some_field,
+        ...
+    } = self,
+    // ...
+    let some_field = some_field.into();
+    // ...
+    InitedSelf {
+        some_field,
+        ...
+    }
+}
+```
+Shadowing and not changing in the same scope can be done as many times as needed, however if this is being used to mutate a value during its construction, instead consider the scoped mutability pattern—
+```rust
+let thing = {
+    let mut my_thing = ...;
+    // Mutate `my_thing` to construct it...
+    my_thing
+};
+```
+
+## How to structure `mod.rs`
+
+Files named `mod.rs` must only be used to specify the structure of a project, if definitions are added, it can quickly become very messy and detract from its core purpose of declaring sub-modules and the current module’s interface.
+
+The `mod.rs` file must be separated into distinct blocks in the following order, keeping the most public items first:
+1. `pub mod ...` declarations
+2. `pub(crate) mod ...` declarations
+3. `mod ...` declarations
+4. `pub use ...` declarations
+5. `pub(crate) use ...` declarations
+6. `pub use ...` declarations
+
+Any items gated behind a `#[cfg(...)]` must be placed at the end of the file, in the same order as the above.
+Like-gated items should be wrapped in a block, i.e. `#[cfg(...)] { /* items here */ }`.
+
+No other items should be present.
+
+Note that these guidelines also hold for `lib.rs`, with the exception that a crate’s `Result` and `Error` types are permitted in `lib.rs`, given their central importance.
+
+## Reference scope
+
+In many cases, the compiler is smart enough to create temporary storage locations to store variables which are given the value `&expr`, however, when these are passed to functions, it becomes slightly harder to follow which type is being used, especially when handling `&T` where `T` is `!Copy`.
+In this case, it is only a single character in the variable declaration, possibly many lines away which shows that the value `T` is not being moved, only its reference.
+
+Instead of relying on temporary storage locations, store the value explicitly and take a reference where needed.
+This way, the transfer of ownership is much more explicit.
+As a rule of thumb, only use `&` at the start of the value of a `let` declaration when either indexing or slicing.
+
+✅ Do this:
+
+```rust
+let foo = from_func();
+other_func(&foo);
+```
+
+⚠️ Avoid this:
+
+```rust
+let foo = &from_func();
+other_func(foo);
+```
+
+## Struct field ordering
+
+The more public an item, the more likely a user is to want to know more about it and understand it.
+Therefore, we should put the items they are most likely to care about nearer the top of our code.
+In the case of struct definitions this means that `pub` fields should come first, then `pub(crate)` ones and then private ones.
+Structs neatly organised in this way make it clear when they have entered implementation details and hence when they may stop reading.
+
+If a particular field-ordering is required for a derived `Ord`/`PartialOrd` implementation, instead write those out by hand as the reader is less likely to need to look at these.
+
+✅ Do this:
+
+```rust
+struct ScriptThread<T> {
+    pub user_data: T,
+
+    pub(crate) global_vars: BTreeMap<String, Value>,
+
+    stack: Vec<StackFrame>,
+    max_steps: Option<u64>,
+    steps: u64,
+}
+```
+
+⚠️ Avoid this:
+
+```rust
+struct ScriptThread<T> {
+    stack: Vec<StackFrame>,
+    pub(crate) global_vars: BTreeMap<String, Value>,
+    pub user_data: T,
+    steps: u64,
+    max_steps: Option<u64>,
+}
+```
+
+## Hex values
+
+Unless there is an existing convention, hex values should be lowercase as this avoids creating visually-impenetrable rectangles.
+By using lowercase, we provide more ‘handles’ for the eye to use.
+
+✅ Do this:
+```rust
+const SPECIFIC_IMPORTANT_VALUE: u64 = 0xab5c4d320974a3bc;
+```
+
+⚠️ Avoid this:
+
+```rust
+const SPECIFIC_IMPORTANT_VALUE: u64 = 0XAB5C4D320974A3BC;
+```
+
 # Function discipline
 
 ## No-information returns
@@ -549,6 +1141,213 @@ fn setup_foo(&self) {
 }
 ```
 
+## Hide generic type parameters
+
+Generic type parameters add complication to understanding an API.
+On functions, only introduce them explicitly if they are required in more than one place in the current signature, otherwise, avoid them by using the unnamed lifetime `'_` or `impl Trait`.
+Rust’s elision rules allow us to hide ‘obvious’ lifetimes, by using `impl Trait`, a similar effect can be achieved.
+
+Note that although it is possible to omit specifying even the unnamed lifetime (i.e. it may be possible to write `serde::Deserialize<’de>` as `serde::Deserialise`), this should never be done.
+A type without lifetime parameters looks completely self-contained and hence can be freely passed around, but this is not the case!
+If a lifetime is present, always communicate that fact (i.e. prefer `serde::Deserialize<’_>` to `serde::Deserialize`).
+
+✅ Do this:
+
+```rust
+fn transmit(tx: impl Transmitter<'_>, message: &[u8]) -> Result<()> { ... }
+```
+
+⚠️ Avoid this:
+
+```rust
+fn transmit<'a, T: Transmitter<’a>>(tx: T, message: &[u8]) -> Result<()> { ... }
+```
+
+## Pattern-matched parameters
+
+Using pattern matching in `fn` parameters obfuscates the purpose of values being handled, ultimately harming readability as the fact that this kind of unpacking is done is an implementation detail.
+If parameters are to be unpacked, instead do this at the first line of a particular function.
+Note that this guidance does not apply to closures, which are commonly used as small, locally-scoped helper functions.
+
+✅ Do this:
+```rust
+impl Server {
+    fn new(config: ServerConfig) -> Result<Self> {
+        let Config { db_path, working_path } = config;
+        // ...
+    }
+}
+```
+
+⚠️ Avoid this:
+```rust
+impl Server {
+    fn new(ServerConfig { db_path, working_path }: ServerConfig) -> Result<Self> {
+        // ...
+    }
+}
+```
+
+## Builder ownership
+
+In Rust, there are two forms of the builder pattern, depending on the receiver type used.
+Consider the following builder—
+```rust
+let frobnicator = Frobnicator::builder()
+    .foo("foo")
+    .bar("bar")
+    .build()?;
+```
+The methods `foo`, `bar` and `build` can either take ownership of `self` or take `&mut self` by value.
+It `self` is used, it encourages a simple flow of data, with values being neatly moved from one place to another.
+If `&mut self` is used, it makes conditional use of each of the builder methods simpler, however either the builder must be bound to a variable or all contained data must be cloned during `.build()`.
+Although the optimiser may remove some unnecessary cloning, this should not be relied upon.
+Besides, if the `.build` method takes a reference to the builder—allowing it to be called multiple times—this feels more like a _factory_ than a _builder._
+
+# Error discipline
+
+## Error messages
+
+In Rust, it is a good idea to start writing a project by first making its `Error` type, this no only encourages message consistency, but also highlights the necessary information for these good error messages.
+This in turn, makes it clearer which information should be plumbed where, avoiding the awkward and altogether too-common situation where an error condition is identified, but much work must be done to get the right information there.
+
+Error messages should be concise. Every second longer a user spends reading an error message and not understanding what went wrong is a second longer of their frustration. The form of the phrases used in error messages should be consistent. If, likely from previous messages, someone is expecting—
+```
+cannot foo the bar
+```
+but instead reads—
+```
+barring failed for foo
+```
+they will experience unnecessary discomfort. Keep it nice and clean.
+
+A majority of the time, error messages should start with a verb and in most cases that verb should be prefixed with ‘cannot.’
+
+Capitalisation of error messages should be consistent. If it is possible that an error will not be a top-level error (e.g. it may be wrapped), then the first letter should be lowercase. Unexpected capital letters in the middle of a line of logging look dishevelled and imply that little thought has gone into the overall design of the implementation. This couldn’t be further from the truth so let’s make it appear as such.
+
+Remember: the latin alphabet is optimised for many contiguous lowercase letters, hence lowercase is a good default to maintain. However, uppercase should be used for acronyms and standard names such as: TCP and NixOS.
+
+When writing error messages, think about the background of the expected user/consumer of the project. Consider whether the person reading it will have good technical knowledge and tailor your approach as such.
+
+If the reader of these error messages is expected to be a (Rust) developer (e.g. code in question is in a library or building block for something else), they will be familiar with how to fix simple problems and as such may not benefit from unnecessary advice. For these readers, a good concise error message will contain all the information needed to point them towards how to fix it. In this case, suggestions are at best superfluous and at worst unhelpful.
+
+If the reader of these error messages is not expected to be a developer (e.g. these messages will appear in some GUI), think carefully about where you want to send that reader next. Whereas a developer might be okay to submit an issue, a non-developer will appreciate being explicitly pointed in the right direction.
+
+Going up the stack, the reader’s knowledge of low-level details becomes less reliable hence they must lean more heavily on the help we give them.
+
+As an error passes further and further up the stack, more context messages may be added to it. Be aware of how errors will bubble up to avoid repeating the same information multiple times.
+
+Note that all this advice applies to both error messages associated with error types and panic messages.
+
+## Error types
+
+All reasonable types which implement `Error` fall into one of three categories:
+- Those which erase the underlying types
+- Those which preserve them, for example by enumeration
+- Those which preserve them opaquely
+
+Errors which use type-erasure (e.g. `Box<dyn Error>` and `anyhow::Error`) are often easier to use when writing code, however things become very problematic later on when attempting to inspect errors—with less help from the compiler comes far more places for subtle breakages to occur, not only now, but in future.
+Type-erased errors should only be used in prototypes where maintenance will never be a concern, otherwise, use concrete types.
+As a general rule, type erased errors _must not be used in library crates._
+Type erasure is a very strong opinion and one which may not be shared by a crate’s dependants.
+The process of converting from erased errors back to a contained concrete one is unpleasant and will irritate consumers.
+
+Errors which preserve types (e.g those annotated with `#[derive(thiserror::Error)]`) give Rust a unique advantage—not only can the golden path receive first-class support, but so too can the error path, thus allowing an even higher level of quality to be attained.
+In particular, the process of responding to particular errors is far more robust with enumerated errors.
+
+Errors which preserve types but which represent unrecoverable errors should represent their error condition as a contained `&‘static str` or `String` which is assigned where the error is constructed.
+When constructing these errors, special care must be taken to ensure that the message is consistent with other errors in the codebase.
+The field used to hold the reason for the error in these cases should be named `reason`.
+
+If one error wraps another, the inner error should be held in a field named `cause`.
+
+## Panic calmly
+
+Panics must only be used if a program enters an unrecoverable state.
+Further, that unrecoverable state must not be as a result of user input—a program which a user can easily crash is not a good program.
+
+In Rust, panics are very aggressive.
+Not only are they unrecoverable, but also if the default panic strategy is overridden (e.g. by a user who wants a smaller binary), we have no guarantee that the usual cleanup is performed and must rely on the OS to do its best with the resources it knows about.
+By default therefore, try not to panic.
+
+If a panic is inevitable, be sure that the message signals who is at fault—if it’s an internal error, start the message with `internal error:`.
+
+The over-use of `.unwrap()` is a major red flag, as the resulting code is likely very fragile, relying on possibly-unclear preconditions in the code above it.
+If that code changes—which is very likely in a program under active development—production code may panic.
+As a rule of thumb, `.unwrap()` should only be used in code in small scopes, where errors can only possibly originate from the programmer—e.g. in `Regex::new("...").unwrap()`, a panic can only occur if the constant regex is invalid.
+In general though, unwrapping should be replaced with either:
+- Good use of the type system to allow the compiler to enforce preconditions
+- Calls to `.expect` which document the required precondition (these must follow the same convention as panic messages)
+The first option is very much preferable.
+
+We can remove panics originating from `.unwrap()` calls by using the `?` operator to pass errors up the call-stack.
+In the case of unwrapping options in a function which returns a result, calling the `.ok_or`/`.ok_or_else` methods may be required.
+
+We can also remove panics originating from `.unwrap()` calls by using pattern-matching.
+If a call to `.unwrap()` is preceded by `.is_some()`/`.is_ok()`, instead make use of pattern matching: `if let Some(x) = x` or `if let Ok(x) = x`.
+
+When calls to `.unwrap()` are removed, the surrounding code is not only more robust, but you may notice that it is often much cleaner.
+This is not a coincidence—it is a nudge from the developers of the language to encourage fault-tolorant Rust.
+
+The general avoidance of panicking does not apply to tests.
+If the `?` operator is used in tests, the origin of the error is lost, making the test harder to debug.
+
+# Unsafe discipline
+
+## Minimise unsafe
+
+Rust’s `unsafe` keyword turns off a small but important number of the compiler’s checks.
+In effect, it is a ‘hold my beer’ marker—you tell the compiler to trust you and just watch whilst you do something crazy.
+But the compiler is not the only entity whose trust we require, when we use `unsafe`, we also ask our _users_ to trust that we know exactly what we are doing.
+We do not want to break trust.
+
+Therefore, we must endeavour to minimise the use of unsafe in our code.
+If there is a place where `unsafe` is used but not required for a strict functional requirement, drop it and replace it with a safe equivalent.
+Such sections are inherently much harder to maintain as they require not only excellent documentation, but dilligence, careful consideration and above all time.
+The more unsafe code a project contains, the slower it will be able to move forward in the long-run.
+
+If `unsafe` is mandatory, minimise the scope of the `unsafe` blocks and functions in use.
+Even if this means adding an extra line or two, maximise the amount of help the compiler can give us whilst minimising the number of unsafe interactions which will require audit.
+A function of 50 lines wrapped in a single large `unsafe` block is far harder to maintain than a 53 line function containing three one-line `unsafe` blocks.
+
+Note that ‘it’s faster’ is not a good reason to use `unsafe` constructs.
+Even if true, unless profiling can categorically show that safety checks are a significant cost in a small, hot section of the codebase, the significant increase in burden is simply not worth it.
+Rust is already an extremely fast language.
+
+# Project structure discipline
+
+## Use `mod.rs` to declare a module-root
+
+When declaring a module `foo` which comprises multiple files, Rust allows two directory structures as follows.
+
+Firstly, all files can be grouped into a single directory containing a `mod.rs`—
+```
+foo/
+├── mod.rs
+├── file_in_foo.rs
+└── another_file_in_foo.rs
+```
+
+Secondly, all files can be grouped into a single directory, except for the module root which is stored next to the directory and shares its name—
+```
+foo.rs
+foo/
+├── file_in_foo.rs
+└── another_file_in_foo.rs
+```
+
+Always prefer the first way as `mod.rs` are expected to have a specific structure, hence the reader knows what they’ll see when opening one of these.
+Some editors group files and folders separately, so in the above example, the fact that `foo.rs` is related to the `foo/` directory will not be obvious when there are many other entries in between.
+
+## Define `Error` and `Result` in standard locations
+
+A crate’s `Error` and `Result` types are likely the most important types it contains, and should therefore be declared in a standard place.
+
+In library crates, the `Error` type should be defined in the crate-root, `lib.rs`.
+The custom `Result` type alias, `type Result<T> = std::result::Result<T, Error>` must be immediately below it.
+
+In binary crates, the `Error` type should be defined `error.rs` and the `Result` alias in `result.rs`, both in the crate’s root directory.
+
 # Comment and Doc discipline
 
 ## First-sentence form
@@ -581,12 +1380,13 @@ Leave no room for ambiguity and hence misunderstanding.
 | Ed    | yes       | Forbid struct construction with Self::XXX {...}, for associated types, use the type name explicitly. NB: this is not enums! |
 | Ed    | yes       | Forbid use XXX::* unless XXX is an enum, and even then, this must be local (definitely do this if rustfmt would start awkwardly wrapping?) |
 | Ed    | yes       | Forbid use of use super::... except for use super::* in unit tests |
-|       |           | Struct population must not mix computed and assigned/renamed fields |
-|       |           | Use a consistent order for naming |
-|       |           | thiserror message forms |
-|       |           | panic!() message forms |
-|       |           | .expect() message forms |
-|       |           | One-block declarations: consts then statics then lazy_statics (?) then lets. |
+| Ed    | yes       | Struct population must not mix computed and assigned/renamed fields |
+| Ed    | yes       | Use a consistent order for naming |
+| Ed    | yes       | thiserror message forms |
+| Ed    | yes       | panic!() message forms |
+| Ed    | yes       | .expect() message forms |
+| Ed    | yes       | One-block declarations: consts then statics then lazy_statics (?) then lets. |
+| Ed    | yes       | Avoid `mut` as much as possible |
 |       |           | Unsafe functions / functions containing unsafe must list preconditions (to what extent does clippy help with this?) |
 | Ed    | yes       | Generic type parameters must be one letter |
 | Ed    | yes       | Generic lifetime names must not contain underscores |
@@ -596,63 +1396,64 @@ Leave no room for ambiguity and hence misunderstanding.
 | Ed    | REJECTED  | Comments must be no wider than 80 characters from their leftmost point |
 | Ed    | yes       | impl LocalTrait for ForeignType order: std first, then non-std but popular, then others in a reasonable order |
 | Ed    | yes       | Use Self as reasonably possible (in function return types, value construction Self{}/Self()/Self) |
-|       |           | No use of declarations in format-like macros (the key=value part at the end), prefer local lets |
-|       |           | Use `.map(\|_\| ())` rather than `.map(drop)` |
-|       |           | If a where clause exists, all type bounds must be within it (no mixing) |
-|       |           | Clippy lints to turn on: no broken links, |
-|       |           | Prefer scoping to drop (avoid all drop calls?) |
-|       |           | Always use clap-derive not the old API |
-|       |           | Prefer iterator combinators if infallible, consider avoiding if fallible |
-|       |           | No method calls on struct literals |
-|       |           | Scoped mutability—names must match: let x = { let mut x = …; …; x} |
-|       |           | Prefer Foo::new() or equivalent to Foo{} |
-|       |           | All imports must be in one block (until rustfmt stabilises its many sorted blocks) |
+| Ed    | REJECTED  | No use of declarations in format-like macros (the key=value part at the end), prefer local lets |
+| Ed    | yes       | Use `.map(\|_\| ())` rather than `.map(drop)` |
+| Ed    | yes       | If a where clause exists, all type bounds must be within it (no mixing) |
+| --    | FUTURE    | Clippy lints to turn on: no broken links, |
+| Ed    | yes       | Prefer scoping to drop (avoid all drop calls?) |
+| Ed    | REJECTED  | Always use clap-derive not the old API |
+| --    | FUTURE    | Prefer iterator combinators if infallible, consider avoiding if fallible |
+| Ed    | yes       | No method calls on struct literals |
+| Ed    | yes       | Scoped mutability—names must match: let x = { let mut x = …; …; x} |
+| Ed    | yes       | Prefer Foo::new() or equivalent to Foo{} |
+| Ed    | REJECTED  | All imports must be in one block (until rustfmt stabilises its many sorted blocks) |
 | Ed    | yes       | Imports must be nested (no Java-style repetition) |
-|       |           | Error type must be defined in lib.rs or error.rs in crate root |
-|       |           | Always declare Result<T>, this must be done immediately below the error type |
-|       |           | Don’t use mod.rs, use foo.rs next to foo/ to help code editors! |
+| Ed    | yes       | Error type must be defined in lib.rs or error.rs in crate root |
+| Ed    | yes       | Always declare Result<T>, this must be done immediately below the error type |
+| Ed    | yes       | Use mod.rs, do not use foo.rs next to foo/ |
 |       |           | Constructing boxed errors? |
-|       |           | When using builders, provide a MyType::builder() -> MyTypeBuilder? |
-|       |           | MyTypeBuilder must have a .build() -> MyType (duh) |
-|       |           | Prefer builders by value? (avoid awkwardly relying on clone() calls getting optimised away) |
-|       |           | Use explicit Ok(()) explicitly rather than Ok(returns_unit()) (split into two lines) |
-|       |           | No method calls on (curly brace?) macro results? |
-|       |           | Prefer explicit matches (avoid catch-all _ => () cases) |
-|       |           | Start by defining the error states (the error path must be first-class, even if not optimised) |
-|       |           | Leverage the type system to uphold invariants and prevent misuse |
-|       |           | Minimise use of unsafe and scope as closely as possible to where you actually need unsafe |
-|       |           | Use rustfmt, but use THESE SPECIFIC (insert here) settings, do not use #[rustfmt::skip]! |
-|       |           | Prefer let xxx: Foo to turbofish to add type annotations on the last thing in a chain (unless really annoying!) i.e. prefer to signpost what the goal of a large chain is, also can be slightly more reliable in some cases |
-|       |           | For locally-written Serde, use an explicit return and put the helper types at the end of the function, don’t write macro helpers for the helper types! (Type names don’t need to be crate-level unique, just distinct enough but within reason e.g. no type shadowing)
-|       |           | Shadowing: two levels of variable shadowing okay, type shadowing is never okay! |
-|       |           | In mod.rs equivalent, put all mods first, then all pub uses then pub(crate) uses all uses in separate blocks (grouped nicely) then #[cfg(..)] after all |
-|       |           | All use statements must come before all code |
+| Ed    | yes       | When using builders, provide a MyType::builder() -> MyTypeBuilder? |
+| Ed    | yes       | MyTypeBuilder must have a .build() -> MyType (duh) |
+| Ed    | yes       | Prefer builders by value? (avoid awkwardly relying on clone() calls getting optimised away) |
+| Ed    | yes       | Use explicit Ok(()) explicitly rather than Ok(returns_unit()) (split into two lines) |
+| Ed    | yes       | No method calls on (curly brace?) macro results? |
+| Ed    | REJECTED  | Prefer explicit matches (avoid catch-all _ => () cases) |
+| Ed    | yes       | Start by defining the error states (the error path must be first-class, even if not optimised) |
+| ED    | UNSCOPED  | Leverage the type system to uphold invariants and prevent misuse |
+| Ed    | yes       | Minimise use of unsafe and scope as closely as possible to where you actually need unsafe |
+| Ed    | FUTURE    | Use rustfmt, but use THESE SPECIFIC (insert here) settings, do not use #[rustfmt::skip]! |
+| Ed    | yes       | Prefer let xxx: Foo to turbofish to add type annotations on the last thing in a chain (unless really annoying!) i.e. prefer to signpost what the goal of a large chain is, also can be slightly more reliable in some cases |
+| Ed    | yes       | For locally-written Serde, use an explicit return and put the helper types at the end of the function, don’t write macro helpers for the helper types! (Type names don’t need to be crate-level unique, just distinct enough but within reason e.g. no type shadowing)
+| Ed    | yes       | Shadowing: two levels of variable shadowing okay, type shadowing is never okay! |
+| Ed    | yes       | In mod.rs equivalent, put all mods first, then all pub uses then pub(crate) uses all uses in separate blocks (grouped nicely) then #[cfg(..)] after all |
+| Ed    | OBVIOUS?  | All use statements must come before all code |
 |       |           | When read from top-to-bottom, try to make this feel like a tour of the API (guide the reader) |
-|       |           | Redundant type annotations—does clippy prevent let foo: Foo = (...).collect::<Foo>();? |
-|       |           | No .map(Self) at the end of a chain (e.g. to construct Result<Self> |
-|       |           | No let x = &expr unless indexing/slicing |
+| Ed    | yes       | Redundant type annotations—does clippy prevent let foo: Foo = (...).collect::<Foo>();? |
+| Ed    | REJECTED  | No .map(Self) at the end of a chain (e.g. to construct Result<Self> |
+| Ed    | yes       | No let x = &expr unless indexing/slicing |
 |       |           | Use `vec![]` rather than Vec::new(), use Foo::new() rather than Foo::with_capacity(0) (for which Foo? yes: Vec, HashMap, BTreeMap) |
-|       |           | Don’t pattern-match on pointer parameters i.e. don’t `.map(\|&x\| x)`, use `.map(\|x\| *x)` |
-|       |           | Don’t populate tuples with lots of computation. If the line breaks, put things in variables |
-|       |           | Don’t pattern-match in fn functions (like one would expect in closures) |
-|       |           | Put pub fields first in mixed structs. If this breaks Ord, write it manually |
-|       |           | Prefer pattern matching to field-access where all fields should be considered |
-|       |           | Don’t assign or compare &lit (e.g. &0, &""), put the & as close to where needed as possible and deref instead |
-|       |           | In tests, #[test] (or equivalent) should be the final attribute |
-|       |           | If hex is used, make it lowercase |
+| Ed    | yes       | Don’t pattern-match on pointer parameters i.e. don’t `.map(\|&x\| x)`, use `.map(\|x\| *x)` |
+| Ed    | yes       | Don’t populate tuples with lots of computation. If the line breaks, put things in variables |
+| Ed    | yes       | Don’t pattern-match in fn functions (like one would expect in closures) |
+| Ed    | yes       | Put pub fields first in mixed structs. If this breaks Ord, write it manually |
+| Ed    | yes       | Prefer pattern matching to field-access where all fields should be considered |
+| Ed    | yes       | Don’t assign or compare &lit (e.g. &0, &""), put the & as close to where needed as possible and deref instead |
+| Ed    | REJECTED  | In tests, #[test] (or equivalent) should be the final attribute |
+| Ed    | yes       | If hex is used, make it lowercase |
 |       |           | All public top-level items must be documented |
-|       |           | Put raw API-data unpacking structs at the end of the function they’re needed in after // serde structs |
 |       |           | Put test helper structs at the end of the function they’re used in, after // test structs |
-|       |           | Prefer to call API response structs Response (no shadowing due to independent scopes) |
-|       |           | Unpack to ensure all fields are considered |
-|       |           | advice use of `.ok().unwrap_or_else(\|\|...)` if `.unwrap_or_else(\|_\| …)` is seen |
+| Ed    | yes       | Prefer to call API response structs Response (no shadowing due to independent scopes) |
+| Ed    | yes       | Unpack to ensure all fields are considered |
+| Ed    | yes       | advice use of `.ok().unwrap_or_else(\|\|...)` if `.unwrap_or_else(\|_\| …)` is seen |
 |       |           | which files #![...] annotations are placed in |
 |       |           | unused trait method parameters should use let _ = param rather than named _foo or annotations |
-|       |           | format! parameters which consist of a single identifier (no pathing) should be folded into the format string |
-|       |           | Builder creation: prefer Foo::builder() to FooBuilder::new() (also have no public ::new() on the builder) |
+| Ed    | yes       | format! parameters which consist of a single identifier (no pathing) should be folded into the format string |
+| Ed    | yes       | Builder creation: prefer Foo::builder() to FooBuilder::new() (also have no public ::new() on the builder) |
 |       |           | Local helper types should be put behind a comment at the end, after an explicit return? |
 |       |           | Prefer `.collect()` to `Foo::from_iter` |
 |       |           | Functions upon which functions depend should come after |
+|       |           | Avoid let without values |
+| Ed    | yes       | Don’t pattern match in function parameters (closures okay) |
 <!-- TODO(kcza): function dependencies AFTER -->
 
 [dictionary]: https://www.dictionary.com/
