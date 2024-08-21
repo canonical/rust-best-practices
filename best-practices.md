@@ -7,6 +7,7 @@ Ideally, this document would be a spec for a new AI linter but at present we mus
 If you spot any of the problems detailed here in our existing code-bases or patches, don’t be afraid to fix them—a good codebase is inherently more maintainable and will cause fewer headaches and annoyances later. Remember that all code should aim to be locally-consistent—new code shouldn’t stick out like a sore thumb. Note also that the perfect is the enemy of the good—sole focus on fine-tuning code at the cost of all forward progress doesn’t keep the lights on.
 
 _Disclaimer: this is not a complete list, more items can and likely will be added in future._
+If you find an item which you believe should be in this document, please open an issue.
 
 # Table of Contents
 
@@ -734,10 +735,72 @@ let num_spaces = my_string.chars()
     .count();
 ```
 
+## Avoid unassigned `let` declarations
+
+Let-declarations without values indicate an odd flow of data through a function.
+Instead, prefer to return the required value from the block which computes it.
+
+✅ Do this:
+
+```rust
+let message = if result.is_ok() {
+    "success!"
+} else {
+    "failed!"
+}
+
+let mut retries = 0;
+let message = loop {
+    let resp = exec_web_request();
+    match resp {
+        Ok(m) => break m.text(),
+        Err(Error::NetworkUnavailable) => {},
+        Err(e) => return Err(e),
+    }
+
+    retries += 1;
+    if retries > 5 {
+        return Err(Error::Unavailable);
+    }
+}
+```
+
+⚠️ Avoid this:
+
+```rust
+let message;
+if result.is_ok() {
+    message = "success!";
+} else {
+    message = "failed!";
+}
+
+let mut retries = 0;
+let message;
+loop {
+    let resp = exec_web_request();
+    match resp {
+        Ok(m) => {
+            message = m.text();
+            break;
+        },
+        Err(Error::NetworkUnavailable) => {},
+        Err(e) => return Err(e),
+    }
+
+    retries += 1;
+    if retries > 5 {
+        return Err(Error::Unavailable);
+    }
+}
+```
+
 ## Format arg inlining
 
 Arguments to `format!`-like macros should aim to be as similar as possible to the string they are intended to produce.
 Whenever a single variable is used in a format argument, it should be inlined to avoid the reader needing to dart back and forth between the format string and its arguments (both of which may stretch over multiple lines).
+
+_NB: older Rust versions may not support this syntax._
 
 ✅ Do this:
 
@@ -1127,13 +1190,75 @@ By using lowercase, we provide more ‘handles’ for the eye to use.
 ✅ Do this:
 
 ```rust
-const SPECIFIC_IMPORTANT_VALUE: u64 = 0xab5c4d320974a3bc;
+const SOME_SPECIFIC_IMPORTANT_VALUE: u64 = 0xab5c4d320974a3bc;
 ```
 
 ⚠️ Avoid this:
 
 ```rust
-const SPECIFIC_IMPORTANT_VALUE: u64 = 0XAB5C4D320974A3BC;
+const SOME_SPECIFIC_IMPORTANT_VALUE: u64 = 0XAB5C4D320974A3BC;
+```
+
+## Prefer `collect` when interacting with `FromIterator`
+
+The `FromIterator` trait defines a method `from_iter` which is called by `Iterator::collect`.
+We therefore have two methods of collecting into an iterator, `Foo::from_iter` and `collect()` with appropriate type bounds.
+Prefer the latter as this makes the order of operations read from top to bottom.
+
+✅ Do this:
+
+```rust
+let my_vec: Vec<_> = collection.into_iter()
+                .filter(...)
+                .collect();
+```
+
+⚠️ Avoid this:
+
+```rust
+let my_vec = Vec::from_iter(collection.into_iter().filter(...))
+```
+
+## Empty `Vec` construction
+
+To construct an empty `Vec`, we have three options: `vec![]`, `Vec::new()` and `Vec::with_capacity(_)`.
+If the size of the `Vec` resulting from an operation can be reasonably estimated, prefer `Vec::with_capacity` as this will reduce reallocations.
+Otherwise if a zero-sized `Vec` is required, use `Vec::new()` as this indicates most clearly that no operation is being performed—the function `Vec::new` makes no allocations, but no such guarantee is given for `vec!`.
+Consider also that `vec![expr; 0]` will still evaluate (and then immediately drop) `expr`.
+
+## Item ordering
+
+When read from top to bottom, a file should feel like a tour of the APIs it defines.
+The most important items should be defined further up the file, with their helpers below.
+No `impl` block should come before the type or trait to which it relates.
+In this way, lower-level implementation details are hidden from the user until they wish to know more, at which point, the reader having gained a good knowledge of the overall form of the code, they can read on to understand how it functions.
+
+✅ Do this:
+
+```rust
+impl Foo {
+    pub fn some_func(&self) {
+        self.some_helper_func();
+    }
+
+    fn some_helper_func(&self) {
+        // ...
+    }
+}
+```
+
+⚠️ Avoid this:
+
+```rust
+impl Foo {
+    fn some_helper_func(&self) {
+        // ...
+    }
+
+    pub fn some_func(&self) {
+        self.some_helper_func();
+    }
+}
 ```
 
 # Function discipline
@@ -1224,6 +1349,42 @@ impl Server {
 }
 ```
 
+## Unused parameters in default trait function
+
+Occasionally, a default trait function implementation is provided, but not all of its parameters are used, causing a compiler warning.
+In this case, explicitly add `let _ = unused_param;` lines until all these warnings are removed.
+
+In particular, we do not wish to rename the parameter to something like `_unused_param` as this appear in docs.
+Similarly, we don’t want to `#[allow(unused_variables)]` as these will suppress unused-parameter warnings for parameters which are expected to be used in the default implementation.
+
+✅ Do this:
+
+```rust
+trait CustomScriptValue<’v> {
+    fn at(&self, index: Value<’v>) -> Result<Value<’v>> {
+        let _ = index;
+        Err(Error::Unsupported { .. })
+    }
+}
+```
+
+⚠️ Avoid this:
+
+```rust
+trait CustomScriptValue<’v> {
+    fn at(&self, _index: Value<’v>) -> Result<Value<’v>> {
+        Err(Error::Unsupported { .. })
+    }
+
+    // OR
+
+    #[allow(unused_parameters)]
+    fn at(&self, index: Value<’v>) -> Result<Value<’v>> {
+        Err(Error::Unsupported { .. })
+    }
+}
+```
+
 ## Builder ownership
 
 In Rust, there are two forms of the builder pattern, depending on the receiver type used.
@@ -1310,14 +1471,15 @@ Panics must only be used if a program enters an unrecoverable state.
 Further, that unrecoverable state must not be as a result of user input—a program which a user can easily crash is not a good program.
 
 In Rust, panics are very aggressive.
-Not only are they unrecoverable, but also if the default panic strategy is overridden (e.g. by a user who wants a smaller binary), we have no guarantee that the usual cleanup is performed and must rely on the OS to do its best with the resources it knows about.
+Not only are they unrecoverable within the same thread, but also if the default panic strategy is overridden (e.g. by a user who wants a smaller binary and hence sets `profile.release.panic = "abort"` in their `Cargo.toml`), we have no guarantee that the usual cleanup is performed.
+In this case, we must rely on the OS to do its best with the resources, but we have no guarantee that this will be sufficient.
 By default therefore, try not to panic.
 
-If a panic is inevitable, be sure that the message signals who is at fault—if it’s an internal error, start the message with `internal error:`.
+If, however, a panic is inevitable, be sure that the message signals who is at fault—if it’s an internal error, start the message with `internal error:`.
 
 The over-use of `.unwrap()` is a major red flag, as the resulting code is likely very fragile, relying on possibly-unclear preconditions in the code above it.
 If that code changes—which is very likely in a program under active development—production code may panic.
-As a rule of thumb, `.unwrap()` should only be used in code in small scopes, where errors can only possibly originate from the programmer—e.g. in `Regex::new("...").unwrap()`, a panic can only occur if the constant regex is invalid.
+As a rule of thumb, `.unwrap()` should only be used in code in tiny scopes, where errors can only possibly originate from the programmer—e.g. in `Regex::new("...").unwrap()`, a panic can only occur if the raw regex constant is invalid.
 In general though, unwrapping should be replaced with either:
 
 - Good use of the type system to allow the compiler to enforce preconditions
@@ -1329,13 +1491,19 @@ We can remove panics originating from `.unwrap()` calls by using the `?` operato
 In the case of unwrapping options in a function which returns a result, calling the `.ok_or`/`.ok_or_else` methods may be required.
 
 We can also remove panics originating from `.unwrap()` calls by using pattern-matching.
-If a call to `.unwrap()` is preceded by `.is_some()`/`.is_ok()`, instead make use of pattern matching: `if let Some(x) = x` or `if let Ok(x) = x`.
+If a call to `x.unwrap()` is guarded by `if x.is_some()`/`if x.is_ok()`, instead make use of pattern matching: `if let Some(x) = x` or `if let Ok(x) = x`.
 
 When calls to `.unwrap()` are removed, the surrounding code is not only more robust, but you may notice that it is often much cleaner.
-This is not a coincidence—it is a nudge from the developers of the language to encourage fault-tolorant Rust.
+This is not a coincidence—it is a nudge from the Rust developers to encourage fault-tolorant code and practices.
 
-The general avoidance of panicking does not apply to tests.
+There are two exceptions to this avoidance of panicking: tests and panic-propagation.
+
 If the `?` operator is used in tests, the origin of the error is lost, making the test harder to debug.
+A failed `.unwrap()` will result in a trace pointing to where the panic occurred.
+
+If a thread panics whilst it has acquired a `Mutex` lock, we have no guarantee that the contents of the mutex represents a valid state and hence the lock gets _poisoned._
+This means that any other thread which attempts to lock the mutex will get an error.
+In this case, panicking is acceptable it effectively propagates an existing panic from another thread.
 
 # Unsafe discipline
 
@@ -1358,6 +1526,12 @@ A function of 50 lines wrapped in a single large `unsafe` block is far harder to
 Note that ‘it’s faster’ is not a good reason to use `unsafe` constructs.
 Even if true, unless profiling can categorically show that safety checks are a significant cost in a small, hot section of the codebase, the significant increase in burden is simply not worth it.
 Rust is already an extremely fast language.
+
+## Document preconditions
+
+Both `unsafe` functions and `unsafe` blocks must document their preconditions in a comment with the prefix `// SAFETY: `.
+If something goes wrong in future, this will help the future maintainer understand which conditions have been violated.
+These comments must be carefully maintained as changes are made.
 
 # Project structure discipline
 
@@ -1409,9 +1583,10 @@ When referring to parameters, be concrete and specific.
 Where possible, refer parameters by their name and if an article must be used (i.e. ‘a’/’an’ and ‘the’), always prefer the definite article, ‘the.’
 Leave no room for ambiguity and hence misunderstanding.
 
-<!-- ## Further reading -->
-<!-- TODO(kcza): flesh this out -->
-<!-- Check out  Effective Go and  Google’s style guidelines. If you find yourself in a situation which isn’t covered by this document, refer to these. If you feel this situation is common-enough, message Ed Jones to discuss adding it to this document. -->
+# Further reading
+
+Checkout the [`rust-analyzer` style guide](https://github.com/rust-lang/rust-analyzer/blob/master/docs/dev/style.md).
+Note that those style guidelines are intended for a single project, hence it is possible for its developers to make more specific requirements which only make sense in the context of that project, unlike the guidelines provided here.
 
 # (Admin, to be removed once stable)
 
@@ -1434,7 +1609,7 @@ Leave no room for ambiguity and hence misunderstanding.
 | Ed    | yes      | .expect() message forms                                                                                                                                                                                                                                                |
 | Ed    | yes      | One-block declarations: consts then statics then lazy_statics (?) then lets.                                                                                                                                                                                           |
 | Ed    | yes      | Avoid `mut` as much as possible                                                                                                                                                                                                                                        |
-|       |          | Unsafe functions / functions containing unsafe must list preconditions (to what extent does clippy help with this?)                                                                                                                                                    |
+| Ed    | yes      | Unsafe functions / functions containing unsafe must list preconditions (to what extent does clippy help with this?)                                                                                                                                                    |
 | Ed    | yes      | Generic type parameters must be one letter                                                                                                                                                                                                                             |
 | Ed    | yes      | Generic lifetime names must not contain underscores                                                                                                                                                                                                                    |
 | Ed    | yes      | Generic lifetime names must have a meaningful name if one exists (if long-lived?)                                                                                                                                                                                      |
@@ -1458,7 +1633,7 @@ Leave no room for ambiguity and hence misunderstanding.
 | Ed    | yes      | Error type must be defined in lib.rs or error.rs in crate root                                                                                                                                                                                                         |
 | Ed    | yes      | Always declare Result<T>, this must be done immediately below the error type                                                                                                                                                                                           |
 | Ed    | yes      | Use mod.rs, do not use foo.rs next to foo/                                                                                                                                                                                                                             |
-|       |          | Constructing boxed errors?                                                                                                                                                                                                                                             |
+| Ed    | FUTURE   | Constructing boxed errors?                                                                                                                                                                                                                                             |
 | Ed    | yes      | When using builders, provide a MyType::builder() -> MyTypeBuilder?                                                                                                                                                                                                     |
 | Ed    | yes      | MyTypeBuilder must have a .build() -> MyType (duh)                                                                                                                                                                                                                     |
 | Ed    | yes      | Prefer builders by value? (avoid awkwardly relying on clone() calls getting optimised away)                                                                                                                                                                            |
@@ -1466,19 +1641,19 @@ Leave no room for ambiguity and hence misunderstanding.
 | Ed    | yes      | No method calls on (curly brace?) macro results?                                                                                                                                                                                                                       |
 | Ed    | REJECTED | Prefer explicit matches (avoid catch-all \_ => () cases)                                                                                                                                                                                                               |
 | Ed    | yes      | Start by defining the error states (the error path must be first-class, even if not optimised)                                                                                                                                                                         |
-| ED    | UNSCOPED | Leverage the type system to uphold invariants and prevent misuse                                                                                                                                                                                                       |
+| --    | UNSCOPED | Leverage the type system to uphold invariants and prevent misuse                                                                                                                                                                                                       |
 | Ed    | yes      | Minimise use of unsafe and scope as closely as possible to where you actually need unsafe                                                                                                                                                                              |
-| Ed    | FUTURE   | Use rustfmt, but use THESE SPECIFIC (insert here) settings, do not use #[rustfmt::skip]!                                                                                                                                                                               |
+| --    | FUTURE   | Use rustfmt, but use THESE SPECIFIC (insert here) settings, do not use #[rustfmt::skip]!                                                                                                                                                                               |
 | Ed    | yes      | Prefer let xxx: Foo to turbofish to add type annotations on the last thing in a chain (unless really annoying!) i.e. prefer to signpost what the goal of a large chain is, also can be slightly more reliable in some cases                                            |
 | Ed    | yes      | For locally-written Serde, use an explicit return and put the helper types at the end of the function, don’t write macro helpers for the helper types! (Type names don’t need to be crate-level unique, just distinct enough but within reason e.g. no type shadowing) |
 | Ed    | yes      | Shadowing: two levels of variable shadowing okay, type shadowing is never okay!                                                                                                                                                                                        |
 | Ed    | yes      | In mod.rs equivalent, put all mods first, then all pub uses then pub(crate) uses all uses in separate blocks (grouped nicely) then #[cfg(..)] after all                                                                                                                |
 | Ed    | OBVIOUS? | All use statements must come before all code                                                                                                                                                                                                                           |
-|       |          | When read from top-to-bottom, try to make this feel like a tour of the API (guide the reader)                                                                                                                                                                          |
+| Ed    | yes      | When read from top-to-bottom, try to make this feel like a tour of the API (guide the reader)                                                                                                                                                                          |
 | Ed    | yes      | Redundant type annotations—does clippy prevent let foo: Foo = (...).collect::<Foo>();?                                                                                                                                                                                 |
 | Ed    | REJECTED | No .map(Self) at the end of a chain (e.g. to construct Result<Self>                                                                                                                                                                                                    |
 | Ed    | yes      | No let x = &expr unless indexing/slicing                                                                                                                                                                                                                               |
-|       |          | Use `vec![]` rather than Vec::new(), use Foo::new() rather than Foo::with_capacity(0) (for which Foo? yes: Vec, HashMap, BTreeMap)                                                                                                                                     |
+| Ed    | yes      | Use `vec![]` rather than Vec::new(), use Foo::new() rather than Foo::with_capacity(0) (for which Foo? yes: Vec, HashMap, BTreeMap)                                                                                                                                     |
 | Ed    | yes      | Don’t pattern-match on pointer parameters i.e. don’t `.map(\|&x\| x)`, use `.map(\|x\| *x)`                                                                                                                                                                            |
 | Ed    | yes      | Don’t populate tuples with lots of computation. If the line breaks, put things in variables                                                                                                                                                                            |
 | Ed    | yes      | Don’t pattern-match in fn functions (like one would expect in closures)                                                                                                                                                                                                |
@@ -1487,22 +1662,20 @@ Leave no room for ambiguity and hence misunderstanding.
 | Ed    | yes      | Don’t assign or compare &lit (e.g. &0, &""), put the & as close to where needed as possible and deref instead                                                                                                                                                          |
 | Ed    | REJECTED | In tests, #[test] (or equivalent) should be the final attribute                                                                                                                                                                                                        |
 | Ed    | yes      | If hex is used, make it lowercase                                                                                                                                                                                                                                      |
-|       |          | All public top-level items must be documented                                                                                                                                                                                                                          |
-|       |          | Put test helper structs at the end of the function they’re used in, after // test structs                                                                                                                                                                              |
+| Ed    | OBVIOUS  | All public top-level items must be documented                                                                                                                                                                                                                          |
+| Ed    | FUTURE   | Put test helper structs at the end of the function they’re used in, after // test structs                                                                                                                                                                              |
 | Ed    | yes      | Prefer to call API response structs Response (no shadowing due to independent scopes)                                                                                                                                                                                  |
 | Ed    | yes      | Unpack to ensure all fields are considered                                                                                                                                                                                                                             |
 | Ed    | yes      | advice use of `.ok().unwrap_or_else(\|\|...)` if `.unwrap_or_else(\|_\| …)` is seen                                                                                                                                                                                    |
-|       |          | which files #![...] annotations are placed in                                                                                                                                                                                                                          |
-|       |          | unused trait method parameters should use let \_ = param rather than named \_foo or annotations                                                                                                                                                                        |
+| Ed    | UNSCOPED | which files #![...] annotations are placed in                                                                                                                                                                                                                          |
+| Ed    | yes      | unused trait method parameters should use let \_ = param rather than named \_foo or annotations                                                                                                                                                                        |
 | Ed    | yes      | format! parameters which consist of a single identifier (no pathing) should be folded into the format string                                                                                                                                                           |
 | Ed    | yes      | Builder creation: prefer Foo::builder() to FooBuilder::new() (also have no public ::new() on the builder)                                                                                                                                                              |
-|       |          | Local helper types should be put behind a comment at the end, after an explicit return?                                                                                                                                                                                |
+| Ed    | FUTURE   | Local helper types should be put behind a comment at the end, after an explicit return?                                                                                                                                                                                |
 | Ed    | yes      | Prefer `.collect()` to `Foo::from_iter`                                                                                                                                                                                                                                |
-|       |          | Functions upon which functions depend should come after                                                                                                                                                                                                                |
+| Ed    | yes      | Functions upon which functions depend should come after                                                                                                                                                                                                                |
 | Ed    | yes      | Avoid let without values                                                                                                                                                                                                                                               |
 | Ed    | yes      | Don’t pattern match in function parameters (closures okay)                                                                                                                                                                                                             |
-
-<!-- TODO(kcza): function dependencies AFTER -->
 
 [dictionary]: https://www.dictionary.com/
 [thesaurus]: https://www.thesaurus.com/
