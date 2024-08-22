@@ -255,7 +255,7 @@ Single-letter lifetime names should generally be avoided.
 ✅ Do this:
 
 ```rust
-struct QueryMatch<'cursor, 'tree> { .. }
+struct ASTQueryMatch<'cursor, 'tree> { .. }
 
 struct Value<'h> { .. }
 ```
@@ -263,7 +263,7 @@ struct Value<'h> { .. }
 ⚠️ Avoid this:
 
 ```rust
-struct QueryMatch<'a, 'b> { .. }
+struct ASTQueryMatch<'a, 'b> { .. }
 
 struct Value<'value> { .. }
 ```
@@ -310,10 +310,6 @@ impl Ord for MyStruct {
 }
 ```
 
-## Pattern matching in parameters
-
-<!-- TODO(kcza): complete me! -->
-
 ## Don’t pattern-match pointers
 
 When taking a pointer as an argument to a closure, it is possible to pattern-match the pointer to obtain the value at the other end.
@@ -333,7 +329,7 @@ Although it may be convenient, it ultimately harms readability—it is clearer t
 
 ## Avoid numeric tuple-indexing
 
-Although sometimes a handy shorthand, indexing tuples with .0, .1 etc. deprives us of the opportunity to insert a good name in the same way that field-access on a struct would. Instead, prefer to use pattern-matching to better document the data currently being handled.
+Although sometimes a handy shorthand, indexing tuples with .0, .1 etc. deprives us of the opportunity to insert a good name in the same way that field-access on a struct would. Instead, prefer to use pattern-matching to give human-friendly names to the data being handled.
 
 ✅ Do this:
 
@@ -362,8 +358,6 @@ fn line_through(point1: (f64, f64), point2: (f64, f64)) -> Line {
 	}
 }
 ```
-
-# Error discipline
 
 # Code discipline
 
