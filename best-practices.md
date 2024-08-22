@@ -753,6 +753,19 @@ If the size of the `Vec` resulting from an operation can be reasonably estimated
 Otherwise if a zero-sized `Vec` is required, use `Vec::new()` as this indicates most clearly that no operation is being performed—the function `Vec::new` makes no allocations, but no such guarantee is given for `vec!`.
 Consider also that `vec![expr; 0]` will still evaluate (and then immediately drop) `expr`.
 
+✅ Do this:
+
+```rust
+let my_vec = Vec::new();
+let my_vec = vec![item1, item2, ...];
+```
+
+⚠️ Avoid this:
+
+```rust
+let my_vec = vec![];
+```
+
 ## Avoid loosely-scoped `let mut`
 
 In many cases, mutability is used to create a given structure which is then used immutably for the remainder of its lifetime.
