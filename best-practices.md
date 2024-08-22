@@ -764,6 +764,7 @@ let my_vec = vec![item1, item2, ...];
 
 ```rust
 let my_vec = vec![];
+let my_vec = Vec::with_capacity(0);
 ```
 
 ## Avoid loosely-scoped `let mut`
