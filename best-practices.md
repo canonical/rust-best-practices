@@ -1533,6 +1533,40 @@ If a thread panics whilst it has acquired a `Mutex` lock, we have no guarantee t
 This means that any other thread which attempts to lock the mutex will get an error.
 In this case, panicking is acceptable it effectively propagates an existing panic from another thread.
 
+## Error conversion
+
+Returned errors from other crates should be converted to the crate’s `Error` type at the earliest readonable opportunity.
+The intuition here is that within our crates, we should be talking our own error language and that calling functions and methods in other crates crosses an interface boundary, so to propagate their errors for too long creates a slow transition rather than a clean, abrupt change.
+Long call-chains often handle many different error types and converting early into the common crate-local error type will allow natural error propagation.
+By maintaining the same convention with short chains, our code becomes more predictable and hence easier to read.
+
+✅ Do this:
+
+```rust
+let override_url = env::var("URL")
+    .ok()
+    .map(|override| {
+        Url::parse(&override).map_err(|cause| Error::MalformedEnvUrl {
+            env_var: "URL",
+            cause,
+        })
+    })
+    .transpose()?;
+```
+
+⚠️ Avoid this:
+
+```rust
+let override_url = env::var("URL")
+    .ok()
+    .map(|override_url| url::Url::parse(&override_url))
+    .transpose()
+    .map_err(|cause| Error::MalformedEnvUrl { // The error to be mapped comes from somewhere in the chain above!
+        env_var: "URL",
+        cause,
+    })?;
+```
+
 # Unsafe discipline
 
 ## Minimise unsafe
