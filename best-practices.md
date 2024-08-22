@@ -1,13 +1,19 @@
 # Rust best practices
 
-This is a list of best-practices which originate from discussions with both our CTO and the company’s other tech leads. All points listed here must be strongly considered before merging code at Canonical. Individually, the things written here may seem unimportant or even trivial, but each of these is a crucial building block for writing good, clean code. You wouldn’t want to hire a builder who has a reputation for installing rotten beams.
+This is a list of best-practices which originate from discussions with both our CTO and the company’s other tech leads.
+All points listed here must be strongly considered before merging code at Canonical.
+Individually, the things written here may seem unimportant or even trivial, but each of these is a crucial building block for writing good, clean code.
+You wouldn’t want to hire a builder who has a reputation for installing rotten beams.
 
-Ideally, this document would be a spec for a new AI linter but at present we must rely on the diligence of humans. Therefore, this document should be considered as a style guide for ‘Canonical Rust,’ and is intended to complement Rust for Rustaceans and well thought-out, consistent API design.
+Ideally, this document would be a spec for a new AI linter but at present we must rely on the diligence of humans.
+Therefore, this document should be considered as a style guide for ‘Canonical Rust,’ and is intended to complement both the idiomatic advice laid out in Rust for Rustaceans and well thought-out, consistent API design.
 
-If you spot any of the problems detailed here in our existing code-bases or patches, don’t be afraid to fix them—a good codebase is inherently more maintainable and will cause fewer headaches and annoyances later. Remember that all code should aim to be locally-consistent—new code shouldn’t stick out like a sore thumb. Note also that the perfect is the enemy of the good—sole focus on fine-tuning code at the cost of all forward progress doesn’t keep the lights on.
+If you spot any of the problems detailed here in our existing code-bases or patches, don’t be afraid to fix them—a good codebase is inherently more maintainable and will cause fewer headaches and annoyances later.
+Remember that all code should aim to be locally-consistent—new code shouldn’t stick out like a sore thumb.
+Note also that the perfect is the enemy of the good—sole focus on fine-tuning code at the cost of all forward progress doesn’t keep the lights on.
 
 _Disclaimer: this is not a complete list, more items can and likely will be added in future._
-If you find an item which you believe should be in this document, please open an issue.
+_If you find an item which you believe should be in this document, please do open an issue._
 
 # Table of Contents
 
@@ -82,17 +88,23 @@ If you find an item which you believe should be in this document, please open an
 
 # Preconditions
 
-All new code should abide by cargo fmt, cargo clippy, and cargo clippy --tests. If your crate uses features, be careful to ensure that clippy is definitely being run on your code.
+All new code should abide by `cargo fmt`, `cargo clippy`, and `cargo clippy --tests`.
+If your crate uses features, be careful to ensure that `clippy` is definitely being run all on of your code.
 
 # Cosmetic discipline
 
 ## Spacing
 
-Use blank lines semantically, rather than aesthetically. They should be used consistently, regardless of the size of a section of code, to delimit sections of strongly-associated code. There are no hard and fast rules for this strong association, but the following heuristics are quite effective.
+Use blank lines semantically, rather than aesthetically.
+They should be used consistently, regardless of the size of a section of code, to delimit sections of strongly-associated code.
+There are no hard and fast rules for this strong association, but the following heuristics are quite effective.
 
-- If a variable is declared and only used in the block of code which follows it, that declaration and block are strongly associated. Do not put a blank line here.
-- If a variable is used in multiple blocks of code, not just the one which follows it, that declaration is not strongly associated with the block immediately after it. Put a newline here.
-- If a variable is declared and then checked, the declaration and check are strongly associated and must not be separated by a blank line. If the check contains more than three lines, the declaration and check start to form their own strongly associated block so require a blank line after.
+- If a variable is declared and only used in the block of code which follows it, that declaration and block are strongly associated.
+  Do not put a blank line here.
+- If a variable is used in multiple blocks of code, not just the one which follows it, that declaration is not strongly associated with the block immediately after it.
+  Put a newline here.
+- If a variable is declared and then checked, the declaration and check are strongly associated and must not be separated by a blank line.
+  If the check contains more than three lines, the declaration and check start to form their own strongly associated block so require a blank line after.
 
 ✅ Do this:
 
@@ -130,9 +142,15 @@ return Ok(y);
 
 ## Grouping
 
-Don’t interleave unrelated code. Remember, to a new reader, this will look deliberate and they will be confused about how variables relate. Keep it clean and group together strongly intradependent sections of code.
+Don’t interleave unrelated code.
+Remember, to a new reader, this will look deliberate and they will be confused about how variables relate.
+Keep it clean and group together strongly intradependent sections of code.
 
-This is particularly significant where closures are used—if a closure is defined half-way through a function, does not capture anything and then is only used at the end, the reader will have to keep many things in mind for no good reason. If values are captured, declare closures close to where they’re needed. If no captures are required, consider defining them at the top of the highest possible scope to make it obvious that no closures are needed. Also, consider whether a closure is required at all—code may feel cleaner with a simpler, more top-to-bottom flow control pattern. Logic should feel clean and be easy to follow.
+This is particularly significant where closures are used—if a closure is defined half-way through a function, does not capture anything and then is only used at the end, the reader will have to keep many things in mind for no good reason.
+If values are captured, declare closures close to where they’re needed.
+If no captures are required, consider defining them at the top of the highest possible scope to make it obvious that no closures are needed.
+Also, consider whether a closure is required at all—code may feel cleaner with a simpler, more top-to-bottom flow control pattern.
+Logic should feel clean and be easy to follow.
 
 _The following snippets assume that functions `foo`, `bar` and `baz` are free of side-effects._
 
@@ -188,22 +206,40 @@ const SOME_SPECIFIC_IMPORTANT_VALUE: u64 = 0XAB5C4D320974A3BC;
 
 ## Name content
 
-Naming is one of the three hardest problems in programming (along with off-by-one errors). Every variable, every function, every type and every concept requires a good name which fits into a good naming scheme. There is no one optimal way to come up with a good name, however when attempting to do so, the first place to look is for similar names in your project and try to mimic these. This should result in a name which intuitively feels like it belongs among the rest of the code. Even doing this has its pitfalls, so ideally your name should:
+Naming is one of the three hardest problems in programming (along with off-by-one errors).
+Every variable, every function, every type and every concept requires a good name which fits into a good naming scheme.
+There is no one optimal way to come up with a good name, however when attempting to do so, the first place to look is for similar names in your project and try to mimic these.
+This should result in a name which intuitively feels like it belongs among the rest of the code.
+Even doing this has its pitfalls, so ideally your name should:
 
-- **say what it means**—make the name fit conceptually into the surrounding context. If a reader sees `fn is_in(a: &str, b: &str)`, the order is not as obvious as if they were to see `fn is_in(haystach: &str, needle: &str)`.
-- **have a consistent word order**—inconsistency makes an API look dishevelled, unplanned and hence unprofessional. If the rest of the API uses `verb_noun` then unless there is a very good reason not to, the next function should be of the form `verb_noun`.
-- **be concise**—a long name can almost always be shortened. More characters implies a need to disambiguate, so if no such need exists, reduce the cognitive load on the next reader by reducing the amount they must read. Of course, don’t take this too far—the next reader must not be expected to look elsewhere to understand the full meaning of a name, as may occur if nonstandard acronyms or abbreviations are used.
-- **comprise simple words**—a long word can often be replaced by a shorter one. A concise name will comprise the smallest list of the smallest words which do not lose the subject’s meaning. Remember: [thesaurus.com][thesaurus] and [dictionary.com][dictionary] are your friends!
-- **comprise correct words**—if there is any disagreement over the implications of chosen words, then there will be some reader who gets the wrong idea. It’s better to spend more time discussing internally than to confuse a user. (Example: in Starlark, a 20-minute discussion was needed on the choice between `NOT_SAFE` vs `UNSAFE` as an empty value of a set of safety flags, where each flag had a name like `FOO_SAFE`.) **be unified**—there should be one and only one name for concepts used. If more are used haphazardly, it implies a difference where there is none and thus muddies the water.
-- **avoid including types**—type names should be omitted unless required to discriminate between two variables of different types which roughly hold the same value. Some examples: in a finder function `needleStr` and `haystackStr` can be more concisely expressed as `needle` and `haystack`.
+- **say what it means**—make the name fit conceptually into the surrounding context.
+  If a reader sees `fn is_in(a: &str, b: &str)`, the order is not as obvious as if they were to see `fn is_in(haystach: &str, needle: &str)`.
+- **have a consistent word order**—inconsistency makes an API look dishevelled, unplanned and hence unprofessional.
+  If the rest of the API uses `verb_noun` then unless there is a very good reason not to, the next function should be of the form `verb_noun`.
+- **be concise**—a long name can almost always be shortened.
+  More characters implies a need to disambiguate, so if no such need exists, reduce the cognitive load on the next reader by reducing the amount they must read.
+  Of course, don’t take this too far—the next reader must not be expected to look elsewhere to understand the full meaning of a name, as may occur if nonstandard acronyms or abbreviations are used.
+- **comprise simple words**—a long word can often be replaced by a shorter one.
+  A concise name will comprise the smallest list of the smallest words which do not lose the subject’s meaning.
+  Remember: [thesaurus.com][thesaurus] and [dictionary.com][dictionary] are your friends!
+- **comprise correct words**—if there is any disagreement over the implications of chosen words, then there will be some reader who gets the wrong idea.
+  It’s better to spend more time discussing internally than to confuse a user.
+  (Example: in Starlark, a 20-minute discussion was needed on the choice between `NOT_SAFE` vs `UNSAFE` as an empty value of a set of safety flags, where each flag had a name like `FOO_SAFE`.) **be unified**—there should be one and only one name for concepts used.
+  If more are used haphazardly, it implies a difference where there is none and thus muddies the water.
+- **avoid including types**—type names should be omitted unless required to discriminate between two variables of different types which roughly hold the same value.
+  Some examples: in a finder function `needleStr` and `haystackStr` can be more concisely expressed as `needle` and `haystack`.
 
 Canonical policy dictates that names should use UK spelling and not US or other spelling.
 
-Good names with the help of concise doc comments do a good job of explaining a good API. However, if after much consideration, there don’t seem to be any good names, this is likely caused by the API not being good. If an API cannot be easily and intuitively explained, it is not a good API and it’s time for a refactor.
+Good names with the help of concise doc comments do a good job of explaining a good API.
+However, if after much consideration, there don’t seem to be any good names, this is likely caused by the API not being good.
+If an API cannot be easily and intuitively explained, it is not a good API and it’s time for a refactor.
 
-A good, semantically and behaviorally consistent API hidden behind a layer of bad naming is hard to distinguish from a bad API. Time spent getting the right naming will pay off.
+A good, semantically and behaviorally consistent API hidden behind a layer of bad naming is hard to distinguish from a bad API.
+Time spent getting the right naming will pay off.
 
-Great care should be taken over all names, but extreme care should be taken over publicly exposed ones. These names do not have the luxury of being able to be tweaked without consequence later—any appreciation for a slightly better name an external user may have will be completely overshadowed by their irritation of having to deal with a breaking change.
+Great care should be taken over all names, but extreme care should be taken over publicly exposed ones.
+These names do not have the luxury of being able to be tweaked without consequence later—any appreciation for a slightly better name an external user may have will be completely overshadowed by their irritation of having to deal with a breaking change.
 
 ## Pattern match variable naming
 
@@ -299,13 +335,21 @@ The builder `MyTypeBuilder` must also have a fallible `.build()` method, which r
 
 ## Don’t import all
 
-In general, do not import `*` from a crate. Consider a source file which does this twice from two different dependencies, making use of items from each. Now, consider what happens when these crates are updated and some of these items are removed—the compiler will complain of undefined symbols, but will have absolutely no idea where these came from. Or worse, as the global namespace is used, updates can now cause name-clashes! By sticking to explicit imports only, we help ourselves and our future maintainers.
+In general, do not import `*` from a crate.
+Consider a source file which does this twice from two different dependencies, making use of items from each.
+Now, consider what happens when these crates are updated and some of these items are removed—the compiler will complain of undefined symbols, but will have absolutely no idea where these came from.
+Or worse, as the global namespace is used, updates can now cause name-clashes!
+By sticking to explicit imports only, we help ourselves and our future maintainers.
 
-A corollary of this is that preludes, regardless of their initial convenience, should not be used by us in our own code. Nevertheless, they remain a handy tool for others to use when prototyping, so we should still consider exposing them where appropriate.
+A corollary of this is that preludes, regardless of their initial convenience, should not be used by us in our own code.
+Nevertheless, they remain a handy tool for others to use when prototyping, so we should still consider exposing them where appropriate.
 
 The only exception to these rules is that in the context of a unit test module, inserting use `super::*` is acceptable as it is a well-established and clear convenience.
 
-The rule around enums is slightly different. Here, it is acceptable to import `*` to bring all items of an enum into scope. However, this should not be done at the top level, only locally to improve the readability of long match statements. There, they should be placed as close as possible to the relevant match, preferably on the line immediately preceding it.
+The rule around enums is slightly different.
+Here, it is acceptable to import `*` to bring all items of an enum into scope.
+However, this should not be done at the top level, only locally to improve the readability of long match statements.
+There, they should be placed as close as possible to the relevant match, preferably on the line immediately preceding it.
 
 ✅ Do this:
 
@@ -440,7 +484,8 @@ pub use bar::Bar;
 
 ## Exhaustively match to draw attention
 
-Pattern matching is an excellent way to ensure that all items of data in internal structures have been considered, not only by the author of the current change, but also by the authors of any future changes. When using internal interfaces, always consider using pattern-matching to deliberately create compiler errors and thus draw attention.
+Pattern matching is an excellent way to ensure that all items of data in internal structures have been considered, not only by the author of the current change, but also by the authors of any future changes.
+When using internal interfaces, always consider using pattern-matching to deliberately create compiler errors and thus draw attention.
 
 ✅ Do this:
 
@@ -491,7 +536,8 @@ Although it may be convenient, it ultimately harms readability—it is clearer t
 
 ## Avoid numeric tuple-indexing
 
-Although sometimes a handy shorthand, indexing tuples with .0, .1 etc. deprives us of the opportunity to insert a good name in the same way that field-access on a struct would. Instead, prefer to use pattern-matching to give human-friendly names to the data being handled.
+Although sometimes a handy shorthand, indexing tuples with .0, .1 etc. deprives us of the opportunity to insert a good name in the same way that field-access on a struct would.
+Instead, prefer to use pattern-matching to give human-friendly names to the data being handled.
 Note that this advice does not apply in the `impl` blocks of newtype-pattern structs, i.e. tuple-structs with a single element.
 
 ✅ Do this:
@@ -589,9 +635,13 @@ impl PartialOrd<Rhs=Node> for Node { // NB: Rhs=Self is also the default for Par
 
 Do not use `Self` when constructing associated types.
 
-Traits often include type fields as part of the interface they describe. These types may be referred to with `Self::AssociatedType`. Do not use these to construct values as it prevents the next reader from understanding which type is in use and which fields and methods are available. Use these `Self::*` types to define interfaces, but use concrete types to define implementations.
+Traits often include type fields as part of the interface they describe.
+These types may be referred to with `Self::AssociatedType`.
+Do not use these to construct values as it prevents the next reader from understanding which type is in use and which fields and methods are available.
+Use these `Self::*` types to define interfaces, but use concrete types to define implementations.
 
-The only exception is for trait items which return a `Result<_, Self::Err>`, where `Err` is set to the crate’s `Error` type. In this case, it is okay to use the crate’s `Result` type alias instead.
+The only exception is for trait items which return a `Result<_, Self::Err>`, where `Err` is set to the crate’s `Error` type.
+In this case, it is okay to use the crate’s `Result` type alias instead.
 
 ✅ Do this:
 
@@ -889,7 +939,8 @@ other_func(foo);
 ## Shadowing
 
 Shadowing provides an excellent way to manipulate data or change its type whilst still highlighting that the ‘same’ data is being processed, however, too many levels of shadowing make things confusing.
-In general, if shadowing with scope (i.e. within `{}`), use at most one levels of shadowing.
+In general, if shadowing with scope (i.e.
+within `{}`), use at most one levels of shadowing.
 
 ```rust
 if let Some(name_override) = name_override {
@@ -1014,7 +1065,8 @@ If a value must be dropped early, use curly-braces rather than an explicit `drop
 This will highlight the non-standard lifetimes of the values in scope whilst also avoiding the reader missing the `drop` call, which may be nestled among busy-looking lines of code.
 
 Similarly, `drop` should not be used to discard values in call chains.
-If a single value is to be ignored, use the ‘toilet operator,’ `|_| ()`, i.e. a closure which takes one argument, ignores it and returns a unit.
+If a single value is to be ignored, use the ‘toilet operator,’ `|_| ()`, i.e.
+a closure which takes one argument, ignores it and returns a unit.
 This form remains consistent ignoring some parts but not all of an incoming value, such as when extracting keys from key-value pairs—
 
 ```rust
@@ -1078,7 +1130,8 @@ To avoid this, it is good practice to declare (de)serialisation types which clos
 If you see `Serialize`/`Deserialize` being implemented on data which is received from or will be sent to a remote, this is a sign of a remote API bleeding into our code.
 
 Instead, define (de)serialisation types in the functions which implement the necessary API calls.
-Let’s say we have a function called `get_image_info`, which makes a web-request to get information associated with given container image name (e.g. author, description, latest version).
+Let’s say we have a function called `get_image_info`, which makes a web-request to get information associated with given container image name (e.g.
+author, description, latest version).
 To nicely transfer data from some remote format into one we govern, say `ImageInfo`, add an explicit `return` at the end and _below_ this, create a new type called `Response`, which implements `Deserialize`.
 Add a comment which says `// serde structs.` to let the reader know that everything beyond this point only relates to modelling the remote API.
 If the remote responds with a nested structure, add more types, always trying to maintain a 1:1 relationship between Rust types and the remote format—
@@ -1125,12 +1178,14 @@ Name shadowing is okay here as the scope is small and well-defined.
 
 Scoping the deserialisation in this way is extremely good practice for several reasons:
 
-Firstly, it minimises the blast radius of incoming remote API changes. If a remote API changes, we need only update the deserialisation structs and their unpacking into our internal ones—the core of our program/library remains untouched.
+Firstly, it minimises the blast radius of incoming remote API changes.
+If a remote API changes, we need only update the deserialisation structs and their unpacking into our internal ones—the core of our program/library remains untouched.
 
 Secondly, it minimises the amount of code which must be read—if the interaction with the remote API is functioning correctly but someone wishes to know how this function works, they know that they can stop reading past the `// serde structs.` marker.
 Conversely, if the API interaction is broken due to a data format ‘surprise,’ that same comment draws the maintainer’s eye to the place they need.
 
-Thirdly, it is often simpler to implement the Serde traits on these types! As we model the remote structure before unpacking into internal ones, less `#[serde(...)]` wrangling is required.
+Thirdly, it is often simpler to implement the Serde traits on these types!
+As we model the remote structure before unpacking into internal ones, less `#[serde(...)]` wrangling is required.
 
 Finally, it reduces the amount of clutter in file-level scopes.
 As the `Response` types are locally-scoped, the reader knows exactly where they are used and hence does not need to keep them in mind alongside the rest of the codebase.
@@ -1202,7 +1257,10 @@ format!("{}/{}", path, file)
 In Rust, it is a good idea to start writing a project by first making its `Error` type, this no only encourages message consistency, but also highlights the necessary information for these good error messages.
 This in turn, makes it clearer which information should be plumbed where, avoiding the awkward and altogether too-common situation where an error condition is identified, but much work must be done to get the right information there.
 
-Error messages should be concise. Every second longer a user spends reading an error message and not understanding what went wrong is a second longer of their frustration. The form of the phrases used in error messages should be consistent. If, likely from previous messages, someone is expecting—
+Error messages should be concise.
+Every second longer a user spends reading an error message and not understanding what went wrong is a second longer of their frustration.
+The form of the phrases used in error messages should be consistent.
+If, likely from previous messages, someone is expecting—
 
 ```
 cannot foo the bar
@@ -1214,23 +1272,34 @@ but instead reads—
 barring failed for foo
 ```
 
-they will experience unnecessary discomfort. Keep it nice and clean.
+they will experience unnecessary discomfort.
+Keep it nice and clean.
 
 A majority of the time, error messages should start with a verb and in most cases that verb should be prefixed with ‘cannot.’
 
-Capitalisation of error messages should be consistent. If it is possible that an error will not be a top-level error (e.g. it may be wrapped), then the first letter should be lowercase. Unexpected capital letters in the middle of a line of logging look dishevelled and imply that little thought has gone into the overall design of the implementation. This couldn’t be further from the truth so let’s make it appear as such.
+Capitalisation of error messages should be consistent.
+If it is possible that an error will not be a top-level error (e.g. it may be wrapped), then the first letter should be lowercase.
+Unexpected capital letters in the middle of a line of logging look dishevelled and imply that little thought has gone into the overall design of the implementation.
+This couldn’t be further from the truth so let’s make it appear as such.
 
-Remember: the latin alphabet is optimised for many contiguous lowercase letters, hence lowercase is a good default to maintain. However, uppercase should be used for acronyms and standard names such as: TCP and NixOS.
+Remember: the latin alphabet is optimised for many contiguous lowercase letters, hence lowercase is a good default to maintain.
+However, uppercase should be used for acronyms and standard names such as: TCP and NixOS.
 
-When writing error messages, think about the background of the expected user/consumer of the project. Consider whether the person reading it will have good technical knowledge and tailor your approach as such.
+When writing error messages, think about the background of the expected user/consumer of the project.
+Consider whether the person reading it will have good technical knowledge and tailor your approach as such.
 
-If the reader of these error messages is expected to be a (Rust) developer (e.g. code in question is in a library or building block for something else), they will be familiar with how to fix simple problems and as such may not benefit from unnecessary advice. For these readers, a good concise error message will contain all the information needed to point them towards how to fix it. In this case, suggestions are at best superfluous and at worst unhelpful.
+If the reader of these error messages is expected to be a (Rust) developer (e.g. code in question is in a library or building block for something else), they will be familiar with how to fix simple problems and as such may not benefit from unnecessary advice.
+For these readers, a good concise error message will contain all the information needed to point them towards how to fix it.
+In this case, suggestions are at best superfluous and at worst unhelpful.
 
-If the reader of these error messages is not expected to be a developer (e.g. these messages will appear in some GUI), think carefully about where you want to send that reader next. Whereas a developer might be okay to submit an issue, a non-developer will appreciate being explicitly pointed in the right direction.
+If the reader of these error messages is not expected to be a developer (e.g.
+these messages will appear in some GUI), think carefully about where you want to send that reader next.
+Whereas a developer might be okay to submit an issue, a non-developer will appreciate being explicitly pointed in the right direction.
 
 Going up the stack, the reader’s knowledge of low-level details becomes less reliable hence they must lean more heavily on the help we give them.
 
-As an error passes further and further up the stack, more context messages may be added to it. Be aware of how errors will bubble up to avoid repeating the same information multiple times.
+As an error passes further and further up the stack, more context messages may be added to it.
+Be aware of how errors will bubble up to avoid repeating the same information multiple times.
 
 Note that all this advice applies to both error messages associated with error types and panic messages.
 
