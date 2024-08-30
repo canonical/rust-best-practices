@@ -214,7 +214,7 @@ This should result in a name which intuitively feels like it belongs among the r
 Even doing this has its pitfalls, however, so ideally your name should:
 
 - **say what it means**—make the name fit conceptually into the surrounding context.
-  If a reader sees `fn is_in(a: &str, b: &str)`, the order is not as obvious as if they were to see `fn is_in(haystach: &str, needle: &str)`.
+  If a reader sees `fn is_in(a: &str, b: &str)`, the order is not as obvious as if they were to see `fn is_in(haystack: &str, needle: &str)`.
 - **have a consistent word order**—inconsistency makes an API look dishevelled, unplanned and hence unprofessional.
   If the rest of the API uses `verb_noun` then unless there is a very good reason not to, the next function should be of the form `verb_noun`.
 - **be concise**—a long name can almost always be shortened.
