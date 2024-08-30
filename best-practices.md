@@ -1828,7 +1828,7 @@ Leave no room for ambiguity and hence misunderstanding.
 
 ```rust
 /// Increment a counter by a given amount.
-fn incr_by(&self, other: u64) -> Result<()> { .. }
+fn incr_by(&self, delta: u64) -> Result<()> { .. }
 ```
 
 ⚠️ Avoid this:
