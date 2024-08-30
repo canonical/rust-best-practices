@@ -1,2 +1,2 @@
 # rust-best-practices
-A set of rules to avoid arguments over code-quality
+A set of guidelines to avoid arguments over code-quality
