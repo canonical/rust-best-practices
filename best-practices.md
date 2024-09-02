@@ -114,7 +114,7 @@ let x = foo();
 if !x.is_valid() {
     return Err(Error::Invalid);
 }
-println!(“{x}”);
+println!("{x}");
 
 let y = baz();
 if !y.is_valid() {
@@ -132,7 +132,7 @@ if !x.is_valid() {
     return Err(Error::Invalid);
 }
 
-println!(“{x}”);
+println!("{x}");
 let y = baz();
 if !y.is_valid() {
     return Err(Error::Invalid);
