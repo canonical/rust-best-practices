@@ -1,5 +1,8 @@
 # Best practices
 
+The following is a list of best practices.
+Each section is written to be mostly independent of the others to allow for a dip-in, dip-out pattern of reading.
+
 # Table of Contents
 
 - [Preconditions](#preconditions)
