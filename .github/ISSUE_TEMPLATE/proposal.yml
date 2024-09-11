@@ -1,0 +1,65 @@
+name: Proposal
+description: Propose a new convention
+title: "Proposal: "
+labels: ["proposal"]
+projects: []
+assignees:
+  - TheSignPainter98
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to submit a proposal!
+  - type: textarea
+    id: description
+    attributes:
+      label: Please describe what you'd like standardised
+      description: Make sure to provide rationale and, if relevant, any other options you have considered.
+      placeholder: What irks you?
+    validations:
+      required: true
+  - type: textarea
+    id: do-this
+    attributes:
+      label: Please show conformant code
+      description: Highlight the goal of this
+      placeholder: |
+        ```rust
+        fn main() {
+          println!("hello, world!");
+        }
+        ```
+    validations:
+      required: false
+  - type: textarea
+    id: avoid-this
+    attributes:
+      label: Please show non-conformant code
+      description: Highlight what this proposal tries to avoid
+      placeholder: |
+        ```rust
+        fn main() {
+          println!("{}", "hello, world!");
+        }
+        ```
+    validations:
+      required: false
+  - type: dropdown
+    id: category
+    attributes:
+      label: What discipline does this fall into?
+      options:
+        - Cosmetic discipline
+        - Naming discipline
+        - Import discipline
+        - Pattern matching discipline
+        - Code discipline
+        - Error and panic discipline
+        - Function discipline
+        - Ordering discipline
+        - Unsafe discipline
+        - Structural discipline
+        - Comment discipline
+        - Other (please specify)
+    validations:
+      required: true
