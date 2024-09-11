@@ -16,6 +16,8 @@ Then, after suitable discussion, if the proposal is accepted, a PR can then be o
 At this point, either you, or one of our core contributors can write up the proposal.
 Before being merged, this PR must be approved by you and our core contributors (of course, self-approvals don’t count :) ).
 
+Proposal PRs must include links to the relevant issue.
+
 # Fixes
 
 If you see any typos, grammatical mistakes or the like, please do open a PR!
