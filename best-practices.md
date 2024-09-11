@@ -90,7 +90,7 @@ _If you find an item which you believe should be in this document, please do ope
 # Preconditions
 
 All new code should abide by `cargo fmt`, `cargo clippy`, and `cargo clippy --tests`.
-If your crate uses features, be careful to ensure that `clippy` is definitely being run all on of your code.
+If your crate uses features, be careful to ensure that `clippy` is definitely being run all on of your code, for example by using `--all-features`.
 
 # Cosmetic discipline
 
@@ -147,11 +147,11 @@ Don’t interleave unrelated code.
 Remember, to a new reader, this will look deliberate and they become confused about how variables relate.
 Keep it clean and group together strongly intradependent sections of code.
 
-This is particularly significant where closures are used—if a closure is defined half-way through a function, does not capture anything and then is only used at the end, the reader will have to keep more things in mind for no good reason.
-If values are captured, declare closures close to where they’re needed.
-If no captures are required, consider defining them at the top of the highest possible scope to make it obvious that no closures are needed.
-Also, consider whether a closure is required at all—code may feel cleaner with a simpler, more top-to-bottom flow control pattern.
-Logic should feel clean and be easy to follow.
+This is particularly significant where closures are bound to variables—if a closure is defined as such halfway through a function, does not capture anything and then is only used at the end, the reader will have to keep more things in mind for no good reason.
+If values are captured, declare such closures close as possible to where they’re needed.
+Otherwise, define an `fn` function, rather than a closure with `|| ...`.
+Also, consider whether a closure is required at all—although it may be tempting to define helper closures, code may feel cleaner with a simpler, more top-to-bottom flow control pattern.
+Logic should always feel clean and be easy to follow.
 
 _The following snippets assume that functions `foo`, `bar` and `baz` are free of side-effects._
 
@@ -159,7 +159,7 @@ _The following snippets assume that functions `foo`, `bar` and `baz` are free of
 
 ```rust
 let x = foo();
-let b = baz();;
+let b = baz();
 if !b.is_valid() {
     return Err(Error::Invalid)
 }
@@ -304,7 +304,7 @@ Numbers should not be used in lifetime names.
 
 Single-letter lifetime names are acceptable if a structure is expected to be used very many times (e.g. a script interface may make heavy use of some `Value<'h>` which contains a reference to a heap upon which it is allocated).
 NB: the compiler will occasionally recommend the use `'a` as it lacks wider context information.
-The name `’a` is nearly always a bad one.
+The name `'a` is nearly always a bad one.
 
 Lifetime parameters should aim to be concise without losing meaning.
 Given the difficulty new users face when understanding lifetimes in an interface, try to give them a hand by being explicit.
@@ -1140,9 +1140,9 @@ async fn log(&self, message: String) -> Result<()> {
 }
 ```
 
-## Prefer constructors
+## Constructors vs. structs with all fields public
 
-When exposing structs, prefer to expose constructor functions or a builder rather than exposing public fields.
+For structs created by a consumer and which represent an ‘object’ in the code’s model (i.e. those which aren’t just used to transfer data between components), prefer to expose constructor functions or a builder rather than exposing public fields.
 There are several benefits here:
 
 - They format more nicely in call chains
@@ -1151,20 +1151,23 @@ There are several benefits here:
 
 Structs with all-public fields cannot benefit from any of the above and moreover, if it is later decided that any of these properties is beneficial, we face either a breaking change to fix it or extra complication to work around it.
 
-The exception here is for ‘config’ structs, which are passed to single function and which configure its behaviour (e.g. `FooConfig` may be passed to `fn foo`).
-As the purpose of these structs is _only_ to pass data to another part of the codebase, simplifying construction is beneficial.
-To defend against the future addition of new fields causing breaking changes, consider marking them as `#[non_exhaustive]` and adding a `Default` implementation.
+For structs created by the consumer which just transfer data (e.g. `FooConfig` may be passed to `fn foo`), if there is a reasonable `Default` implementation, prefer to make all fields public to reduce boilerplate.
+To defend against the future addition of new fields causing breaking changes, consider marking the struct as `#[non_exhaustive]`.
+If there is no reasonable `Default` implementation, use a builder instead.
 
-## API-specific `serde` implementations
+## Method-specific data-structures
 
-Data-formats returned from remote APIs should not govern internal representations without good reason, as unpredictable remote API changes could lead to large breakages.
-To avoid this, it is good practice to define local (de)serialisation types which closely match the expected form of the remote API and then map data from those types into our internal ones.
+Avoid namespace pollution by putting helper types into the most local scope they may be reasonably defined in.
+Further, if common patterns start to arise, make sure to use standard names for each type, for example `Test` for test-specific builder-pattern test cases or `Message`/`Response` for serde-structs which represent a foreign API.
+Note that by using predictable names in very predictable, local-scale patterns, the reader is able to safely forget details unimportant to them.
+When helper types are local to a function, place the definitions at the bottom, below a marker comment such as `// test types` or `// serde types`.
+Such marker comments let the reader know that unless they wish to know the finer details about how a test works or how a foreign API is handled, they do not need to read any further.
 
-Define these (de)serialisation types in the functions which implement the necessary API calls.
+This pattern is particularly useful to significantly reduce the blast-radius of incoming remote API changes by closely matching the expected form with a set of local (de)serialization types independent to those understood internally by our crate.
 Let’s say we have a function called `get_image_info`, which makes a web-request to get information associated with given container image name (e.g.
 author, description, latest version).
 To nicely transfer data from some remote format into one we govern, say `ImageInfo`, add an explicit `return` at the end of `get_image_info` and _below_ this, create a new type called `Response`, which implements `Deserialize`.
-Add a comment which says `// serde types.` to let the reader know that everything beyond this point only relates to modelling the remote API.
+Add a comment which says `// serde types.` to let the reader know that everything beyond this point only relates to modelling the remote API—thus saving them time as they will likely only care about these details if something is broken.
 Add as many new local types as are necessary to maintain a 1:1 relationship between Rust types and the remote’s format—
 
 ```rust
@@ -1199,31 +1202,18 @@ async fn get_image_info(&self, name: &str) -> Result<ImageInfo> {
 }
 ```
 
-For consistency, we try to always call incoming data `Response` and outgoing data `Message`.
-Name shadowing is okay here as the scope is small and the shadowed type will likely only appear once in a very predictable place and with a predictable name.
+As a rule of thumb, `serde` annotations should not be present on the types used in the core of a crate, where the content of those types is taken entirely from a remote API or is destined to be sent to one.
+Remote APIs should not govern internal representation.
 
-Scoping the (de)serialisation in this way is extremely good practice for several reasons:
+## Method calls on closing brackets and braces
 
-Firstly, it minimises the blast radius of incoming remote API changes.
-If a remote API is changed, we need only update the deserialisation structs and their unpacking into our internal ones—the core of our program/library remains untouched.
-
-Secondly, it minimises the amount of code which must be read—if the interaction with the remote API is functioning correctly but someone wishes to know how this function works, they know that they can stop reading past the `// serde structs.` marker.
-Conversely, if the API interaction is broken due to a data format ‘surprise,’ that same comment draws the maintainer’s eye to the place they need.
-
-Thirdly, it is often simpler to implement the Serde traits on these types!
-As we model the remote structure before unpacking into internal structures, less `serde`-wrangling is required.
-
-Finally, it reduces the amount of clutter in file-level scopes.
-As the `Response` types are locally-scoped, the reader knows exactly where they are used and hence does not need to keep them in mind alongside the rest of the codebase.
-They may be safely forgotten until needed.
-
-## Method calls on closing curly braces
-
-Control structures and struct literals should not have methods called upon them as the formatter moves method calls onto the line below.
+Expressions which end in a `}` such as control structures and struct literals should not have methods called upon them as the formatter moves method calls onto the line below.
 This adds an unwelcome surprise as the scope of what the reader is currently looking at will appear to increase, adding to cognitive load and potential confusion.
 To avoid this, use a binding (`let some_var = ...; some_var.foo()`).
 
 When designing APIs, if a public struct will be filled by consumers for the purpose of calling a single method on it, consider instead reversing the dependency by using a free function which takes the struct as its first parameter in the fashion of a config struct.
+
+Expressions which end in a `)` or `]` follow the same rule unless that expression is quite short.
 
 ✅ Do this:
 
@@ -1239,6 +1229,13 @@ let value = if some_condition {
     value b
 };
 value.to_string()
+
+// ...
+    .filter(|c| {
+        let exceptions = [ 'a', 'b', 'c', 'd', ... ];
+        !exceptions.contains(c)
+    })
+// ...
 ```
 
 ⚠️ Avoid this:
@@ -1256,6 +1253,10 @@ if some_condition {
     value_b
 }
 .to_string()
+
+// ...
+    .filter(|c| ![ 'a', 'b', 'c', 'd', ... ].contains(c))
+// ...
 ```
 
 ## Format arg inlining
@@ -1344,11 +1345,60 @@ Type erasure is a very strong opinion and one which may not be shared by a crate
 Errors which preserve types (e.g those annotated with `#[derive(thiserror::Error)]`) give Rust a unique advantage—not only can the golden path receive first-class support, but so too can the error path, thus allowing an even higher level of quality to be attained.
 In particular, the process of responding to particular errors is far more robust with enumerated errors.
 
-Errors which preserve types but which represent unrecoverable errors should represent their error condition as a contained `&‘static str` or `String` which is assigned where the error is constructed.
+Errors which preserve types but which represent unrecoverable errors should represent their error condition as a contained `String` which is assigned where the error is constructed.
+(Note that although `&‘static str` may be applicable, `String` offers more flexibility and can be expected to have a negligible performance impact.)
 When constructing these errors, special care must be taken to ensure that the message is consistent with other errors in the codebase.
 The field used to hold the reason for the error in these cases should be named `reason`.
 
-If one error wraps another, the inner error should be held in a field named `cause`.
+```rust
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    // ...
+
+    #[error("invalid {credential}: {reason}")]
+    InvalidCredentials{
+        credential: String,
+        reason: String,
+    },
+}
+```
+
+If one error wraps another, the inner error should be held in a field named `source`.
+
+```rust
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    // ...
+
+    #[error("cannot access {path}: {source}")]
+    IO {
+        path: PathBuf,
+        source: io::Error,
+    },
+}
+```
+
+Note that exposing the error type originating from dependencies as these may accidentally expose internal details in a public API.
+In these cases, if using enumerated errors, consider adding an `Internal` variant which holds a type which hides the internal details as follows—
+
+```rust
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    // ...
+
+    #[error(transparent)]
+    Internal(#[from] InternalError),
+}
+
+#[derive(Debug, thiserror::Error)]
+#[error(transparent)]
+pub struct InternalError(#[from] InternalErrorImpl);
+
+#[derive(Debug, thiserror::Error)]
+enum InternalErrorImpl {
+    // ...
+}
+```
 
 ## Error conversion
 
@@ -1363,9 +1413,9 @@ By maintaining the same convention with short chains, our code becomes more pred
 let override_url = env::var("URL")
     .ok()
     .map(|override| {
-        Url::parse(&override).map_err(|cause| Error::MalformedEnvUrl {
+        Url::parse(&override).map_err(|source| Error::MalformedEnvUrl {
             env_var: "URL",
-            cause,
+            source,
         })
     })
     .transpose()?;
@@ -1378,9 +1428,9 @@ let override_url = env::var("URL")
     .ok()
     .map(|override_url| url::Url::parse(&override_url))
     .transpose()
-    .map_err(|cause| Error::MalformedEnvUrl { // The error to be mapped comes from somewhere in the chain above!
+    .map_err(|source| Error::MalformedEnvUrl { // The error to be mapped comes from somewhere in the chain above!
         env_var: "URL",
-        cause,
+        source,
     })?;
 ```
 
@@ -1389,9 +1439,8 @@ let override_url = env::var("URL")
 Panics must only be used if a program enters an unrecoverable state.
 Further, that unrecoverable state must not be as a result of user input—a program which a user can easily crash is not a good program.
 
-In Rust, panics are very aggressive.
-Not only are they unrecoverable within the same thread, but also if the default panic strategy is overridden (e.g. by a user who wants a smaller binary and hence sets `profile.release.panic = "abort"` in their `Cargo.toml`), we have no guarantee that the usual cleanup is performed.
-In this case, we must rely on the OS to do its best with the resources it understands but we have no guarantee that this will be sufficient.
+In Rust, panics are very aggressive, especially as if the default panic strategy is overridden (e.g. by a user who wants a smaller binary and hence sets `profile.release.panic = "abort"` in their `Cargo.toml`), we have no guarantee that the usual cleanup is performed.
+In such a situation, we must rely on the OS to do its best with the resources it understands but we have no guarantee that this will be sufficient.
 By default therefore, don’t panic.
 
 If, however, a panic is inevitable, be sure that the message signals who is at fault—if it’s an internal error, start the message with `internal error:`.
@@ -1481,7 +1530,7 @@ If a generic _type_ parameter is only used once and isn’t too complicated, use
 
 Note that although it is possible to omit the unnamed lifetime (i.e. it may be possible to write `MyRef<'_>` as `MyRef`), this should never be done.
 A type without lifetime parameters looks completely self-contained and hence as though may be freely passed around.
-If a lifetime is present, always communicate that fact (i.e. always prefer `MyRef<'_>` to `MyRef`).
+If a lifetime is present, _always_ communicate that fact (i.e. always prefer `MyRef<'_>` to `MyRef`).
 
 ✅ Do this:
 
@@ -1495,7 +1544,7 @@ fn transmit(tx: impl Transmitter<'_>, message: &[u8]) -> Result<()> { ... }
 fn transmit<'a, T: Transmitter<’a>>(tx: T, message: &[u8]) -> Result<()> { ... }
 ```
 
-## Unused parameters default implementations
+## Unused parameters in default implementations
 
 Occasionally, when a default trait function implementation is provided, not all of its parameters are used.
 To avoid a compiler warning, explicitly add `let _ = unused_param;` lines until all these warnings are removed.
@@ -1715,9 +1764,9 @@ struct ScriptExecutionContext<'h, T> {
 
 ## Minimise unsafe
 
-Rust’s `unsafe` keyword turns off a small but important number of the compiler’s checks.
+Rust’s `unsafe` keyword enables a small but important number of additional powers which the compiler is unable to check.
 In effect, it is a ‘hold my beer’ marker—you tell the compiler to trust you and just watch whilst you do something either incredibly impressive or incredibly harmful.
-But the compiler is not the only entity whose trust we require, when we use `unsafe`, we also ask our _users_ to trust that we know exactly what we are doing.
+But the compiler is not the only one whose trust we require—when we use `unsafe`, we also ask our _users_ to trust that we know exactly what we are doing.
 Under no circumstance do we want to break that trust.
 
 Therefore, we must endeavour to minimise the use of unsafe constructs in our code.
