@@ -1,7 +1,7 @@
-name: Proposal
+name: RFC
 description: Propose a new convention
-title: "Proposal: "
-labels: ["proposal"]
+title: "RFC: "
+labels: ["rfc"]
 projects: []
 assignees:
   - TheSignPainter98
@@ -9,7 +9,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to submit a proposal!
+        Thanks for taking the time to submit an RFC!
   - type: textarea
     id: description
     attributes:
@@ -22,7 +22,7 @@ body:
     id: do-this
     attributes:
       label: Please show conformant code
-      description: Highlight the goal of this
+      description: Highlight the goal of this proposal
       placeholder: |
         ```rust
         fn main() {

@@ -1,9 +1,9 @@
 ---
-name: Proposal
-about: Implement a proposal
-title: "Implement: "
+name: Implement RFC
+about: Implement an RFC
+title: "Implement: RFC "
 labels: proposal
 assignees: TheSignPainter98
 ---
 
-Implements proposal: #<!-- proposal issue number here -->
+Implements RFC: #<!-- RFC issue number here -->

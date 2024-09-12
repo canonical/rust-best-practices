@@ -5,14 +5,14 @@ There are many very valuable ways to contribute to this project and help advance
 
 # Table of Contents
 
-- [Proposals for new sections](#proposals-for-new-sections)
+- [RFCs](#rfcs)
 - [Fixes](#fixes)
 - [Feedback](#feedback)
 
-# Proposals for new sections
+# RFCs
 
 If you have an idea for something not currently covered by this repo, please first [open an issue][open-an-issue] describing what you’d like to see encouraged/avoided.
-Then, after suitable discussion, if the proposal is accepted, a PR can then be opened.
+Then, after suitable discussion, if the RFC is accepted, a PR can then be opened.
 At this point, either you, or one of our core contributors can write up the proposal.
 Before being merged, this PR must be approved by you and our core contributors (of course, self-approvals don’t count :) ).
 
