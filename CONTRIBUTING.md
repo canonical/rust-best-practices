@@ -5,9 +5,14 @@ There are many very valuable ways to contribute to this project and help advance
 
 # Table of Contents
 
+- [CLA](#cla)
 - [RFCs](#rfcs)
 - [Fixes](#fixes)
 - [Feedback](#feedback)
+
+# CLA
+
+To uphold the good spirit of Ubuntu, we require all contributors to sign the [Ubuntu Contributor License Agreement][cla]
 
 # RFCs
 
@@ -29,4 +34,5 @@ Notes and feedback give vital extra perspective which helps improve documents su
 To provide your feedback, please [open an issue][open-an-issue].
 Please make sure to provide permalinks to any sections being discussed as this keeps the paper trail tidy for future readers.
 
+[cla]: https://ubuntu.com/legal/contributors
 [open-an-issue]: https://github.com/canonical/rust-best-practices/issues/new
