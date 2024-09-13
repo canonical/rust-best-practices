@@ -422,18 +422,16 @@ use tokio::runtime::Runtime;
 
 Excessive repetition harms readability by adding lots of visual noise.
 For this reason, avoid Java-style imports where every single imported item gets its own line with a complete and exhaustive path and instead use the cleaner nested syntax.
-If two `use` items share the same prefix, they must be merged.
+If a path contains _n_ parts, merge the first _n-1,_ so that only the final part is grouped with its siblings.
 
 ✅ Do this:
 
 ```rust
 use allocative::Allocative;
 use derive_more::Display;
-use starlark::{
-    environment::{FrozenModule, Module},
-    eval::Evaluator,
-    values::{AllocValue, Freeze, ProvidesStaticType, StarlarkValue, ValueLike},
-};
+use starlark::environment::{FrozenModule, Module};
+use starlark::eval::Evaluator;
+use starlark::values::{AllocValue, Freeze, ProvidesStaticType, StarlarkValue, ValueLike};
 use starlark_derive::{starlark_value, NoSerialize, Trace};
 ```
 
