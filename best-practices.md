@@ -823,7 +823,7 @@ Doing this also makes code simpler to read as there are fewer things which can m
 
 ```rust
 let my_structure = {
-    let mut my_structure = MyStructure{}
+    let mut my_structure = MyStructure::new();
     // Mutate `my_structure` as required to construct it.
     my_structure
 };
