@@ -957,7 +957,7 @@ In the second case when shadowing in the same scope with the same type, there is
 However, if this is being used to effectively mutate a value during construction with no other values being affected, instead use the scoped-mutability pattern—
 
 ```rust
-let thing = {
+let my_thing = {
     let mut my_thing = ...;
     // Mutate `my_thing` to construct it...
     my_thing
