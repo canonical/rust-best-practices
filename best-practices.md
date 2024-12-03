@@ -1861,14 +1861,14 @@ Leave no room for ambiguity and hence misunderstanding.
 ✅ Do this:
 
 ```rust
-/// Increment a counter by a given amount.
+/// Increments this counter by the given `delta`.
 fn incr_by(&self, delta: u64) -> Result<()> { .. }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
-/// Increment this counter by the given `delta`.
+/// Increments a counter by a given amount.
 fn incr_by(&self, delta: u64) -> Result<()> { .. }
 ```
 
