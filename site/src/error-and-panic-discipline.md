@@ -129,21 +129,30 @@ By maintaining the same convention with short chains, our code becomes more pred
 
 ✅ Do this:
 
-```rust,ignore
+```rust
+{{#include snippet_helpers/error_and_panic_discipline.rs}}
+# fn snippet() -> Result<()> {
+# use std::env;
+# use url::Url;
 let override_url = env::var("URL")
     .ok()
-    .map(|override| {
-        Url::parse(&override).map_err(|source| Error::MalformedEnvUrl {
+    .map(|override_url| {
+        Url::parse(&override_url).map_err(|source| Error::MalformedEnvUrl {
             env_var: "URL",
             source,
         })
     })
     .transpose()?;
+# Ok(())
+# }
 ```
 
 ⚠️ Avoid this:
 
-```rust,ignore
+```rust
+{{#include snippet_helpers/error_and_panic_discipline.rs}}
+# use std::env;
+# fn snippet() -> Result<()> {
 let override_url = env::var("URL")
     .ok()
     .map(|override_url| url::Url::parse(&override_url))
@@ -152,6 +161,8 @@ let override_url = env::var("URL")
         env_var: "URL",
         source,
     })?;
+# Ok(())
+# }
 ```
 
 ## Panic calmly

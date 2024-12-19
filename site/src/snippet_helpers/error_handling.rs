@@ -3,6 +3,10 @@
 # enum Error {
 #     Invalid,
 #     NetworkUnavailable,
+#     MalformedEnvUrl {
+#         env_var: &'static str,
+#         source: Box<dyn std::error::Error>,
+#     },
 #     Unknown(Box<dyn std::error::Error>),
 # }
 #
