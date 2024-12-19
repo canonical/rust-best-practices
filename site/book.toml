@@ -16,5 +16,6 @@ git-repository-icon = "fa-github"
 git-repository-url = "https://github.com/canonical/rust-best-practices"
 smart-punctuation = true
 fold.enable = true
+playground.runnable = false
 
 [output.linkcheck]
