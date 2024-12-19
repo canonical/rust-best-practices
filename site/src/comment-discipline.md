@@ -8,7 +8,7 @@ After reading this first sentence, it should be clear _when_ to use the given fu
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 /// This function reports an increase in the number of steps taken by this
 /// thread.
 fn add_steps(&self, delta: i64) -> Result<()> { .. }
@@ -16,7 +16,7 @@ fn add_steps(&self, delta: i64) -> Result<()> { .. }
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 /// This function adds a given delta to the current step counter.
 fn add_steps(&self, delta: i64) -> Result<()> { .. }
 ```
@@ -29,14 +29,14 @@ Leave no room for ambiguity and hence misunderstanding.
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 /// Increments this counter by the given `delta`.
 fn incr_by(&self, delta: u64) -> Result<()> { .. }
 ```
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 /// Increments a counter by a given amount.
 fn incr_by(&self, delta: u64) -> Result<()> { .. }
 ```

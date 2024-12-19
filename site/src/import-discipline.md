@@ -20,7 +20,7 @@ There, they should be placed as close as possible to the relevant match, prefera
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 use some_crate::{SpecificItem1, SpecificItem2};
 use some_other_crate::SpecificItem3;
 
@@ -37,7 +37,7 @@ fn some_fn(some_enum: SomeEnum) -> {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 use some_crate::*;
 use some_other_crate::prelude::*;
 use another_crate::SomeEnum::*;
@@ -65,13 +65,13 @@ To clearly delimit whether an import is from the standard library, from a third 
 
 Note that this order follows the currently-unstable `rustfmt` option—
 
-```
+```toml
 import_group = "StdExternCrate"
 ```
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 use std::path::PathBuf;
 
 use camino::Utf8PathBuf;
@@ -82,7 +82,7 @@ use crate::{Error, Result};
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 use camino::Utf8PathBuf;
 use crate::{Error, Result};
 use std::path::PathBuf;
@@ -97,7 +97,7 @@ If a path contains _n_ parts, merge the first _n-1,_ so that only the final part
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 use allocative::Allocative;
 use derive_more::Display;
 use starlark::environment::{FrozenModule, Module};
@@ -108,7 +108,7 @@ use starlark_derive::{starlark_value, NoSerialize, Trace};
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 use allocative::Allocative;
 use derive_more::Display;
 use starlark::environment::FrozenModule;
@@ -130,7 +130,7 @@ When importing from a child module `foo`, always `use self::foo` as this avoids 
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 mod foo;
 mod bar;
 
@@ -140,7 +140,7 @@ pub use self::bar::Bar;
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 mod foo;
 mod bar;
 

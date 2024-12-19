@@ -8,7 +8,7 @@ This in turn will draw the attention of the next maintainer and help them correc
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 impl Ord for MyStruct {
     fn cmp(&self, other: &Self) -> Ordering {
         let Self {
@@ -27,7 +27,7 @@ impl Ord for MyStruct {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 impl Ord for MyStruct {
     fn cmp(&self, other: &Self) -> Ordering {
         (self.my, self.thing, self.with, self.some)
@@ -43,13 +43,13 @@ Although it may seem convenient, it ultimately harms readability—it is clearer
 
 ✅ Do this:
 
-```rust
+```rust,ignore
     .map(|x| *x)
 ```
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
     .map(|&x| x)
 ```
 
@@ -61,7 +61,7 @@ Note that this advice does not apply in the `impl` blocks of newtype-pattern str
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 fn line_through(point1: (f64, f64), point2: (f64, f64)) -> Line {
 	let (x1, y1) = point1;
 	let (x2, y2) = point2;
@@ -76,7 +76,7 @@ fn line_through(point1: (f64, f64), point2: (f64, f64)) -> Line {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 fn line_through(point1: (f64, f64), point2: (f64, f64)) -> Line {
 	let gradient = (point2.1 - point1.1) / (point2.0 - point1.0);
 	let y_intercept = point1.1 - gradient * point1.0;
@@ -98,7 +98,7 @@ Note that this guidance does not apply to closures, which are commonly used as s
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 impl Server {
     fn new(config: ServerConfig) -> Result<Self> {
         let Config { db_path, working_path } = config;
@@ -109,7 +109,7 @@ impl Server {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 impl Server {
     fn new(ServerConfig { db_path, working_path }: ServerConfig) -> Result<Self> {
         // ...

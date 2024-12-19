@@ -7,7 +7,7 @@ By maximising the use of `Self` it also highlights where it _isn’t_ possible t
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 impl Node {
     pub fn new(parent: &Self) -> Self {
         Self(..)
@@ -21,7 +21,7 @@ impl PartialOrd for Node {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 impl Node {
     pub fn new(parent: &Node) -> Node {
         Foo(..)
@@ -47,7 +47,7 @@ In this case, it is okay to use the crate’s `Result` type alias instead.
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 impl Responder for MyType {
     type Response = SomeStruct;
     type Err = Error;
@@ -63,7 +63,7 @@ impl Responder for MyType {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 impl Responder for MyType {
     type Response = SomeStruct;
     type Err = Error;
@@ -105,7 +105,7 @@ If there is a dependency between field declarations, for example if some shared 
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 struct Entry<K, V> {
     id: u64,
     key: K,
@@ -129,7 +129,7 @@ fn get_entry(&self, key: K) -> Result<Entry<K, V>> {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 struct Entry<K, V> {
     id: u64,
     key: K,
@@ -156,7 +156,7 @@ Keep things visually simple—if the formatter chooses to break tuple population
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 let key = some_long_computation()?
     .something_else()
     .another_thing();
@@ -167,7 +167,7 @@ let value = some_other_long_computation()
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 (
     some_long_computation()?
         .something_else()
@@ -185,7 +185,7 @@ Prefer the latter as this makes the order of operations the same as what is read
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 let my_vec: Vec<_> = collection.into_iter()
     .filter(...)
     .collect();
@@ -193,7 +193,7 @@ let my_vec: Vec<_> = collection.into_iter()
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 let my_vec = Vec::from_iter(collection.into_iter().filter(...))
 ```
 
@@ -206,13 +206,13 @@ Consider also that `vec![expr; n]` where `n` is zero will still evaluate (and th
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 let my_vec = Vec::new();
 ```
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 let my_vec = vec![];
 let my_vec = Vec::with_capacity(0);
 ```
@@ -223,7 +223,7 @@ In many cases, mutability is used to create a given structure which is then used
 Whenever this happens, scope the mutable declarations to just where they are needed, thus forcing a compiler error if this condition is broken in future.
 Doing this also makes code simpler to read as there are fewer things which can mutate at any one point.
 
-```rust
+```rust,ignore
 let my_structure = {
     let mut my_structure = MyStructure::new();
     // Mutate `my_structure` as required to construct it.
@@ -236,7 +236,7 @@ For greatest clarity, make sure the name of the outer (immutable) and inner (mut
 If mutability is to retain some state whilst iterating through a structure, consider using a functional style instead.
 As a simple example, if presented with the following imperative code to count the number of spaces in a string
 
-```rust
+```rust,ignore
 let mut num_spaces = 0;
 for c in my_string.chars() {
     if c == ' ' {
@@ -247,7 +247,7 @@ for c in my_string.chars() {
 
 Consider instead, using the functional style to avoid the mutation—
 
-```rust
+```rust,ignore
 let num_spaces = my_string.chars()
     .filter(|c| c == ' ')
     .count();
@@ -260,7 +260,7 @@ Instead, prefer to return the required value from the block which computes it.
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 let message = if result.is_ok() {
     "success!"
 } else {
@@ -285,7 +285,7 @@ let message = loop {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 let message;
 if result.is_ok() {
     message = "success!";
@@ -324,14 +324,14 @@ As a rule of thumb, only use `&` at the start of the value of a `let` declaratio
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 let foo = from_func();
 other_func(&foo);
 ```
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 let foo = &from_func();
 other_func(foo);
 ```
@@ -348,7 +348,7 @@ Let us consider name-shadowing with variables, for which there are three cases:
 
 In the first case when shadowing with different scopes, use at most one level of shadowing, for example when pattern matching enum variants—
 
-```rust
+```rust,ignore
 if let Some(foo) = foo {
     // The outer `foo` is now shadowed.
     // The inner `foo` should not be shadowed.
@@ -358,7 +358,7 @@ if let Some(foo) = foo {
 In the second case when shadowing in the same scope with the same type, there is no restriction placed on this and it may be done as many times as necessary.
 However, if this is being used to effectively mutate a value during construction with no other values being affected, instead use the scoped-mutability pattern—
 
-```rust
+```rust,ignore
 let my_thing = {
     let mut my_thing = ...;
     // Mutate `my_thing` to construct it...
@@ -369,7 +369,7 @@ let my_thing = {
 In the final case, when shadowing in the same but changing types (e.g. in a conversion method), shadowing can be done at most once per variable.
 This pattern is commonly seen in conversion functions—those which take ownership of their sole parameter and convert it into another type.
 
-```rust
+```rust,ignore
 impl Store<New> {
     fn init(self) -> Store<Inited> {
         let Self { some_field } = self,
@@ -401,7 +401,7 @@ These rules ensure that the reader cannot miss any constraints.
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 impl<'a, 'b, I, T> SomeStruct<'a, 'b, I, T>
     where
         'b: 'a,
@@ -412,7 +412,7 @@ impl<'a, 'b, I, T> SomeStruct<'a, 'b, I, T>
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 impl<'a, 'b: 'a, I: IntoIterator<T> + 'a> SomeStruct
     where
         T: 'b
@@ -458,7 +458,7 @@ If a type parameter seems necessary as a variable name is not sufficiently descr
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 let some_meaningful_var_name: Vec<_> = foo.iter()
     .filter(...)
     .map(...)
@@ -468,7 +468,7 @@ let some_meaningful_var_name: Vec<_> = foo.iter()
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 let x = foo.iter()
     .filter(...)
     .map(...)
@@ -486,7 +486,7 @@ If a single value is to be ignored, use the ‘toilet operator,’ `|_| ()`, i.e
 a closure which takes one argument, ignores it and returns a unit.
 This form is consistent with similar closures which ignore parts of their inputs, for example when extracting the key from a key-value pair—
 
-```rust
+```rust,ignore
     .map(|(key, _)| key)
 ```
 
@@ -499,7 +499,7 @@ This highlights that we care only about side-effects, and that no information is
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 async fn log(&self, message: String) -> Result<()> {
     {
         let mut file = OpenOptions::new()
@@ -514,7 +514,7 @@ async fn log(&self, message: String) -> Result<()> {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 async fn log(&self, message: String) -> Result<()> {
     let mut file = OpenOptions::new()
         .append(true)
@@ -557,7 +557,7 @@ To nicely transfer data from some remote format into one we govern, say `ImageIn
 Add a comment which says `// serde types.` to let the reader know that everything beyond this point only relates to modelling the remote API—thus saving them time as they will likely only care about these details if something is broken.
 Add as many new local types as are necessary to maintain a 1:1 relationship between Rust types and the remote’s format—
 
-```rust
+```rust,ignore
 async fn get_image_info(&self, name: &str) -> Result<ImageInfo> {
     let response: Response = serde_json::from_str(get_response(...).await?.text());
     let info = ImageInfo {
@@ -604,7 +604,7 @@ Expressions which end in a `)` or `]` follow the same rule unless that expressio
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 foo(FooConfig {
     bar: "asdf",
     baz: "fdsa",
@@ -627,7 +627,7 @@ value.to_string()
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 Foo {
     bar: "asdf",
     baz: "fdsa",
@@ -655,12 +655,12 @@ _NB: older Rust versions may not support this syntax._
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 format!("{path}/{file}")
 ```
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 format!("{}/{}", path, file)
 ```

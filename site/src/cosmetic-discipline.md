@@ -15,7 +15,7 @@ There are no hard and fast rules for this strong association, but the following 
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 let x = foo();
 if !x.is_valid() {
     return Err(Error::Invalid);
@@ -31,7 +31,7 @@ return Ok(y);
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 let x = foo();
 
 if !x.is_valid() {
@@ -63,7 +63,7 @@ _The following snippets assume that functions `foo`, `bar` and `baz` are free of
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 let x = foo();
 let b = baz();
 if !b.is_valid() {
@@ -79,7 +79,7 @@ if !y.is_valid() {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 let x = foo()
 let check = |x| {
     if !x.valid() {
@@ -99,12 +99,12 @@ By using lowercase, we provide more ‘handles’ for the eye to use.
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 const SOME_SPECIFIC_IMPORTANT_VALUE: u64 = 0xab5c4d320974a3bc;
 ```
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 const SOME_SPECIFIC_IMPORTANT_VALUE: u64 = 0xAB5C4D320974A3BC;
 ```

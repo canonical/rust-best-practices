@@ -49,7 +49,7 @@ When matching structs and struct-like enum variants, try to use the original fie
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 if let Some(response) = response { ... }
 if let Some(response) = event.response { ... }
 if let Some(event_response) = event.response { ... }
@@ -71,7 +71,7 @@ match state {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 if let Some(r) = response { ... }
 if let Some(r) = event.response { ... }
 if let Some(er) = event.response { ... }
@@ -107,7 +107,7 @@ Single-letter lifetime names should generally be avoided.
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 struct ASTQueryMatch<'cursor, 'tree> { .. }
 
 struct Value<'h> { .. }
@@ -115,7 +115,7 @@ struct Value<'h> { .. }
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 struct ASTQueryMatch<'a, 'b> { .. }
 
 struct Value<'value> { .. }
@@ -128,7 +128,7 @@ This `MyTypeBuilder` must also have a fallible `.build()` method, which returns 
 
 Typical usage is hence—
 
-```rust
+```rust,ignore
 let foo = Foo::builder()
     .bar(bar)
     // ...

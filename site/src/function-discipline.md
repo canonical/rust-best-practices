@@ -18,7 +18,7 @@ Therefore, do-nothing `match` branches should be written as `.. => {}` rather th
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 fn setup_foo(&self) -> Result<()> {
     match self.foo_type {
         FooType::A => {}
@@ -31,7 +31,7 @@ fn setup_foo(&self) -> Result<()> {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 fn setup_foo(&self) -> Result<()> {
     match self.foo_type {
         FooType::A => ()
@@ -58,13 +58,13 @@ If a lifetime is present, _always_ communicate that fact (i.e. always prefer `My
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 fn transmit(tx: impl Transmitter<'_>, message: &[u8]) -> Result<()> { ... }
 ```
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 fn transmit<'a, T: Transmitter<’a>>(tx: T, message: &[u8]) -> Result<()> { ... }
 ```
 
@@ -79,7 +79,7 @@ Similarly, we could individually annotate each unused parameter, however this wo
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 trait CustomScriptValue<'v> {
     fn at(&self, index: Value<'v>) -> Result<Value<'v>> {
         let _ = index;
@@ -90,7 +90,7 @@ trait CustomScriptValue<'v> {
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 trait CustomScriptValue<'v> {
     fn at(&self, _index: Value<'v>) -> Result<Value<'v>> {
         Err(Error::Unsupported { .. })
@@ -112,7 +112,7 @@ In typical usage, users of `MyType` shouldn’t need to import `MyTypeBuilder`, 
 
 ✅ Do this:
 
-```rust
+```rust,ignore
 use crate::Foo;
 
 let foo = Foo::builder()
@@ -123,7 +123,7 @@ let foo = Foo::builder()
 
 ⚠️ Avoid this:
 
-```rust
+```rust,ignore
 use crate::{Foo, FooBuilder}
 
 let foo = FooBuilder::new()
@@ -137,7 +137,7 @@ let foo = FooBuilder::new()
 In Rust, there are two forms of the builder pattern, depending on the receiver type used.
 Consider the following builder—
 
-```rust
+```rust,ignore
 let frobnicator = Frobnicator::builder()
     .foo("foo")
     .bar("bar")
