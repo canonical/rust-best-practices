@@ -2,6 +2,7 @@
 #
 # enum Error {
 #     Invalid,
+#     NetworkUnavailable,
 #     Unknown(Box<dyn std::error::Error>),
 # }
 #
