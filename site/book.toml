@@ -1,0 +1,21 @@
+[book]
+title = "Rust best practices"
+description = "Rust best practices"
+authors = ["Ed Jones"]
+language = "en"
+multilingual = false
+src = "src"
+
+[build]
+create-missing = false
+
+[output.html]
+copy-fonts = true
+edit-url-template = "https://github.com/canonical/rust-best-practices/blob/main/docs/{path}"
+git-repository-icon = "fa-github"
+git-repository-url = "https://github.com/canonical/rust-best-practices"
+smart-punctuation = true
+fold.enable = true
+playground.runnable = false
+
+[output.linkcheck]
