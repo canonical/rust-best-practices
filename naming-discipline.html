@@ -221,33 +221,157 @@ These names do not have the luxury of being able to be tweaked without consequen
 </ul>
 <p>When matching structs and struct-like enum variants, try to use the original field names.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">if let Some(response) = response { ... }
-if let Some(response) = event.response { ... }
-if let Some(event_response) = event.response { ... }
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: Self) -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(Self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Event {
+</span><span class="boring">    response: Option&lt;()&gt;,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct File {
+</span><span class="boring">    name: (),
+</span><span class="boring">    path: (),
+</span><span class="boring">}
+</span><span class="boring">let response = Some(());
+</span>if let Some(response) = response { /* ... */ }
+<span class="boring">
+</span><span class="boring">let event = Event { response: None };
+</span>if let Some(response) = event.response { /* ... */ }
+if let Some(event_response) = event.response { /* ... */ }
 
-let Self { name, path } = self;
-
-enum State {
+<span class="boring">impl File {
+</span><span class="boring">  fn f(self) {
+</span>let Self { name, path } = self;
+<span class="boring">  }
+</span><span class="boring">}
+</span>
+<span class="boring">use std::fs;
+</span><span class="boring">type Workload = ();
+</span>enum State {
     Reading(fs::File),
     Evaluating {
         workload: Workload,
-        ...
+<span class="boring">      other_fields: (),
+</span>        /* ... */
     }
 }
-match state {
-    State::Reading(file) =&gt; {...}
-    State::Evaluating{ workload, .. } =&gt; {...}
+<span class="boring">let state = State::Evaluating {
+</span><span class="boring">    workload: (),
+</span><span class="boring">    other_fields: ()
+</span><span class="boring">};
+</span>match state {
+    State::Reading(file) =&gt; { /* ... */ }
+    State::Evaluating{ workload, .. } =&gt; { /* ... */ }
 }</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">if let Some(r) = response { ... }
-if let Some(r) = event.response { ... }
-if let Some(er) = event.response { ... }
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: Self) -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(Self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Event {
+</span><span class="boring">    response: Option&lt;()&gt;,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct File {
+</span><span class="boring">    name: (),
+</span><span class="boring">    path: (),
+</span><span class="boring">}
+</span><span class="boring">let response = Some(());
+</span>if let Some(r) = response { /* ... */ }
+<span class="boring">
+</span><span class="boring">let event = Event { response: None };
+</span>if let Some(r) = event.response { /* ... */ }
+if let Some(er) = event.response { /* ... */ }
 
-let Self { name: some_name, path: name } = self;
-
-match state {
-    State::Reading(data_source) =&gt; {...}
-    State::Evaluating{ workload: to_eval, .. } =&gt; {...}
+<span class="boring">impl File {
+</span><span class="boring">  fn f(self) {
+</span>let Self { name: some_name, path: name } = self;
+<span class="boring">  }
+</span><span class="boring">}
+</span>
+<span class="boring">use std::fs;
+</span><span class="boring">type Workload = ();
+</span><span class="boring">enum State {
+</span><span class="boring">    Reading(fs::File),
+</span><span class="boring">    Evaluating {
+</span><span class="boring">        workload: Workload,
+</span><span class="boring">        other_fields: (),
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">let state = State::Evaluating {
+</span><span class="boring">    workload: (),
+</span><span class="boring">    other_fields: ()
+</span><span class="boring">};
+</span>match state {
+    State::Reading(data_source) =&gt; { /* ... */ }
+    State::Evaluating{ workload: to_eval, .. } =&gt; { /* ... */ }
 }</code></pre>
 <h2 id="generic-type-parameter-naming"><a class="header" href="#generic-type-parameter-naming">Generic type parameter naming</a></h2>
 <p>To avoid them being mistaken for concrete types, generic type parameters must have single-letter names.</p>
@@ -264,21 +388,83 @@ The name <code>'a</code> is nearly always a bad one.</p>
 Given the difficulty new users face when understanding lifetimes in an interface, try to give them a hand by being explicit.
 Single-letter lifetime names should generally be avoided.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">struct ASTQueryMatch&lt;'cursor, 'tree&gt; { .. }
+<pre><code class="language-rust">struct ASTQueryMatch&lt;'cursor, 'tree&gt; {
+    /* ... */
+<span class="boring">ignore: &amp;'cursor &amp;'tree (),
+</span>}
 
-struct Value&lt;'h&gt; { .. }</code></pre>
+struct Value&lt;'h&gt; {
+    /* ... */
+<span class="boring">ignore: &amp;'h (),
+</span>}</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">struct ASTQueryMatch&lt;'a, 'b&gt; { .. }
+<pre><code class="language-rust">struct ASTQueryMatch&lt;'a, 'b&gt; {
+    /* ... */
+<span class="boring">ignore: &amp;'a &amp;'b (),
+</span>}
 
-struct Value&lt;'value&gt; { .. }</code></pre>
+struct Value&lt;'value&gt; {
+    /* ... */
+<span class="boring">ignore: &amp;'value (),
+</span>}</code></pre>
 <h2 id="builder-naming"><a class="header" href="#builder-naming">Builder naming</a></h2>
 <p>If a builder for a type <code>MyType</code> is provided, then it should have an associated function <code>builder()</code> which returns a <code>MyTypeBuilder</code>.
 This <code>MyTypeBuilder</code> must also have a fallible <code>.build()</code> method, which returns a <code>MyType</code>.</p>
 <p>Typical usage is hence—</p>
-<pre><code class="language-rust">let foo = Foo::builder()
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: Self) -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(Self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Event {
+</span><span class="boring">    response: Option&lt;()&gt;,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct File {
+</span><span class="boring">    name: (),
+</span><span class="boring">    path: (),
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
+</span><span class="boring">type Foo = Arbitrary;
+</span><span class="boring">let bar = Arbitrary;
+</span>let foo = Foo::builder()
     .bar(bar)
     // ...
-    .build()?;</code></pre>
+    .build()?;
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 
                     </main>
 

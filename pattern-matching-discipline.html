@@ -185,7 +185,50 @@
 When using internal interfaces, always consider using pattern-matching to force useful compiler errors in case important, possibly new, parts of a structure haven’t been considered.
 This in turn will draw the attention of the next maintainer and help them correctly do what they need.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">impl Ord for MyStruct {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Eq, PartialEq, PartialOrd)]
+</span><span class="boring">struct MyStruct {
+</span><span class="boring">    my: String,
+</span><span class="boring">    thing: String,
+</span><span class="boring">    with: String,
+</span><span class="boring">    some: String,
+</span><span class="boring">    unused: String,
+</span><span class="boring">    fields: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Line {
+</span><span class="boring">    gradient: f64,
+</span><span class="boring">    y_intercept: f64,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Server;
+</span><span class="boring">struct ServerConfig {
+</span><span class="boring">    db_path: (),
+</span><span class="boring">    working_path: (),
+</span><span class="boring">}
+</span><span class="boring">use std::cmp::Ordering;
+</span>impl Ord for MyStruct {
     fn cmp(&amp;self, other: &amp;Self) -&gt; Ordering {
         let Self {
             my,
@@ -196,29 +239,118 @@ This in turn will draw the attention of the next maintainer and help them correc
             fields: _,
         } = self;
         (my, thing, with, some)
-            .cmp(&amp;(other.my, other.thing, other.with, other.some))
+            .cmp(&amp;(&amp;other.my, &amp;other.thing, &amp;other.with, &amp;other.some))
     }
 }</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">impl Ord for MyStruct {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Eq, PartialEq, PartialOrd)]
+</span><span class="boring">struct MyStruct {
+</span><span class="boring">    my: String,
+</span><span class="boring">    thing: String,
+</span><span class="boring">    with: String,
+</span><span class="boring">    some: String,
+</span><span class="boring">    unused: String,
+</span><span class="boring">    fields: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Line {
+</span><span class="boring">    gradient: f64,
+</span><span class="boring">    y_intercept: f64,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Server;
+</span><span class="boring">struct ServerConfig {
+</span><span class="boring">    db_path: (),
+</span><span class="boring">    working_path: (),
+</span><span class="boring">}
+</span><span class="boring">use std::cmp::Ordering;
+</span>impl Ord for MyStruct {
     fn cmp(&amp;self, other: &amp;Self) -&gt; Ordering {
-        (self.my, self.thing, self.with, self.some)
-            .cmp(&amp;(other.my, other.type, other.with, other.some))
+        (&amp;self.my, &amp;self.thing, &amp;self.with, &amp;self.some)
+            .cmp(&amp;(&amp;other.my, &amp;other.thing, &amp;other.with, &amp;other.some))
     }
 }</code></pre>
 <h2 id="dont-pattern-match-pointers"><a class="header" href="#dont-pattern-match-pointers">Don’t pattern-match pointers</a></h2>
 <p>It is possible to pattern-match the pointer to a <code>Copy</code> type to obtain the value at the other end.
 Although it may seem convenient, it ultimately harms readability—it is clearer to explicitly dereference the pointer we are given.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">    .map(|x| *x)</code></pre>
+<pre><code class="language-rust"><span class="boring">[0].iter()
+</span>    .map(|x| *x)
+<span class="boring">;</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">    .map(|&amp;x| x)</code></pre>
+<pre><code class="language-rust"><span class="boring">[0].iter()
+</span>    .map(|&amp;x| x)
+<span class="boring">;</span></code></pre>
 <h2 id="avoid-numeric-tuple-indexing"><a class="header" href="#avoid-numeric-tuple-indexing">Avoid numeric tuple-indexing</a></h2>
 <p>Although sometimes a handy shorthand, indexing tuples with <code>.0</code>, <code>.1</code> etc. deprives us of the opportunity to insert a good name in the same way that field-access on a struct would.
 Instead, prefer to use pattern-matching to give human-friendly names to the data being handled.
 Note that this advice does not apply in the <code>impl</code> blocks of newtype-pattern structs, i.e. tuple-structs with a single element (commonly used for wrapper types).</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">fn line_through(point1: (f64, f64), point2: (f64, f64)) -&gt; Line {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Eq, PartialEq, PartialOrd)]
+</span><span class="boring">struct MyStruct {
+</span><span class="boring">    my: String,
+</span><span class="boring">    thing: String,
+</span><span class="boring">    with: String,
+</span><span class="boring">    some: String,
+</span><span class="boring">    unused: String,
+</span><span class="boring">    fields: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Line {
+</span><span class="boring">    gradient: f64,
+</span><span class="boring">    y_intercept: f64,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Server;
+</span><span class="boring">struct ServerConfig {
+</span><span class="boring">    db_path: (),
+</span><span class="boring">    working_path: (),
+</span><span class="boring">}
+</span>fn line_through(point1: (f64, f64), point2: (f64, f64)) -&gt; Line {
 	let (x1, y1) = point1;
 	let (x2, y2) = point2;
 	let gradient = (y2 - y1) / (x2 - x1);
@@ -229,7 +361,49 @@ Note that this advice does not apply in the <code>impl</code> blocks of newtype-
 	}
 }</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">fn line_through(point1: (f64, f64), point2: (f64, f64)) -&gt; Line {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Eq, PartialEq, PartialOrd)]
+</span><span class="boring">struct MyStruct {
+</span><span class="boring">    my: String,
+</span><span class="boring">    thing: String,
+</span><span class="boring">    with: String,
+</span><span class="boring">    some: String,
+</span><span class="boring">    unused: String,
+</span><span class="boring">    fields: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Line {
+</span><span class="boring">    gradient: f64,
+</span><span class="boring">    y_intercept: f64,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Server;
+</span><span class="boring">struct ServerConfig {
+</span><span class="boring">    db_path: (),
+</span><span class="boring">    working_path: (),
+</span><span class="boring">}
+</span>fn line_through(point1: (f64, f64), point2: (f64, f64)) -&gt; Line {
 	let gradient = (point2.1 - point1.1) / (point2.0 - point1.0);
 	let y_intercept = point1.1 - gradient * point1.0;
 	Line {
@@ -243,17 +417,103 @@ Indeed, the fact that a particular parameter is to be pattern-matched inside of 
 <p>If parameters are to be unpacked, do this at the first line of a particular function.</p>
 <p>Note that this guidance does not apply to closures, which are commonly used as small, locally-scoped helper functions, whose types are inferred.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">impl Server {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Eq, PartialEq, PartialOrd)]
+</span><span class="boring">struct MyStruct {
+</span><span class="boring">    my: String,
+</span><span class="boring">    thing: String,
+</span><span class="boring">    with: String,
+</span><span class="boring">    some: String,
+</span><span class="boring">    unused: String,
+</span><span class="boring">    fields: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Line {
+</span><span class="boring">    gradient: f64,
+</span><span class="boring">    y_intercept: f64,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Server;
+</span><span class="boring">struct ServerConfig {
+</span><span class="boring">    db_path: (),
+</span><span class="boring">    working_path: (),
+</span><span class="boring">}
+</span>impl Server {
     fn new(config: ServerConfig) -&gt; Result&lt;Self&gt; {
-        let Config { db_path, working_path } = config;
-        // ...
-    }
+        let ServerConfig { db_path, working_path } = config;
+        /* ... */
+<span class="boring">      Ok(Server)
+</span>    }
 }</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">impl Server {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">#[derive(Eq, PartialEq, PartialOrd)]
+</span><span class="boring">struct MyStruct {
+</span><span class="boring">    my: String,
+</span><span class="boring">    thing: String,
+</span><span class="boring">    with: String,
+</span><span class="boring">    some: String,
+</span><span class="boring">    unused: String,
+</span><span class="boring">    fields: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Line {
+</span><span class="boring">    gradient: f64,
+</span><span class="boring">    y_intercept: f64,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Server;
+</span><span class="boring">struct ServerConfig {
+</span><span class="boring">    db_path: (),
+</span><span class="boring">    working_path: (),
+</span><span class="boring">}
+</span>impl Server {
     fn new(ServerConfig { db_path, working_path }: ServerConfig) -&gt; Result&lt;Self&gt; {
-        // ...
-    }
+        /* ... */
+<span class="boring">      Ok(Server)
+</span>    }
 }</code></pre>
 
                     </main>

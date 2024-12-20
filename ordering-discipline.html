@@ -186,7 +186,31 @@ The most important items should be defined further up the file, with their helpe
 No <code>impl</code> block should come before the type or trait to which it relates.
 In this way, lower-level implementation details are hidden from the reader until they wish to know more, at which point, having gained a good knowledge of the overall form of the code, they can read on to understand how it functions.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">impl Foo {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">type Foo = Arbitrary;
+</span>impl Foo {
     pub fn some_func(&amp;self) {
         self.some_helper_func();
     }
@@ -196,7 +220,31 @@ In this way, lower-level implementation details are hidden from the reader until
     }
 }</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">impl Foo {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">type Foo = Arbitrary;
+</span>impl Foo {
     fn some_helper_func(&amp;self) {
         // ...
     }
@@ -265,7 +313,10 @@ Specifically, this means that we should place:</p>
 Maintaining consistency is of a higher priority than a single derivation, hence the relevant implementations should be written out by hand.
 The reader is more likely to be looking at the entire struct rather than just one trait implementation.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">struct ScriptExecutionContext&lt;'h, T&gt; {
+<pre><code class="language-rust"><span class="boring">use std::collections::BTreeMap;
+</span><span class="boring">type StackFrame = ();
+</span><span class="boring">type Value&lt;'h&gt; = &amp;'h ();
+</span>struct ScriptExecutionContext&lt;'h, T&gt; {
     pub user_data: T,
 
     pub(crate) global_vars: BTreeMap&lt;String, Value&lt;'h&gt;&gt;,
@@ -275,7 +326,10 @@ The reader is more likely to be looking at the entire struct rather than just on
     steps: u64,
 }</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">struct ScriptExecutionContext&lt;'h, T&gt; {
+<pre><code class="language-rust"><span class="boring">use std::collections::BTreeMap;
+</span><span class="boring">type StackFrame = ();
+</span><span class="boring">type Value&lt;'h&gt; = &amp;'h ();
+</span>struct ScriptExecutionContext&lt;'h, T&gt; {
     stack: Vec&lt;StackFrame&gt;,
     pub(crate) global_vars: BTreeMap&lt;String, Value&lt;'h&gt;&gt;,
     pub user_data: T,

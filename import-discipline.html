@@ -194,31 +194,168 @@ Here, it is acceptable to import <code>*</code> to bring all variants of an enum
 However, this should not be done at the top level, only locally to improve the readability of long match statements.
 There, they should be placed as close as possible to the relevant match, preferably on the line immediately preceding it.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">use some_crate::{SpecificItem1, SpecificItem2};
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct SpecificItem1;
+</span><span class="boring">    pub struct SpecificItem2;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod some_other_crate {
+</span><span class="boring">    pub mod prelude {}
+</span><span class="boring">    pub struct SpecificItem3;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod another_crate {
+</span><span class="boring">    pub enum SomeEnum {
+</span><span class="boring">        Variant1,
+</span><span class="boring">        Variant2,
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod allocative {
+</span><span class="boring">    pub struct Allocative;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod derive_more {
+</span><span class="boring">    pub struct Display;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod starlark {
+</span><span class="boring">    pub mod environment {
+</span><span class="boring">        pub struct FrozenModule;
+</span><span class="boring">        pub struct Module;
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub mod eval {
+</span><span class="boring">        pub struct Evaluator;
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub mod values {
+</span><span class="boring">        pub struct AllocValue;
+</span><span class="boring">        pub struct Freeze;
+</span><span class="boring">        pub struct ProvidesStaticType;
+</span><span class="boring">        pub struct StarlarkValue;
+</span><span class="boring">        pub struct ValueLike;
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod starlark_derive {
+</span><span class="boring">    pub fn starlark_value() {}
+</span><span class="boring">    pub struct NoSerialize;
+</span><span class="boring">    pub struct Trace;
+</span><span class="boring">}
+</span>use some_crate::{SpecificItem1, SpecificItem2};
 use some_other_crate::SpecificItem3;
+use another_crate::{SomeEnum, SomeEnum::*};
 
-// ...
-
-fn some_fn(some_enum: SomeEnum) -&gt; {
-    // ...
-
+fn some_fn(some_enum: SomeEnum) {
     use SomeEnum::*;
-        Variant2 =&gt; {...},
+    match some_enum {
+        Variant1 =&gt; { /* ... */ }
+        Variant2 =&gt; { /* ... */ },
     }
 }</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">use some_crate::*;
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct SpecificItem1;
+</span><span class="boring">    pub struct SpecificItem2;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod some_other_crate {
+</span><span class="boring">    pub mod prelude {}
+</span><span class="boring">    pub struct SpecificItem3;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod another_crate {
+</span><span class="boring">    pub enum SomeEnum {
+</span><span class="boring">        Variant1,
+</span><span class="boring">        Variant2,
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod allocative {
+</span><span class="boring">    pub struct Allocative;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod derive_more {
+</span><span class="boring">    pub struct Display;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod starlark {
+</span><span class="boring">    pub mod environment {
+</span><span class="boring">        pub struct FrozenModule;
+</span><span class="boring">        pub struct Module;
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub mod eval {
+</span><span class="boring">        pub struct Evaluator;
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub mod values {
+</span><span class="boring">        pub struct AllocValue;
+</span><span class="boring">        pub struct Freeze;
+</span><span class="boring">        pub struct ProvidesStaticType;
+</span><span class="boring">        pub struct StarlarkValue;
+</span><span class="boring">        pub struct ValueLike;
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod starlark_derive {
+</span><span class="boring">    pub fn starlark_value() {}
+</span><span class="boring">    pub struct NoSerialize;
+</span><span class="boring">    pub struct Trace;
+</span><span class="boring">}
+</span>use some_crate::*;
 use some_other_crate::prelude::*;
-use another_crate::SomeEnum::*;
+use another_crate::{SomeEnum, SomeEnum::*};
 
-// ...
-
-fn some_fn(some_enum: SomeEnum) -&gt; {
-    // ...
-
-    match {
-        Variant1 =&gt; {...},
-        Variant2 =&gt; {...},
+fn some_fn(some_enum: SomeEnum) {
+    match some_enum {
+        Variant1 =&gt; { /* ... */ }
+        Variant2 =&gt; { /* ... */ }
     }
 }</code></pre>
 <h2 id="import-grouping"><a class="header" href="#import-grouping">Import grouping</a></h2>
@@ -230,17 +367,88 @@ To clearly delimit whether an import is from the standard library, from a third 
 <li><code>self</code>, <code>super</code>, <code>crate</code></li>
 </ul>
 <p>Note that this order follows the currently-unstable <code>rustfmt</code> option—</p>
-<pre><code>import_group = "StdExternCrate"
+<pre><code class="language-toml">import_group = "StdExternCrate"
 </code></pre>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">use std::path::PathBuf;
+<pre><code class="language-rust ignore">use std::path::PathBuf;
 
 use camino::Utf8PathBuf;
 use tokio::runtime::Runtime;
 
 use crate::{Error, Result};</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">use camino::Utf8PathBuf;
+<pre><code class="language-rust ignore"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct SpecificItem1;
+</span><span class="boring">    pub struct SpecificItem2;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod some_other_crate {
+</span><span class="boring">    pub mod prelude {}
+</span><span class="boring">    pub struct SpecificItem3;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod another_crate {
+</span><span class="boring">    pub enum SomeEnum {
+</span><span class="boring">        Variant1,
+</span><span class="boring">        Variant2,
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod allocative {
+</span><span class="boring">    pub struct Allocative;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod derive_more {
+</span><span class="boring">    pub struct Display;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod starlark {
+</span><span class="boring">    pub mod environment {
+</span><span class="boring">        pub struct FrozenModule;
+</span><span class="boring">        pub struct Module;
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub mod eval {
+</span><span class="boring">        pub struct Evaluator;
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub mod values {
+</span><span class="boring">        pub struct AllocValue;
+</span><span class="boring">        pub struct Freeze;
+</span><span class="boring">        pub struct ProvidesStaticType;
+</span><span class="boring">        pub struct StarlarkValue;
+</span><span class="boring">        pub struct ValueLike;
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod starlark_derive {
+</span><span class="boring">    pub fn starlark_value() {}
+</span><span class="boring">    pub struct NoSerialize;
+</span><span class="boring">    pub struct Trace;
+</span><span class="boring">}
+</span>use camino::Utf8PathBuf;
 use crate::{Error, Result};
 use std::path::PathBuf;
 use tokio::runtime::Runtime;</code></pre>
@@ -249,14 +457,156 @@ use tokio::runtime::Runtime;</code></pre>
 For this reason, avoid Java-style imports where every single imported item gets its own line with a complete and exhaustive path and instead use the cleaner nested syntax.
 If a path contains <em>n</em> parts, merge the first <em>n-1,</em> so that only the final part is grouped with its siblings.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">use allocative::Allocative;
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct SpecificItem1;
+</span><span class="boring">    pub struct SpecificItem2;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod some_other_crate {
+</span><span class="boring">    pub mod prelude {}
+</span><span class="boring">    pub struct SpecificItem3;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod another_crate {
+</span><span class="boring">    pub enum SomeEnum {
+</span><span class="boring">        Variant1,
+</span><span class="boring">        Variant2,
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod allocative {
+</span><span class="boring">    pub struct Allocative;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod derive_more {
+</span><span class="boring">    pub struct Display;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod starlark {
+</span><span class="boring">    pub mod environment {
+</span><span class="boring">        pub struct FrozenModule;
+</span><span class="boring">        pub struct Module;
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub mod eval {
+</span><span class="boring">        pub struct Evaluator;
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub mod values {
+</span><span class="boring">        pub struct AllocValue;
+</span><span class="boring">        pub struct Freeze;
+</span><span class="boring">        pub struct ProvidesStaticType;
+</span><span class="boring">        pub struct StarlarkValue;
+</span><span class="boring">        pub struct ValueLike;
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod starlark_derive {
+</span><span class="boring">    pub fn starlark_value() {}
+</span><span class="boring">    pub struct NoSerialize;
+</span><span class="boring">    pub struct Trace;
+</span><span class="boring">}
+</span>use allocative::Allocative;
 use derive_more::Display;
 use starlark::environment::{FrozenModule, Module};
 use starlark::eval::Evaluator;
 use starlark::values::{AllocValue, Freeze, ProvidesStaticType, StarlarkValue, ValueLike};
 use starlark_derive::{starlark_value, NoSerialize, Trace};</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">use allocative::Allocative;
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct SpecificItem1;
+</span><span class="boring">    pub struct SpecificItem2;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod some_other_crate {
+</span><span class="boring">    pub mod prelude {}
+</span><span class="boring">    pub struct SpecificItem3;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod another_crate {
+</span><span class="boring">    pub enum SomeEnum {
+</span><span class="boring">        Variant1,
+</span><span class="boring">        Variant2,
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod allocative {
+</span><span class="boring">    pub struct Allocative;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod derive_more {
+</span><span class="boring">    pub struct Display;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod starlark {
+</span><span class="boring">    pub mod environment {
+</span><span class="boring">        pub struct FrozenModule;
+</span><span class="boring">        pub struct Module;
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub mod eval {
+</span><span class="boring">        pub struct Evaluator;
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub mod values {
+</span><span class="boring">        pub struct AllocValue;
+</span><span class="boring">        pub struct Freeze;
+</span><span class="boring">        pub struct ProvidesStaticType;
+</span><span class="boring">        pub struct StarlarkValue;
+</span><span class="boring">        pub struct ValueLike;
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod starlark_derive {
+</span><span class="boring">    pub fn starlark_value() {}
+</span><span class="boring">    pub struct NoSerialize;
+</span><span class="boring">    pub struct Trace;
+</span><span class="boring">}
+</span>use allocative::Allocative;
 use derive_more::Display;
 use starlark::environment::FrozenModule;
 use starlark::environment::Module;
@@ -272,13 +622,13 @@ use starlark_derive::Trace;</code></pre>
 <h2 id="import-self-explicitly"><a class="header" href="#import-self-explicitly">Import <code>self</code> explicitly</a></h2>
 <p>When importing from a child module <code>foo</code>, always <code>use self::foo</code> as this avoids future name-clashes with a dependency also called <code>foo</code>.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">mod foo;
+<pre><code class="language-rust ignore">mod foo;
 mod bar;
 
 pub use self::foo::Foo;
 pub use self::bar::Bar;</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">mod foo;
+<pre><code class="language-rust ignore">mod foo;
 mod bar;
 
 pub use foo::Foo;

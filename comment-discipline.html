@@ -185,22 +185,134 @@
 It should clearly and concisely explain the whole of the golden path of a function.
 After reading this first sentence, it should be clear <em>when</em> to use the given function/type—don’t fall into the trap of just explaining <em>what</em> the given item does.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">/// This function reports an increase in the number of steps taken by this
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span>/// This function reports an increase in the number of steps taken by this
 /// thread.
-fn add_steps(&amp;self, delta: i64) -&gt; Result&lt;()&gt; { .. }</code></pre>
+fn add_steps(&amp;self, delta: i64) -&gt; Result&lt;()&gt; {
+    /* ... */
+<span class="boring">  Ok(())
+</span>}
+<span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">/// This function adds a given delta to the current step counter.
-fn add_steps(&amp;self, delta: i64) -&gt; Result&lt;()&gt; { .. }</code></pre>
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span>/// This function adds a given delta to the current step counter.
+fn add_steps(&amp;self, delta: i64) -&gt; Result&lt;()&gt; {
+    /* ... */
+<span class="boring">  Ok(())
+</span>}
+<span class="boring">}</span></code></pre>
 <h2 id="definite-vs-indefinite-articles"><a class="header" href="#definite-vs-indefinite-articles">Definite vs. Indefinite articles</a></h2>
 <p>When referring to parameters, be concrete and specific.
 Where possible, refer parameters by their name and if an article must be used (i.e. ‘a’/‘an’ and ‘the’), always prefer the definite article, ‘the.’
 Leave no room for ambiguity and hence misunderstanding.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">/// Increments this counter by the given `delta`.
-fn incr_by(&amp;self, delta: u64) -&gt; Result&lt;()&gt; { .. }</code></pre>
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span>/// Increments this counter by the given `delta`.
+fn incr_by(&amp;self, delta: u64) -&gt; Result&lt;()&gt; {
+    /* ... */
+<span class="boring">  Ok(())
+</span>}
+<span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">/// Increments a counter by a given amount.
-fn incr_by(&amp;self, delta: u64) -&gt; Result&lt;()&gt; { .. }</code></pre>
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span>/// Increments a counter by a given amount.
+fn incr_by(&amp;self, delta: u64) -&gt; Result&lt;()&gt; {
+    /* ... */
+<span class="boring">  Ok(())
+</span>}
+<span class="boring">}</span></code></pre>
 
                     </main>
 

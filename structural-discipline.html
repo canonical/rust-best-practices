@@ -198,13 +198,13 @@ Like-gated items should be wrapped in a block, i.e. <code>#[cfg(...)] { /* items
 <h2 id="use-modrs-to-declare-a-module-root"><a class="header" href="#use-modrs-to-declare-a-module-root">Use <code>mod.rs</code> to declare a module-root</a></h2>
 <p>When declaring a module <code>foo</code> which comprises multiple files, Rust allows two directory structures as follows.</p>
 <p>Firstly, all files can be grouped into a single directory containing a <code>mod.rs</code>—</p>
-<pre><code>foo/
+<pre><code class="language-ignore">foo/
 ├── mod.rs
 ├── file_in_foo.rs
 └── another_file_in_foo.rs
 </code></pre>
 <p>Secondly, all files can be grouped into a single directory, except for the module root which is stored next to the directory and shares its name—</p>
-<pre><code>foo.rs
+<pre><code class="language-ignore">foo.rs
 foo/
 ├── file_in_foo.rs
 └── another_file_in_foo.rs

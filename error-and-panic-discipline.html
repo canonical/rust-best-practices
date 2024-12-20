@@ -186,10 +186,10 @@ This in turn, makes it clearer which information should be plumbed where, avoidi
 <p>Error messages should be concise.
 Every second longer a user spends reading an error message and not understanding what went wrong is a second longer of their frustration.
 The form of the phrases used in error messages should be consistent—if, likely from previous messages, the user is expecting—</p>
-<pre><code>cannot foo the bar
+<pre><code class="language-ignore">cannot foo the bar
 </code></pre>
 <p>but instead reads—</p>
-<pre><code>bar is not fooable
+<pre><code class="language-ignore">bar is not fooable
 </code></pre>
 <p>they will experience unnecessary discomfort.
 Keep it nice and clean.</p>
@@ -228,7 +228,7 @@ In particular, the process of responding to particular errors is far more robust
 (Note that although <code>&amp;‘static str</code> may be applicable, <code>String</code> offers more flexibility and can be expected to have a negligible performance impact.)
 When constructing these errors, special care must be taken to ensure that the message is consistent with other errors in the codebase.
 The field used to hold the reason for the error in these cases should be named <code>reason</code>.</p>
-<pre><code class="language-rust">#[derive(Debug, thiserror::Error)]
+<pre><code class="language-rust ignore">#[derive(Debug, thiserror::Error)]
 pub enum Error {
     // ...
 
@@ -239,7 +239,7 @@ pub enum Error {
     },
 }</code></pre>
 <p>If one error wraps another, the inner error should be held in a field named <code>source</code>.</p>
-<pre><code class="language-rust">#[derive(Debug, thiserror::Error)]
+<pre><code class="language-rust ignore">#[derive(Debug, thiserror::Error)]
 pub enum Error {
     // ...
 
@@ -251,7 +251,7 @@ pub enum Error {
 }</code></pre>
 <p>Note that exposing the error type originating from dependencies as these may accidentally expose internal details in a public API.
 In these cases, if using enumerated errors, consider adding an <code>Internal</code> variant which holds a type which hides the internal details as follows—</p>
-<pre><code class="language-rust">#[derive(Debug, thiserror::Error)]
+<pre><code class="language-rust ignore">#[derive(Debug, thiserror::Error)]
 pub enum Error {
     // ...
 
@@ -273,24 +273,95 @@ The intuition here is that within our crates, we should be talking our own error
 Long call-chains often handle many different error types and converting early into the common crate-local error type will allow natural error propagation.
 By maintaining the same convention with short chains, our code becomes more predictable and hence easier to read.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">let override_url = env::var("URL")
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod url {
+</span><span class="boring">    pub struct Url;
+</span><span class="boring">
+</span><span class="boring">    impl Url {
+</span><span class="boring">        pub fn parse(_: &amp;str) -&gt; std::result::Result&lt;Self, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">            Ok(Self)
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
+</span><span class="boring">use std::env;
+</span><span class="boring">use url::Url;
+</span>let override_url = env::var("URL")
     .ok()
-    .map(|override| {
-        Url::parse(&amp;override).map_err(|source| Error::MalformedEnvUrl {
+    .map(|override_url| {
+        Url::parse(&amp;override_url).map_err(|source| Error::MalformedEnvUrl {
             env_var: "URL",
             source,
         })
     })
-    .transpose()?;</code></pre>
+    .transpose()?;
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">let override_url = env::var("URL")
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">mod url {
+</span><span class="boring">    pub struct Url;
+</span><span class="boring">
+</span><span class="boring">    impl Url {
+</span><span class="boring">        pub fn parse(_: &amp;str) -&gt; std::result::Result&lt;Self, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">            Ok(Self)
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">use std::env;
+</span><span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
+</span>let override_url = env::var("URL")
     .ok()
     .map(|override_url| url::Url::parse(&amp;override_url))
     .transpose()
     .map_err(|source| Error::MalformedEnvUrl { // The error to be mapped comes from somewhere in the chain above!
         env_var: "URL",
         source,
-    })?;</code></pre>
+    })?;
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 <h2 id="panic-calmly"><a class="header" href="#panic-calmly">Panic calmly</a></h2>
 <p>Panics must only be used if a program enters an unrecoverable state.
 Further, that unrecoverable state must not be as a result of user input—a program which a user can easily crash is not a good program.</p>

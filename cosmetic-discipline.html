@@ -193,7 +193,60 @@ Put a blank line here.</li>
 If the check contains more than three lines, the declaration and check start to form their own strongly associated block so require a blank line after.</li>
 </ul>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">let x = foo();
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn is_valid(&amp;self) -&gt; bool {
+</span><span class="boring">        true
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl std::ops::Add for Arbitrary {
+</span><span class="boring">    type Output = Self;
+</span><span class="boring">
+</span><span class="boring">    fn add(self, _: Self) -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl std::fmt::Display for Arbitrary {
+</span><span class="boring">    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+</span><span class="boring">        write!(f, "Arbitrary")
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn foo() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn bar() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn baz() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;Arbitrary&gt; {
+</span>let x = foo();
 if !x.is_valid() {
     return Err(Error::Invalid);
 }
@@ -203,9 +256,63 @@ let y = baz();
 if !y.is_valid() {
     return Err(Error::Invalid);
 }
-return Ok(y);</code></pre>
+return Ok(y);
+<span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">let x = foo();
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn is_valid(&amp;self) -&gt; bool {
+</span><span class="boring">        true
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl std::ops::Add for Arbitrary {
+</span><span class="boring">    type Output = Self;
+</span><span class="boring">
+</span><span class="boring">    fn add(self, _: Self) -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl std::fmt::Display for Arbitrary {
+</span><span class="boring">    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+</span><span class="boring">        write!(f, "Arbitrary")
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn foo() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn bar() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn baz() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;Arbitrary&gt; {
+</span>let x = foo();
 
 if !x.is_valid() {
     return Err(Error::Invalid);
@@ -217,7 +324,8 @@ if !y.is_valid() {
     return Err(Error::Invalid);
 }
 
-return Ok(y);</code></pre>
+return Ok(y);
+<span class="boring">}</span></code></pre>
 <h2 id="grouping"><a class="header" href="#grouping">Grouping</a></h2>
 <p>Don’t interleave unrelated code.
 Remember, to a new reader, this will look deliberate and they become confused about how variables relate.
@@ -229,28 +337,139 @@ Also, consider whether a closure is required at all—although it may be temptin
 Logic should always feel clean and be easy to follow.</p>
 <p><em>The following snippets assume that functions <code>foo</code>, <code>bar</code> and <code>baz</code> are free of side-effects.</em></p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">let x = foo();
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn is_valid(&amp;self) -&gt; bool {
+</span><span class="boring">        true
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl std::ops::Add for Arbitrary {
+</span><span class="boring">    type Output = Self;
+</span><span class="boring">
+</span><span class="boring">    fn add(self, _: Self) -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl std::fmt::Display for Arbitrary {
+</span><span class="boring">    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+</span><span class="boring">        write!(f, "Arbitrary")
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn foo() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn bar() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn baz() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
+</span>let x = foo();
 let b = baz();
 if !b.is_valid() {
-    return Err(Error::Invalid)
+    return Err(Error::Invalid);
 }
 let z = x + b;
 
 let y = bar();
 if !y.is_valid() {
-    return Err(Error::Invalid)
-}</code></pre>
+    return Err(Error::Invalid);
+}
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">let x = foo()
-let check = |x| {
-    if !x.valid() {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn is_valid(&amp;self) -&gt; bool {
+</span><span class="boring">        true
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl std::ops::Add for Arbitrary {
+</span><span class="boring">    type Output = Self;
+</span><span class="boring">
+</span><span class="boring">    fn add(self, _: Self) -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl std::fmt::Display for Arbitrary {
+</span><span class="boring">    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+</span><span class="boring">        write!(f, "Arbitrary")
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn foo() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn bar() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn baz() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
+</span><span class="boring">type X = Arbitrary;
+</span>let x = foo();
+let check = |x: X| {
+    if !x.is_valid() {
         return Err(Error::Invalid)
     }
     Ok(x)
 };
 let y = bar();
 let z = x + check(baz())?;
-check(y)?;</code></pre>
+check(y)?;
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 <h2 id="hex-values"><a class="header" href="#hex-values">Hex values</a></h2>
 <p>Unless there is an existing convention, hex values should be lowercase as this avoids creating visually-impenetrable rectangles.
 By using lowercase, we provide more ‘handles’ for the eye to use.</p>

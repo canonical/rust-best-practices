@@ -184,24 +184,191 @@
 <p>Use <code>Self</code> wherever possible to reduce the number of types which the reader must keep in mind as instead of needing to remember an extra type which may or may not be important, the reader is instead reminded that the current code strongly relates to the <code>impl</code> block it is contained in.
 By maximising the use of <code>Self</code> it also highlights where it <em>isn’t</em> possible to use it, for example when the return type of a function has a slightly different set of generic parameters.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">impl Node {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">use std::cmp::Ordering;
+</span><span class="boring">#[derive(Eq, PartialEq)]
+</span><span class="boring">struct Node;
+</span>impl Node {
     pub fn new(parent: &amp;Self) -&gt; Self {
-        Self(..)
-    }
+        // ...
+<span class="boring">      Node
+</span>    }
 }
 
 impl PartialOrd for Node {
-    fn cmp(&amp;self, other: &amp;Self) -&gt; Ordering;
+    fn partial_cmp(&amp;self, other: &amp;Self) -&gt; Option&lt;Ordering&gt; {
+<span class="boring">      Some(Ordering::Less)
+</span>    }
 }</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">impl Node {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">use std::cmp::Ordering;
+</span><span class="boring">#[derive(Eq, PartialEq)]
+</span><span class="boring">struct Node;
+</span>impl Node {
     pub fn new(parent: &amp;Node) -&gt; Node {
-        Foo(..)
-    }
+        // ...
+<span class="boring">      Node
+</span>    }
 }
 
-impl PartialOrd&lt;Rhs=Node&gt; for Node { // NB: Rhs=Self is also the default for PartialOrd.
-    fn cmp(&amp;self, other: &amp;Node) -&gt; Ordering;
+impl PartialOrd&lt;Node&gt; for Node { // NB: Rhs=Self is also the default for PartialOrd.
+    fn partial_cmp(&amp;self, other: &amp;Node) -&gt; Option&lt;Ordering&gt; {
+        // ...
+<span class="boring">      Some(Ordering::Less)
+</span>    }
 }</code></pre>
 <h2 id="when-not-to-use-self"><a class="header" href="#when-not-to-use-self">When not to use <code>Self</code></a></h2>
 <p>Do not use <code>Self</code> when constructing associated types.</p>
@@ -212,29 +379,200 @@ Use these <code>Self::*</code> types to define interfaces, but use concrete type
 <p>The only exception is for trait items which return a <code>Result&lt;_, Self::Err&gt;</code>, where <code>Err</code> is set to the crate’s <code>Error</code> type.
 In this case, it is okay to use the crate’s <code>Result</code> type alias instead.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">impl Responder for MyType {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">type MyType = Arbitrary;
+</span><span class="boring">struct SomeStruct {
+</span><span class="boring">    some: (),
+</span><span class="boring">    fields: (),
+</span><span class="boring">}
+</span>impl Responder for MyType {
     type Response = SomeStruct;
     type Err = Error;
 
     fn respond(&amp;self, _input: Input) -&gt; Result&lt;Self::Response&gt; {
+        let some = ();
+        let fields = ();
         Ok(SomeStruct{
-            some: ...,
-            fields: ...,
+            some,
+            fields,
         })
     }
 }</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">impl Responder for MyType {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">type MyType = Arbitrary;
+</span><span class="boring">struct SomeStruct {
+</span><span class="boring">    some: (),
+</span><span class="boring">    fields: (),
+</span><span class="boring">}
+</span><span class="boring">{
+</span><span class="boring">type Result&lt;T, E&gt; = std::result::Result&lt;T, E&gt;;
+</span>impl Responder for MyType {
     type Response = SomeStruct;
     type Err = Error;
 
-    fn respond(&amp;self, _input: I) -&gt; Result&lt;SomeStruct, Error&gt; {
+    fn respond(&amp;self, _input: Input) -&gt; Result&lt;SomeStruct, Error&gt; {
+        let some = ();
+        let fields = ();
         Ok(Self::Response {
-            some: ...,
-            fields: ...,
+            some,
+            fields,
         })
     }
-}</code></pre>
+}
+<span class="boring">}</span></code></pre>
 <h2 id="struct-population"><a class="header" href="#struct-population">Struct population</a></h2>
 <p>Structs, like tuples, provide an excellent way to group together related information of different types.
 Unlike tuples however, they force values to be named, thus avoiding any forgettable-ordering problems.
@@ -257,86 +595,523 @@ This avoids the reader having to wade through alphabet soup.</p>
 Each line which populates a field in a given struct must be independent.
 If there is a dependency between field declarations, for example if some shared state is mutated during their construction, use <code>let</code> declarations and the first form instead.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">struct Entry&lt;K, V&gt; {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>struct Entry&lt;K, V&gt; {
     id: u64,
     key: K,
     value: V,
     pretty_date_modified: String,
 }
 
-fn get_entry(&amp;self, key: K) -&gt; Result&lt;Entry&lt;K, V&gt;&gt; {
-    let id = self.id_of(key)?;
-    let value = self.get(key)?;
-    let pretty_date_modified = self.date_modified(key)?
+<span class="boring">type V = Arbitrary;
+</span><span class="boring">impl&lt;K: Clone&gt; Entry&lt;K, V&gt; {
+</span>fn get_entry(&amp;self, key: &amp;K) -&gt; Result&lt;Entry&lt;K, V&gt;&gt; {
+    let key = key.clone();
+    let id = self.id_of(&amp;key)?;
+    let value = self.get(&amp;key)?;
+    let pretty_date_modified = self.date_modified(&amp;key)?
         .format_as("yyyy-MM-dd@hh:mm:ss");
-    Entry {
+    Ok(Entry {
         id,
         key,
         value,
         pretty_date_modified,
-    }
-}</code></pre>
+    })
+}
+<span class="boring">
+</span><span class="boring">  fn get(&amp;self, _: &amp;K) -&gt; Result&lt;V&gt; {
+</span><span class="boring">      Ok(Arbitrary)
+</span><span class="boring">  }
+</span><span class="boring">
+</span><span class="boring">  fn id_of(&amp;self, _: &amp;K) -&gt; Result&lt;u64&gt; {
+</span><span class="boring">      Ok(0)
+</span><span class="boring">  }
+</span><span class="boring">
+</span><span class="boring">  fn date_modified(&amp;self, _: &amp;K) -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">      Ok(Arbitrary)
+</span><span class="boring">  }
+</span><span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">struct Entry&lt;K, V&gt; {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>struct Entry&lt;K, V&gt; {
     id: u64,
     key: K,
     value: V,
     pretty_date_modified: String,
 }
 
-fn get_entry(&amp;self, key: K) -&gt; Result&lt;Entry&lt;K, V&gt;&gt; {
+<span class="boring">type V = Arbitrary;
+</span><span class="boring">impl&lt;K: Clone&gt; Entry&lt;K, V&gt; {
+</span>fn get_entry(&amp;self, key: &amp;K) -&gt; Result&lt;Entry&lt;K, V&gt;&gt; {
     let value_stored_at_key = self.get(key)?;
-    Entry {
+    Ok(Entry {
         id: self.id_of(key)?,
         pretty_date_modified: self.date_modified(key)?
             .format_as("yyyy-MM-dd@hh:mm:ss"),
-        key,
+        key: key.clone(),
         value: value_stored_at_key,
-    }
-}</code></pre>
+    })
+}
+<span class="boring">
+</span><span class="boring">  fn get(&amp;self, _: &amp;K) -&gt; Result&lt;V&gt; {
+</span><span class="boring">      Ok(Arbitrary)
+</span><span class="boring">  }
+</span><span class="boring">
+</span><span class="boring">  fn id_of(&amp;self, _: &amp;K) -&gt; Result&lt;u64&gt; {
+</span><span class="boring">      Ok(0)
+</span><span class="boring">  }
+</span><span class="boring">
+</span><span class="boring">  fn date_modified(&amp;self, _: &amp;K) -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">      Ok(Arbitrary)
+</span><span class="boring">  }
+</span><span class="boring">}</span></code></pre>
 <h2 id="tuple-population"><a class="header" href="#tuple-population">Tuple population</a></h2>
 <p>Tuples are most easily read when they are short as once line-breaks occur, the structure being created gets harder to discern.
 Keep things visually simple—if the formatter chooses to break tuple population into multiple lines, instead introduce new <code>let</code> declarations to move computation away from the tuple population.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">let key = some_long_computation()?
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;(Arbitrary, Arbitrary)&gt; {
+</span>let key = some_long_computation()?
     .something_else()
     .another_thing();
 let value = some_other_long_computation()
     .chained_with_something_else()?;
-(key, value)</code></pre>
+<span class="boring">let ret =
+</span>(key, value)
+<span class="boring">;
+</span><span class="boring">Ok(ret)
+</span><span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">(
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;(Arbitrary, Arbitrary)&gt; {
+</span><span class="boring">let ret =
+</span>(
     some_long_computation()?
         .something_else()
         .another_thing(),
     some_other_long_computation()
         .chained_with_something_else()?,
-)</code></pre>
+)
+<span class="boring">;
+</span><span class="boring">Ok(ret)
+</span><span class="boring">}</span></code></pre>
 <h2 id="prefer-collect-when-interacting-with-fromiterator"><a class="header" href="#prefer-collect-when-interacting-with-fromiterator">Prefer <code>collect</code> when interacting with <code>FromIterator</code></a></h2>
 <p>The <code>FromIterator</code> trait defines a method <code>from_iter</code> which is called by <code>Iterator::collect</code>.
 We therefore have two methods of collecting into an iterator, <code>Foo::from_iter</code> and <code>collect()</code> with appropriate type bounds.
 Prefer the latter as this makes the order of operations the same as what is read from top to bottom.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">let my_vec: Vec&lt;_&gt; = collection.into_iter()
-    .filter(...)
+<pre><code class="language-rust"><span class="boring">let collection = [0];
+</span><span class="boring">let filter_closure = |_: &amp;i32| true;
+</span>let my_vec: Vec&lt;_&gt; = collection.into_iter()
+    .filter(filter_closure)
     .collect();</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">let my_vec = Vec::from_iter(collection.into_iter().filter(...))</code></pre>
+<pre><code class="language-rust"><span class="boring">let collection = [0];
+</span><span class="boring">let filter_closure = |_: &amp;i32| true;
+</span>let my_vec = Vec::from_iter(
+    collection.into_iter()
+        .filter(filter_closure)
+);</code></pre>
 <h2 id="empty-vec-construction"><a class="header" href="#empty-vec-construction">Empty <code>Vec</code> construction</a></h2>
 <p>To construct an empty <code>Vec</code>, we have three options: <code>vec![]</code>, <code>Vec::new()</code> and <code>Vec::with_capacity(_)</code>.
 If the size of the <code>Vec</code> resulting from an operation can be reasonably estimated, prefer <code>Vec::with_capacity</code> as this will avoid unnecessary reallocations.
 Otherwise, if a zero-sized <code>Vec</code> is required, use <code>Vec::new()</code> as this indicates most clearly that no operation is being performed as the docs for <code>Vec::new</code> guarantee no allocations, but those for <code>vec!</code> do not.
 Consider also that <code>vec![expr; n]</code> where <code>n</code> is zero will still evaluate (and then immediately drop) <code>expr</code>.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">let my_vec = Vec::new();</code></pre>
+<pre><code class="language-rust">let my_vec = Vec::new();
+<span class="boring">let my_vec_constraint: Vec&lt;i32&gt; = my_vec;</span></code></pre>
 <p>⚠️ Avoid this:</p>
 <pre><code class="language-rust">let my_vec = vec![];
-let my_vec = Vec::with_capacity(0);</code></pre>
+<span class="boring">let my_vec_constraint: Vec&lt;i32&gt; = my_vec;
+</span>let my_vec = Vec::with_capacity(0);
+<span class="boring">let my_vec_constraint: Vec&lt;i32&gt; = my_vec;</span></code></pre>
 <h2 id="avoid-loosely-scoped-let-mut"><a class="header" href="#avoid-loosely-scoped-let-mut">Avoid loosely-scoped <code>let mut</code></a></h2>
 <p>In many cases, mutability is used to create a given structure which is then used immutably for the remainder of its lifetime.
 Whenever this happens, scope the mutable declarations to just where they are needed, thus forcing a compiler error if this condition is broken in future.
 Doing this also makes code simpler to read as there are fewer things which can mutate at any one point.</p>
-<pre><code class="language-rust">let my_structure = {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">type MyStructure = Arbitrary;
+</span>let my_structure = {
     let mut my_structure = MyStructure::new();
     // Mutate `my_structure` as required to construct it.
     my_structure
@@ -344,27 +1119,109 @@ Doing this also makes code simpler to read as there are fewer things which can m
 <p>For greatest clarity, make sure the name of the outer (immutable) and inner (mutable) declarations have the same name, here <code>my_structure</code>.</p>
 <p>If mutability is to retain some state whilst iterating through a structure, consider using a functional style instead.
 As a simple example, if presented with the following imperative code to count the number of spaces in a string</p>
-<pre><code class="language-rust">let mut num_spaces = 0;
+<pre><code class="language-rust"><span class="boring">let my_string = "";
+</span>let mut num_spaces = 0;
 for c in my_string.chars() {
     if c == ' ' {
-        num_speces += 1;
+        num_spaces += 1;
     }
 }</code></pre>
 <p>Consider instead, using the functional style to avoid the mutation—</p>
-<pre><code class="language-rust">let num_spaces = my_string.chars()
-    .filter(|c| c == ' ')
+<pre><code class="language-rust"><span class="boring">let my_string = "";
+</span>let num_spaces = my_string.chars()
+    .filter(|c| *c == ' ')
     .count();</code></pre>
 <h2 id="avoid-unassigned-let-declarations"><a class="header" href="#avoid-unassigned-let-declarations">Avoid unassigned <code>let</code> declarations</a></h2>
 <p>Let-declarations without values indicate an odd flow of data through a function.
 Instead, prefer to return the required value from the block which computes it.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">let message = if result.is_ok() {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
+</span><span class="boring">let result = Result::Ok(());
+</span>let message = if result.is_ok() {
     "success!"
 } else {
     "failed!"
-}
+};
 
-let mut retries = 0;
+<span class="boring">fn exec_web_request() -&gt; Result&lt;Message&gt; { Ok(Message) }
+</span>let mut retries = 0;
 let message = loop {
     let resp = exec_web_request();
     match resp {
@@ -375,18 +1232,100 @@ let message = loop {
 
     retries += 1;
     if retries &gt; 5 {
-        return Err(Error::Unavailable);
+        return Err(Error::NetworkUnavailable);
     }
-}</code></pre>
+};
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">let message;
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
+</span><span class="boring">let result = Result::Ok(());
+</span>let message;
 if result.is_ok() {
     message = "success!";
 } else {
     message = "failed!";
 }
 
-let mut retries = 0;
+<span class="boring">fn exec_web_request() -&gt; Result&lt;Message&gt; { Ok(Message) }
+</span>let mut retries = 0;
 let message;
 loop {
     let resp = exec_web_request();
@@ -401,9 +1340,11 @@ loop {
 
     retries += 1;
     if retries &gt; 5 {
-        return Err(Error::Unavailable);
+        return Err(Error::NetworkUnavailable);
     }
-}</code></pre>
+}
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 <h2 id="reference-scope"><a class="header" href="#reference-scope">Reference scope</a></h2>
 <p>In many cases, the compiler is smart enough to create temporary storage locations to store variables which are given the value <code>&amp;expr</code>, however, when these are passed to functions, it becomes slightly harder to follow which type is being used, especially when handling <code>&amp;T</code> where <code>T</code> is <code>!Copy</code>.
 In this case, it is only a single character in the variable declaration, possibly many lines away which shows that the value <code>T</code> is not being moved, only its reference.</p>
@@ -411,10 +1352,14 @@ In this case, it is only a single character in the variable declaration, possibl
 This way, the transfer of ownership is much more explicit.
 As a rule of thumb, only use <code>&amp;</code> at the start of the value of a <code>let</code> declaration when either indexing or slicing.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">let foo = from_func();
+<pre><code class="language-rust"><span class="boring">fn from_func() {}
+</span><span class="boring">fn other_func(_: &amp;()) {}
+</span>let foo = from_func();
 other_func(&amp;foo);</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">let foo = &amp;from_func();
+<pre><code class="language-rust"><span class="boring">fn from_func() {}
+</span><span class="boring">fn other_func(_: &amp;()) {}
+</span>let foo = &amp;from_func();
 other_func(foo);</code></pre>
 <h2 id="shadowing"><a class="header" href="#shadowing">Shadowing</a></h2>
 <p>When used in moderation, shadowing provides an excellent way to manipulate data or change its type whilst still highlighting that the ‘same’ data is being processed, however, too many levels of shadowing quickly makes code harder to follow.</p>
@@ -425,30 +1370,114 @@ other_func(foo);</code></pre>
 <li>Shadowing in the same scope with different types, such as <code>let x: T = x.into()</code></li>
 </ol>
 <p>In the first case when shadowing with different scopes, use at most one level of shadowing, for example when pattern matching enum variants—</p>
-<pre><code class="language-rust">if let Some(foo) = foo {
+<pre><code class="language-rust">let foo = Some(());
+if let Some(foo) = foo {
     // The outer `foo` is now shadowed.
     // The inner `foo` should not be shadowed.
 }</code></pre>
 <p>In the second case when shadowing in the same scope with the same type, there is no restriction placed on this and it may be done as many times as necessary.
 However, if this is being used to effectively mutate a value during construction with no other values being affected, instead use the scoped-mutability pattern—</p>
-<pre><code class="language-rust">let my_thing = {
-    let mut my_thing = ...;
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">type MyThing = Arbitrary;
+</span>let my_thing = {
+    let mut my_thing = MyThing::new();
     // Mutate `my_thing` to construct it...
     my_thing
 };</code></pre>
 <p>In the final case, when shadowing in the same but changing types (e.g. in a conversion method), shadowing can be done at most once per variable.
 This pattern is commonly seen in conversion functions—those which take ownership of their sole parameter and convert it into another type.</p>
-<pre><code class="language-rust">impl Store&lt;New&gt; {
+<pre><code class="language-rust"><span class="boring">struct Store&lt;S&gt; {
+</span><span class="boring">    some_field: (),
+</span><span class="boring">    state: S,
+</span><span class="boring">}
+</span><span class="boring">struct New;
+</span><span class="boring">struct Inited;
+</span>impl Store&lt;New&gt; {
     fn init(self) -&gt; Store&lt;Inited&gt; {
-        let Self { some_field } = self,
-        // ...
+        let Self { some_field, .. } = self;
         let some_field = some_field.into();
         // ...
-        InitedSelf {
+        Store {
+            some_field,
             // ...
-            some_field
-            // ...
-        }
+<span class="boring">          state: Inited,
+</span>        }
     }
 }</code></pre>
 <p>Now let us consider name-shadowing with types.
@@ -461,17 +1490,19 @@ If some constraints are complex enough to be placed into a <code>where</code> cl
 <p>If constraints are declared in angle brackets and that declaration is longer than 30 characters, move all constraints into a <code>where</code> clause.</p>
 <p>These rules ensure that the reader cannot miss any constraints.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">impl&lt;'a, 'b, I, T&gt; SomeStruct&lt;'a, 'b, I, T&gt;
+<pre><code class="language-rust"><span class="boring">struct IterWrapper&lt;I&gt;(I);
+</span>impl&lt;'a, 'b, I, T&gt; IterWrapper&lt;I&gt;
     where
         'b: 'a,
-        I: IntoIterator&lt;T&gt; + 'a,
+        I: Iterator&lt;Item=T&gt; + 'a,
         T: 'b,
-{ ... }</code></pre>
+{ /* ... */ }</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">impl&lt;'a, 'b: 'a, I: IntoIterator&lt;T&gt; + 'a&gt; SomeStruct
+<pre><code class="language-rust"><span class="boring">struct IterWrapper&lt;I&gt;(I);
+</span>impl&lt;'a, 'b: 'a, I: Iterator&lt;Item=T&gt; + 'a, T&gt; IterWrapper&lt;I&gt;
     where
         T: 'b
-{ ... }</code></pre>
+{ /* ... */ }</code></pre>
 <h2 id="type-annotations"><a class="header" href="#type-annotations">Type annotations</a></h2>
 <p>The compiler’s type inference is usually very good, but sometimes, it needs a little extra information.
 When adding the necessary annotations, we must be mindful of how much information we provide and where that information is provided.</p>
@@ -502,17 +1533,27 @@ If an API you are making can cause an abundance of name-clashes, your consumers 
 In this case, refactor it as best you can.</p>
 <p>If a type parameter seems necessary as a variable name is not sufficiently descriptive, improve the name.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">let some_meaningful_var_name: Vec&lt;_&gt; = foo.iter()
-    .filter(...)
-    .map(...)
+<pre><code class="language-rust"><span class="boring">let foo = [0];
+</span><span class="boring">let filter_closure = |_: &amp;&amp;i32| true;
+</span><span class="boring">let map_closure = |_| ();
+</span>let some_meaningful_var_name: Vec&lt;_&gt; = foo.iter()
+    .filter(filter_closure)
+    .map(map_closure)
     // ...
     .collect();</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">let x = foo.iter()
-    .filter(...)
-    .map(...)
+<pre><code class="language-rust"><span class="boring">fn snippet&lt;'lifetimes, With, Generics&gt;() {
+</span><span class="boring">struct And&lt;'l&gt;(&amp;'l ());
+</span><span class="boring">let foo = [0];
+</span><span class="boring">let filter_closure = |_: &amp;&amp;i32| true;
+</span><span class="boring">let map_closure = |x| SomeExtremelyLongType(std::marker::PhantomData);
+</span><span class="boring">struct SomeExtremelyLongType&lt;W, G, A&gt;(std::marker::PhantomData&lt;(W, G, A)&gt;);
+</span>let x = foo.iter()
+    .filter(filter_closure)
+    .map(map_closure)
     // ...
-    .collect::&lt;Vec&lt;SomeExtremelyLongType&lt;With, Generics, And&lt;'lifetimes&gt;&gt;&gt;&gt;();</code></pre>
+    .collect::&lt;Vec&lt;SomeExtremelyLongType&lt;With, Generics, And&lt;'lifetimes&gt;&gt;&gt;&gt;();
+<span class="boring">}</span></code></pre>
 <h2 id="avoid-explicit-drop-calls"><a class="header" href="#avoid-explicit-drop-calls">Avoid explicit <code>drop</code> calls</a></h2>
 <p>If a value must be dropped early, create a new scope with curly braces rather than using an explicit <code>drop</code> call.
 This will highlight the lifetimes of the values in use whilst also avoiding the reader missing the <code>drop</code> call, which may be nestled among many busy-looking lines of code.</p>
@@ -520,33 +1561,197 @@ This will highlight the lifetimes of the values in use whilst also avoiding the 
 If a single value is to be ignored, use the ‘toilet operator,’ <code>|_| ()</code>, i.e.
 a closure which takes one argument, ignores it and returns a unit.
 This form is consistent with similar closures which ignore parts of their inputs, for example when extracting the key from a key-value pair—</p>
-<pre><code class="language-rust">    .map(|(key, _)| key)</code></pre>
+<pre><code class="language-rust"><span class="boring">[(1, 2)].iter()
+</span>    .map(|(key, _)| key)
+<span class="boring">;</span></code></pre>
 <p>There are two exceptions to this.</p>
 <p>If <code>|_| ...</code> is used and the ignored parameter is an <code>Error</code>, we should highlight that an error is intentionally being ignored, for example by using <code>.ok()</code> on a <code>Result</code> being handled.</p>
 <p>If converting from some <code>Result&lt;T&gt;</code> to a <code>Result&lt;()&gt;</code> at the end of the last expression of a function, instead of the ignore marker, use the <code>?</code> operator and an explicit <code>Ok(())</code>.
 This highlights that we care only about side-effects, and that no information is returned in the successful case.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">async fn log(&amp;self, message: String) -&gt; Result&lt;()&gt; {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">use std::fs::OpenOptions;
+</span><span class="boring">use std::io::Write;
+</span><span class="boring">impl Log {
+</span>async fn log(&amp;self, message: String) -&gt; Result&lt;()&gt; {
     {
         let mut file = OpenOptions::new()
             .append(true)
             .open(&amp;self.log_file_path)?;
         file.write_all(message.as_bytes())?;
     }
-    self.transmit_log(message).await?;
+    self.transmit_log(&amp;message).await?;
     Ok(())
-}</code></pre>
+}
+<span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">async fn log(&amp;self, message: String) -&gt; Result&lt;()&gt; {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">use std::fs::OpenOptions;
+</span><span class="boring">use std::io::Write;
+</span><span class="boring">impl Log {
+</span>async fn log(&amp;self, message: String) -&gt; Result&lt;()&gt; {
     let mut file = OpenOptions::new()
         .append(true)
         .open(&amp;self.log_file_path)?;
     file.write_all(message.as_bytes())?;
     drop(file);
-    Ok(self.transmit_log(message)
+    self.transmit_log(&amp;message)
         .await
-        .map(drop))
-}</code></pre>
+        .map(drop)
+}
+<span class="boring">}</span></code></pre>
 <h2 id="constructors-vs-structs-with-all-fields-public"><a class="header" href="#constructors-vs-structs-with-all-fields-public">Constructors vs. structs with all fields public</a></h2>
 <p>For structs created by a consumer and which represent an ‘object’ in the code’s model (i.e. those which aren’t just used to transfer data between components), prefer to expose constructor functions or a builder rather than exposing public fields.
 There are several benefits here:</p>
@@ -571,10 +1776,10 @@ author, description, latest version).
 To nicely transfer data from some remote format into one we govern, say <code>ImageInfo</code>, add an explicit <code>return</code> at the end of <code>get_image_info</code> and <em>below</em> this, create a new type called <code>Response</code>, which implements <code>Deserialize</code>.
 Add a comment which says <code>// serde types.</code> to let the reader know that everything beyond this point only relates to modelling the remote API—thus saving them time as they will likely only care about these details if something is broken.
 Add as many new local types as are necessary to maintain a 1:1 relationship between Rust types and the remote’s format—</p>
-<pre><code class="language-rust">async fn get_image_info(&amp;self, name: &amp;str) -&gt; Result&lt;ImageInfo&gt; {
-    let response: Response = serde_json::from_str(get_response(...).await?.text());
+<pre><code class="language-rust ignore">async fn get_image_info(&amp;self, name: &amp;str) -&gt; Result&lt;ImageInfo&gt; {
+    let response: Response = serde_json::from_str(get_response().await?.text());
     let info = ImageInfo {
-        name,
+        name: name.to_owned(),
         version: response.metadata.version,
         authors: response.metadata.authors,
         latest_release: response.releases.last()
@@ -609,49 +1814,243 @@ To avoid this, use a binding (<code>let some_var = ...; some_var.foo()</code>).<
 <p>When designing APIs, if a public struct will be filled by consumers for the purpose of calling a single method on it, consider instead reversing the dependency by using a free function which takes the struct as its first parameter in the fashion of a config struct.</p>
 <p>Expressions which end in a <code>)</code> or <code>]</code> follow the same rule unless that expression is quite short.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">foo(FooConfig {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
+</span><span class="boring">struct FooConfig {
+</span><span class="boring">    bar: &amp;'static str,
+</span><span class="boring">    baz: &amp;'static str,
+</span><span class="boring">}
+</span><span class="boring">fn foo(_: FooConfig) -&gt; Result&lt;()&gt; {
+</span><span class="boring">    Ok(())
+</span><span class="boring">}
+</span>foo(FooConfig {
     bar: "asdf",
     baz: "fdsa",
 })?;
 
-let value = if some_condition {
+<span class="boring">let some_condition = true;
+</span><span class="boring">let value_a = "";
+</span><span class="boring">let value_b = "";
+</span>let value = if some_condition {
     value_a
 } else {
-    value b
+    value_b
 };
 value.to_string()
-
+<span class="boring">;
+</span>
 // ...
-    .filter(|c| {
-        let exceptions = [ 'a', 'b', 'c', 'd', ... ];
+<span class="boring">['?'].iter()
+</span>    .filter(|c| {
+        let exceptions = [ 'a', 'b', 'c', 'd' ];
         !exceptions.contains(c)
     })
-// ...</code></pre>
+<span class="boring">;
+</span>// ...
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">Foo {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn something_else(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn another_thing(self) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn chained_with_something_else(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn format_as(self, fmt: &amp;str) -&gt; String {
+</span><span class="boring">        String::new()
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_long_computation() -&gt; Result&lt;Arbitrary&gt; {
+</span><span class="boring">    Ok(Arbitrary)
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">fn some_other_long_computation() -&gt; Arbitrary {
+</span><span class="boring">    Arbitrary
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Input;
+</span><span class="boring">trait Responder {
+</span><span class="boring">    type Response;
+</span><span class="boring">    type Err;
+</span><span class="boring">    fn respond(&amp;self, input: Input) -&gt; std::result::Result&lt;Self::Response, Self::Err&gt;;
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Message;
+</span><span class="boring">
+</span><span class="boring">impl Message {
+</span><span class="boring">    fn text(&amp;self) {}
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">
+</span><span class="boring">struct Log {
+</span><span class="boring">    log_file_path: String,
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl Log {
+</span><span class="boring">    async fn transmit_log(&amp;self, _: &amp;str) -&gt; Result&lt;usize&gt; {
+</span><span class="boring">        Ok(0)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
+</span><span class="boring">struct Foo {
+</span><span class="boring">    bar: &amp;'static str,
+</span><span class="boring">    baz: &amp;'static str,
+</span><span class="boring">}
+</span><span class="boring">impl Foo {
+</span><span class="boring">    fn do_thing(self) -&gt; Result&lt;()&gt; {
+</span><span class="boring">        Ok(())
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>Foo {
     bar: "asdf",
     baz: "fdsa",
 }
 .do_thing()?;
 
-if some_condition {
+<span class="boring">let some_condition = true;
+</span><span class="boring">let value_a = "";
+</span><span class="boring">let value_b = "";
+</span>if some_condition {
     value_a
 } else {
     value_b
 }
 .to_string()
-
+<span class="boring">;
+</span>
 // ...
-    .filter(|c| ![ 'a', 'b', 'c', 'd', ... ].contains(c))
-// ...</code></pre>
+<span class="boring">['?'].iter()
+</span>    .filter(|c| ![ 'a', 'b', 'c', 'd' ].contains(c))
+<span class="boring">;
+</span>// ...
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 <h2 id="format-arg-inlining"><a class="header" href="#format-arg-inlining">Format arg inlining</a></h2>
 <p>Arguments to <code>format!</code>-like macros should aim to be as similar as possible to the string they are intended to produce.
 Whenever a single variable is used in a format argument, it should be inlined to avoid the reader needing to dart back and forth between the format string and its arguments (both of which may stretch over multiple lines).</p>
 <p><em>NB: older Rust versions may not support this syntax.</em></p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">format!("{path}/{file}")</code></pre>
+<pre><code class="language-rust"><span class="boring">let path = "";
+</span><span class="boring">let file = "";
+</span>format!("{path}/{file}")
+<span class="boring">;</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">format!("{}/{}", path, file)</code></pre>
+<pre><code class="language-rust"><span class="boring">let path = "";
+</span><span class="boring">let file = "";
+</span>format!("{}/{}", path, file)
+<span class="boring">;</span></code></pre>
 
                     </main>
 

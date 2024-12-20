@@ -191,22 +191,196 @@ The intuition here is that in the expected case on the golden path, we expect no
 <p>If a <code>match</code> statement is expected to return <code>()</code>, then it is being used as a control-flow structure.
 Therefore, do-nothing <code>match</code> branches should be written as <code>.. =&gt; {}</code> rather than <code>.. =&gt; ()</code>.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">fn setup_foo(&amp;self) -&gt; Result&lt;()&gt; {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn foo(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>
+mod some_crate {
+    pub struct Foo;
+
+    impl Foo {
+        pub fn builder() -&gt; FooBuilder {
+            FooBuilder
+        }
+    }
+
+    pub struct FooBuilder;
+
+    impl FooBuilder {
+        pub fn new() -&gt; Self {
+            Self
+        }
+
+        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+            Ok(Foo)
+        }
+    }
+}
+<span class="boring">struct Foo {
+</span><span class="boring">    foo_type: FooType
+</span><span class="boring">}
+</span><span class="boring">enum FooType {
+</span><span class="boring">    A,
+</span><span class="boring">}
+</span><span class="boring">impl Foo {
+</span>fn setup_foo(&amp;self) -&gt; Result&lt;()&gt; {
     match self.foo_type {
         FooType::A =&gt; {}
-        ...
+        // ...
     }
     self.setup_bar()?;
     Ok(())
-}</code></pre>
+}
+<span class="boring">
+</span><span class="boring">  fn setup_bar(&amp;self) -&gt; Result&lt;()&gt; {
+</span><span class="boring">      Ok(())
+</span><span class="boring">  }
+</span><span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">fn setup_foo(&amp;self) -&gt; Result&lt;()&gt; {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn foo(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>
+mod some_crate {
+    pub struct Foo;
+
+    impl Foo {
+        pub fn builder() -&gt; FooBuilder {
+            FooBuilder
+        }
+    }
+
+    pub struct FooBuilder;
+
+    impl FooBuilder {
+        pub fn new() -&gt; Self {
+            Self
+        }
+
+        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+            Ok(Foo)
+        }
+    }
+}
+<span class="boring">struct Foo {
+</span><span class="boring">    foo_type: FooType
+</span><span class="boring">}
+</span><span class="boring">enum FooType {
+</span><span class="boring">    A,
+</span><span class="boring">}
+</span><span class="boring">impl Foo {
+</span>fn setup_foo(&amp;self) -&gt; Result&lt;()&gt; {
     match self.foo_type {
         FooType::A =&gt; ()
-        ...
+        // ...
     }
     self.setup_bar()
-}</code></pre>
+}
+<span class="boring">
+</span><span class="boring">  fn setup_bar(&amp;self) -&gt; Result&lt;()&gt; {
+</span><span class="boring">      Ok(())
+</span><span class="boring">  }
+</span><span class="boring">}</span></code></pre>
 <h2 id="hide-generic-type-parameters"><a class="header" href="#hide-generic-type-parameters">Hide generic type parameters</a></h2>
 <p>Generic type parameters add complication to an API.
 Where possible, hide generic parameters either through elision, syntactic sugar (<code>impl Trait</code>) or by leaving them unbound.</p>
@@ -218,9 +392,169 @@ If a generic <em>type</em> parameter is only used once and isn’t too complicat
 A type without lifetime parameters looks completely self-contained and hence as though may be freely passed around.
 If a lifetime is present, <em>always</em> communicate that fact (i.e. always prefer <code>MyRef&lt;'_&gt;</code> to <code>MyRef</code>).</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">fn transmit(tx: impl Transmitter&lt;'_&gt;, message: &amp;[u8]) -&gt; Result&lt;()&gt; { ... }</code></pre>
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn foo(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>
+mod some_crate {
+    pub struct Foo;
+
+    impl Foo {
+        pub fn builder() -&gt; FooBuilder {
+            FooBuilder
+        }
+    }
+
+    pub struct FooBuilder;
+
+    impl FooBuilder {
+        pub fn new() -&gt; Self {
+            Self
+        }
+
+        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+            Ok(Foo)
+        }
+    }
+}
+<span class="boring">trait Transmitter {}
+</span><span class="boring">struct Message&lt;'a&gt;(&amp;'a ());
+</span>fn transmit(tx: impl Transmitter, message: &amp;Message&lt;'_&gt;) -&gt; Result&lt;()&gt; {
+    // ...
+<span class="boring">  Ok(())
+</span>}</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">fn transmit&lt;'a, T: Transmitter&lt;’a&gt;&gt;(tx: T, message: &amp;[u8]) -&gt; Result&lt;()&gt; { ... }</code></pre>
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn foo(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>
+mod some_crate {
+    pub struct Foo;
+
+    impl Foo {
+        pub fn builder() -&gt; FooBuilder {
+            FooBuilder
+        }
+    }
+
+    pub struct FooBuilder;
+
+    impl FooBuilder {
+        pub fn new() -&gt; Self {
+            Self
+        }
+
+        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+            Ok(Foo)
+        }
+    }
+}
+<span class="boring">trait Transmitter {}
+</span><span class="boring">struct Message&lt;'a&gt;(&amp;'a ());
+</span>fn transmit&lt;'a, T: Transmitter&gt;(tx: T, message: &amp;Message&lt;'a&gt;) -&gt; Result&lt;()&gt; {
+    // ...
+<span class="boring">  Ok(())
+</span>}</code></pre>
 <h2 id="unused-parameters-in-default-implementations"><a class="header" href="#unused-parameters-in-default-implementations">Unused parameters in default implementations</a></h2>
 <p>Occasionally, when a default trait function implementation is provided, not all of its parameters are used.
 To avoid a compiler warning, explicitly add <code>let _ = unused_param;</code> lines until all these warnings are removed.</p>
@@ -228,49 +562,438 @@ To avoid a compiler warning, explicitly add <code>let _ = unused_param;</code> l
 It is possible to use <code>#[allow(unused_variables)]</code> to suppress all unused-parameter warnings for the given function, however this will also affect the parameters we <em>do</em> expect to use, possibly causing issues later.
 Similarly, we could individually annotate each unused parameter, however this would make the overall signature much more difficult to read.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">trait CustomScriptValue&lt;'v&gt; {
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn foo(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>
+mod some_crate {
+    pub struct Foo;
+
+    impl Foo {
+        pub fn builder() -&gt; FooBuilder {
+            FooBuilder
+        }
+    }
+
+    pub struct FooBuilder;
+
+    impl FooBuilder {
+        pub fn new() -&gt; Self {
+            Self
+        }
+
+        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+            Ok(Foo)
+        }
+    }
+}
+<span class="boring">struct Value&lt;'v&gt;(&amp;'v ());
+</span>trait CustomScriptValue&lt;'v&gt; {
     fn at(&amp;self, index: Value&lt;'v&gt;) -&gt; Result&lt;Value&lt;'v&gt;&gt; {
         let _ = index;
-        Err(Error::Unsupported { .. })
+        Err(Error::Unsupported)
     }
 }</code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">trait CustomScriptValue&lt;'v&gt; {
-    fn at(&amp;self, _index: Value&lt;'v&gt;) -&gt; Result&lt;Value&lt;'v&gt;&gt; {
-        Err(Error::Unsupported { .. })
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn foo(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>
+mod some_crate {
+    pub struct Foo;
+
+    impl Foo {
+        pub fn builder() -&gt; FooBuilder {
+            FooBuilder
+        }
     }
 
+    pub struct FooBuilder;
+
+    impl FooBuilder {
+        pub fn new() -&gt; Self {
+            Self
+        }
+
+        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+            Ok(Foo)
+        }
+    }
+}
+<span class="boring">struct Value&lt;'v&gt;(&amp;'v ());
+</span>trait CustomScriptValue&lt;'v&gt; {
+    fn at(&amp;self, _index: Value&lt;'v&gt;) -&gt; Result&lt;Value&lt;'v&gt;&gt; {
+        Err(Error::Unsupported)
+    }
+<span class="boring">}
+</span>
     // OR
 
-    #[allow(unused_variables)]
+<span class="boring">trait CustomScriptValue2&lt;'v&gt; {
+</span>    #[allow(unused_variables)]
     fn at(&amp;self, index: Value&lt;'v&gt;) -&gt; Result&lt;Value&lt;'v&gt;&gt; {
-        Err(Error::Unsupported { .. })
+        Err(Error::Unsupported)
     }
 }</code></pre>
 <h2 id="builder-visibility"><a class="header" href="#builder-visibility">Builder visibility</a></h2>
 <p>The type <code>MyTypeBuilder</code> should not have a public constructor.
 In typical usage, users of <code>MyType</code> shouldn’t need to import <code>MyTypeBuilder</code>, it should be a seamless part of <code>MyType</code>.</p>
 <p>✅ Do this:</p>
-<pre><code class="language-rust">use crate::Foo;
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn foo(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>
+mod some_crate {
+    pub struct Foo;
+
+    impl Foo {
+        pub fn builder() -&gt; FooBuilder {
+            FooBuilder
+        }
+    }
+
+    pub struct FooBuilder;
+
+    impl FooBuilder {
+        pub fn new() -&gt; Self {
+            Self
+        }
+
+        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+            Ok(Foo)
+        }
+    }
+}
+<span class="boring">fn snippet() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span>use some_crate::Foo;
 
 let foo = Foo::builder()
-    .bar(bar)
-    // ...
-    .build()?;</code></pre>
+    .foo("foo")
+    .bar("bar")
+    .build()?;
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 <p>⚠️ Avoid this:</p>
-<pre><code class="language-rust">use crate::{Foo, FooBuilder}
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn foo(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>
+mod some_crate {
+    pub struct Foo;
+
+    impl Foo {
+        pub fn builder() -&gt; FooBuilder {
+            FooBuilder
+        }
+    }
+
+    pub struct FooBuilder;
+
+    impl FooBuilder {
+        pub fn new() -&gt; Self {
+            Self
+        }
+
+        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+            Ok(Foo)
+        }
+    }
+}
+<span class="boring">fn snippet() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span>use some_crate::{Foo, FooBuilder};
 
 let foo = FooBuilder::new()
-    .bar(bar)
-    // ...
-    .build()?;</code></pre>
+    .foo("foo")
+    .bar("bar")
+    .build()?;
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 <h2 id="builder-ownership"><a class="header" href="#builder-ownership">Builder ownership</a></h2>
 <p>In Rust, there are two forms of the builder pattern, depending on the receiver type used.
 Consider the following builder—</p>
-<pre><code class="language-rust">let frobnicator = Frobnicator::builder()
+<pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
+</span><span class="boring">
+</span><span class="boring">enum Error {
+</span><span class="boring">    Invalid,
+</span><span class="boring">    NetworkUnavailable,
+</span><span class="boring">    MalformedEnvUrl {
+</span><span class="boring">        env_var: &amp;'static str,
+</span><span class="boring">        source: Box&lt;dyn std::error::Error&gt;,
+</span><span class="boring">    },
+</span><span class="boring">    Unsupported,
+</span><span class="boring">    Unknown(Box&lt;dyn std::error::Error&gt;),
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">impl&lt;E&gt; From&lt;E&gt; for Error
+</span><span class="boring">where
+</span><span class="boring">    E: std::error::Error + 'static,
+</span><span class="boring">{
+</span><span class="boring">    fn from(err: E) -&gt; Self {
+</span><span class="boring">        Error::Unknown(Box::new(err))
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">
+</span><span class="boring">struct Arbitrary;
+</span><span class="boring">
+</span><span class="boring">impl Arbitrary {
+</span><span class="boring">    fn new() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn builder() -&gt; Self {
+</span><span class="boring">        Self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn foo(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn bar(self, _: &amp;str) -&gt; Self {
+</span><span class="boring">        self
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    fn build(self) -&gt; Result&lt;Self&gt; {
+</span><span class="boring">        Ok(self)
+</span><span class="boring">    }
+</span><span class="boring">}
+</span>
+mod some_crate {
+    pub struct Foo;
+
+    impl Foo {
+        pub fn builder() -&gt; FooBuilder {
+            FooBuilder
+        }
+    }
+
+    pub struct FooBuilder;
+
+    impl FooBuilder {
+        pub fn new() -&gt; Self {
+            Self
+        }
+
+        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+            self
+        }
+
+        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+            Ok(Foo)
+        }
+    }
+}
+<span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
+</span><span class="boring">type Foo = Arbitrary;
+</span>let frobnicator = Foo::builder()
     .foo("foo")
     .bar("bar")
-    .build()?;</code></pre>
+    .build()?;
+<span class="boring">Ok(())
+</span><span class="boring">}</span></code></pre>
 <p>The methods <code>foo</code>, <code>bar</code> and <code>build</code> can either take ownership of <code>self</code> or take <code>&amp;mut self</code> by value.</p>
 <p>If <code>self</code> is used, it encourages a simple flow of data, with values being neatly moved from one place to another.
 This should be the default ownership model.</p>
