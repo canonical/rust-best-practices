@@ -20,36 +20,33 @@ There, they should be placed as close as possible to the relevant match, prefera
 
 ✅ Do this:
 
-```rust,ignore
+```rust
+{{#include snippet_helpers/import_discipline.rs}}
 use some_crate::{SpecificItem1, SpecificItem2};
 use some_other_crate::SpecificItem3;
+use another_crate::{SomeEnum, SomeEnum::*};
 
-// ...
-
-fn some_fn(some_enum: SomeEnum) -> {
-    // ...
-
+fn some_fn(some_enum: SomeEnum) {
     use SomeEnum::*;
-        Variant2 => {...},
+    match some_enum {
+        Variant1 => { /* ... */ }
+        Variant2 => { /* ... */ },
     }
 }
 ```
 
 ⚠️ Avoid this:
 
-```rust,ignore
+```rust
+{{#include snippet_helpers/import_discipline.rs}}
 use some_crate::*;
 use some_other_crate::prelude::*;
-use another_crate::SomeEnum::*;
+use another_crate::{SomeEnum, SomeEnum::*};
 
-// ...
-
-fn some_fn(some_enum: SomeEnum) -> {
-    // ...
-
-    match {
-        Variant1 => {...},
-        Variant2 => {...},
+fn some_fn(some_enum: SomeEnum) {
+    match some_enum {
+        Variant1 => { /* ... */ }
+        Variant2 => { /* ... */ }
     }
 }
 ```
@@ -83,6 +80,7 @@ use crate::{Error, Result};
 ⚠️ Avoid this:
 
 ```rust,ignore
+{{#include snippet_helpers/import_discipline.rs}}
 use camino::Utf8PathBuf;
 use crate::{Error, Result};
 use std::path::PathBuf;
@@ -97,7 +95,8 @@ If a path contains _n_ parts, merge the first _n-1,_ so that only the final part
 
 ✅ Do this:
 
-```rust,ignore
+```rust
+{{#include snippet_helpers/import_discipline.rs}}
 use allocative::Allocative;
 use derive_more::Display;
 use starlark::environment::{FrozenModule, Module};
@@ -108,7 +107,8 @@ use starlark_derive::{starlark_value, NoSerialize, Trace};
 
 ⚠️ Avoid this:
 
-```rust,ignore
+```rust
+{{#include snippet_helpers/import_discipline.rs}}
 use allocative::Allocative;
 use derive_more::Display;
 use starlark::environment::FrozenModule;
