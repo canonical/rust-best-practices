@@ -34,8 +34,8 @@ impl Ord for MyStruct {
 # use std::cmp::Ordering;
 impl Ord for MyStruct {
     fn cmp(&self, other: &Self) -> Ordering {
-        (self.my, self.thing, self.with, self.some)
-            .cmp(&(other.my, other.thing, other.with, other.some))
+        (&self.my, &self.thing, &self.with, &self.some)
+            .cmp(&(&other.my, &other.thing, &other.with, &other.some))
     }
 }
 ```

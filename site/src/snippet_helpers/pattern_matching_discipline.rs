@@ -2,12 +2,12 @@
 #
 # #[derive(Eq, PartialEq, PartialOrd)]
 # struct MyStruct {
-#     my: (),
-#     thing: (),
-#     with: (),
-#     some: (),
-#     unused: (),
-#     fields: (),
+#     my: String,
+#     thing: String,
+#     with: String,
+#     some: String,
+#     unused: String,
+#     fields: String,
 # }
 #
 # struct Line {
