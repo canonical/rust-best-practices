@@ -1,0 +1,337 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Import discipline - Rust best practices</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="Rust best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item affix "><a href="preconditions.html">Preconditions</a></li><li class="chapter-item "><a href="cosmetic-discipline.html"><strong aria-hidden="true">1.</strong> Cosmetic discipline</a></li><li class="chapter-item "><a href="naming-discipline.html"><strong aria-hidden="true">2.</strong> Naming discipline</a></li><li class="chapter-item expanded "><a href="import-discipline.html" class="active"><strong aria-hidden="true">3.</strong> Import discipline</a></li><li class="chapter-item "><a href="pattern-matching-discipline.html"><strong aria-hidden="true">4.</strong> Pattern matching discipline</a></li><li class="chapter-item "><a href="code-discipline.html"><strong aria-hidden="true">5.</strong> Code discipline</a></li><li class="chapter-item "><a href="error-and-panic-discipline.html"><strong aria-hidden="true">6.</strong> Error and panic discipline</a></li><li class="chapter-item "><a href="function-discipline.html"><strong aria-hidden="true">7.</strong> Function discipline</a></li><li class="chapter-item "><a href="ordering-discipline.html"><strong aria-hidden="true">8.</strong> Ordering discipline</a></li><li class="chapter-item "><a href="unsafe-discipline.html"><strong aria-hidden="true">9.</strong> Unsafe discipline</a></li><li class="chapter-item "><a href="structural-discipline.html"><strong aria-hidden="true">10.</strong> Structural discipline</a></li><li class="chapter-item "><a href="comment-discipline.html"><strong aria-hidden="true">11.</strong> Comment discipline</a></li><li class="chapter-item "><a href="further-reading.html"><strong aria-hidden="true">12.</strong> Further reading</a></li><li class="chapter-item affix "><li class="spacer"></li><li class="chapter-item affix "><a href="contributing.html">Contributing</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust best practices</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/canonical/rust-best-practices" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/canonical/rust-best-practices/blob/main/docs/src/import-discipline.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="import-discipline"><a class="header" href="#import-discipline">Import discipline</a></h1>
+<h2 id="dont-import-all"><a class="header" href="#dont-import-all">Don’t import all</a></h2>
+<p>In general, do not use <code>*</code> from a crate.
+Consider a source file which does this twice from two different dependencies, making use of items from each.
+Now, consider what happens when these crates are updated and some of these items are removed—the compiler will complain of undefined symbols, but will have absolutely no idea where these came from.
+Even more concerning is the fact that updates can now cause name-clashes!
+By sticking to explicit imports only, we help both ourselves and our future maintainers.</p>
+<p>A corollary of this is that preludes, regardless of their initial convenience, should not be used by us in production code.
+Nevertheless, they remain a handy tool for others to use when prototyping, so we should still consider creating and exposing them where appropriate.</p>
+<p>The only exception to these rules is that in the context of a unit test module, inserting use <code>super::*</code> is acceptable as it is a well-defined idiom.</p>
+<p>The rule for using <code>*</code> from enums is slightly different.
+Here, it is acceptable to import <code>*</code> to bring all variants of an enum into scope.
+However, this should not be done at the top level, only locally to improve the readability of long match statements.
+There, they should be placed as close as possible to the relevant match, preferably on the line immediately preceding it.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">use some_crate::{SpecificItem1, SpecificItem2};
+use some_other_crate::SpecificItem3;
+
+// ...
+
+fn some_fn(some_enum: SomeEnum) -&gt; {
+    // ...
+
+    use SomeEnum::*;
+        Variant2 =&gt; {...},
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">use some_crate::*;
+use some_other_crate::prelude::*;
+use another_crate::SomeEnum::*;
+
+// ...
+
+fn some_fn(some_enum: SomeEnum) -&gt; {
+    // ...
+
+    match {
+        Variant1 =&gt; {...},
+        Variant2 =&gt; {...},
+    }
+}</code></pre>
+<h2 id="import-grouping"><a class="header" href="#import-grouping">Import grouping</a></h2>
+<p>At the time of writing, stable <code>rustfmt</code> does not yet express an opinion on the order of imports, hence for now we must do this ourselves.
+To clearly delimit whether an import is from the standard library, from a third party library or our own work, these imports should be split into three blocks, ordered as follows:</p>
+<ul>
+<li><code>std</code>, <code>core</code>, <code>alloc</code></li>
+<li>Third party crates</li>
+<li><code>self</code>, <code>super</code>, <code>crate</code></li>
+</ul>
+<p>Note that this order follows the currently-unstable <code>rustfmt</code> option—</p>
+<pre><code>import_group = "StdExternCrate"
+</code></pre>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">use std::path::PathBuf;
+
+use camino::Utf8PathBuf;
+use tokio::runtime::Runtime;
+
+use crate::{Error, Result};</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">use camino::Utf8PathBuf;
+use crate::{Error, Result};
+use std::path::PathBuf;
+use tokio::runtime::Runtime;</code></pre>
+<h2 id="import-form"><a class="header" href="#import-form">Import form</a></h2>
+<p>Excessive repetition harms readability by adding lots of visual noise.
+For this reason, avoid Java-style imports where every single imported item gets its own line with a complete and exhaustive path and instead use the cleaner nested syntax.
+If a path contains <em>n</em> parts, merge the first <em>n-1,</em> so that only the final part is grouped with its siblings.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">use allocative::Allocative;
+use derive_more::Display;
+use starlark::environment::{FrozenModule, Module};
+use starlark::eval::Evaluator;
+use starlark::values::{AllocValue, Freeze, ProvidesStaticType, StarlarkValue, ValueLike};
+use starlark_derive::{starlark_value, NoSerialize, Trace};</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">use allocative::Allocative;
+use derive_more::Display;
+use starlark::environment::FrozenModule;
+use starlark::environment::Module;
+use starlark::eval::Evaluator;
+use starlark::values::AllocValue;
+use starlark::values::Freeze;
+use starlark::values::ProvidesStaticType;
+use starlark::values::StarlarkValue;
+use starlark::values::ValueLike;
+use starlark_derive::starlark_value;
+use starlark_derive::NoSerialize;
+use starlark_derive::Trace;</code></pre>
+<h2 id="import-self-explicitly"><a class="header" href="#import-self-explicitly">Import <code>self</code> explicitly</a></h2>
+<p>When importing from a child module <code>foo</code>, always <code>use self::foo</code> as this avoids future name-clashes with a dependency also called <code>foo</code>.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">mod foo;
+mod bar;
+
+pub use self::foo::Foo;
+pub use self::bar::Bar;</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">mod foo;
+mod bar;
+
+pub use foo::Foo;
+pub use bar::Bar;</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="naming-discipline.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="pattern-matching-discipline.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="naming-discipline.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="pattern-matching-discipline.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

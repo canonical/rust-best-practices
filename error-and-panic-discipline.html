@@ -1,0 +1,374 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Error and panic discipline - Rust best practices</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="Rust best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item affix "><a href="preconditions.html">Preconditions</a></li><li class="chapter-item "><a href="cosmetic-discipline.html"><strong aria-hidden="true">1.</strong> Cosmetic discipline</a></li><li class="chapter-item "><a href="naming-discipline.html"><strong aria-hidden="true">2.</strong> Naming discipline</a></li><li class="chapter-item "><a href="import-discipline.html"><strong aria-hidden="true">3.</strong> Import discipline</a></li><li class="chapter-item "><a href="pattern-matching-discipline.html"><strong aria-hidden="true">4.</strong> Pattern matching discipline</a></li><li class="chapter-item "><a href="code-discipline.html"><strong aria-hidden="true">5.</strong> Code discipline</a></li><li class="chapter-item expanded "><a href="error-and-panic-discipline.html" class="active"><strong aria-hidden="true">6.</strong> Error and panic discipline</a></li><li class="chapter-item "><a href="function-discipline.html"><strong aria-hidden="true">7.</strong> Function discipline</a></li><li class="chapter-item "><a href="ordering-discipline.html"><strong aria-hidden="true">8.</strong> Ordering discipline</a></li><li class="chapter-item "><a href="unsafe-discipline.html"><strong aria-hidden="true">9.</strong> Unsafe discipline</a></li><li class="chapter-item "><a href="structural-discipline.html"><strong aria-hidden="true">10.</strong> Structural discipline</a></li><li class="chapter-item "><a href="comment-discipline.html"><strong aria-hidden="true">11.</strong> Comment discipline</a></li><li class="chapter-item "><a href="further-reading.html"><strong aria-hidden="true">12.</strong> Further reading</a></li><li class="chapter-item affix "><li class="spacer"></li><li class="chapter-item affix "><a href="contributing.html">Contributing</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust best practices</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/canonical/rust-best-practices" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/canonical/rust-best-practices/blob/main/docs/src/error-and-panic-discipline.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="error-and-panic-discipline"><a class="header" href="#error-and-panic-discipline">Error and panic discipline</a></h1>
+<h2 id="error-messages"><a class="header" href="#error-messages">Error messages</a></h2>
+<p>In Rust, it is a good idea to start writing a project by first making its <code>Error</code> type, this no only encourages message consistency, but also highlights the necessary information for these good error messages.
+This in turn, makes it clearer which information should be plumbed where, avoiding the awkward and altogether too-common situation where an error condition is identified, but much work must be done to get the right information there.</p>
+<p>Error messages should be concise.
+Every second longer a user spends reading an error message and not understanding what went wrong is a second longer of their frustration.
+The form of the phrases used in error messages should be consistent—if, likely from previous messages, the user is expecting—</p>
+<pre><code>cannot foo the bar
+</code></pre>
+<p>but instead reads—</p>
+<pre><code>bar is not fooable
+</code></pre>
+<p>they will experience unnecessary discomfort.
+Keep it nice and clean.</p>
+<p>A majority of the time, error messages should start with a verb and in most cases that verb should be prefixed with ‘cannot.’</p>
+<p>Capitalisation of error messages should be consistent.
+If it is possible that an error will not be a top-level error (e.g. it may be wrapped), then the first letter should be lowercase.
+Unexpected capital letters in the middle of a line of logging look dishevelled and imply that little thought has gone into the overall design of the implementation.
+This couldn’t be further from the truth so let’s make it appear as such.</p>
+<p>Remember: the latin alphabet is optimised for many contiguous lowercase letters, hence lowercase is a good default to maintain.
+However, uppercase should be used for acronyms and standard names such as: TCP and NixOS.</p>
+<p>When writing error messages, think about the background of the expected user/consumer of the project.
+Consider whether the person reading it will have good technical knowledge and tailor your approach as such.</p>
+<p>If the reader of these error messages is expected to be a (Rust) developer (e.g. code in question is in a library or building block for something else), they will be familiar with how to fix simple problems and as such may not benefit from unnecessary advice.
+For these readers, a good concise error message will contain all the information needed to point them towards how to fix it.
+In this case, suggestions are at best superfluous and at worst unhelpful.</p>
+<p>If the reader of these error messages is not expected to be a developer (e.g. these messages will appear in some GUI), think carefully about where you want to send that reader next.
+Whereas a developer might be okay to submit an issue, a non-developer will appreciate being explicitly pointed in the right direction.</p>
+<p>Going up the stack, the reader’s knowledge of low-level details becomes less reliable hence they must lean more heavily on the help we give them.</p>
+<p>As an error passes further and further up the stack, more context messages may be added to it.
+Be aware of how errors will bubble up to avoid repeating the same information multiple times.</p>
+<p>Note that all this advice applies to both error messages associated with error types and panic messages.</p>
+<h2 id="error-types"><a class="header" href="#error-types">Error types</a></h2>
+<p>All reasonable types which implement <code>Error</code> fall into one of three categories:</p>
+<ul>
+<li>Those which erase the underlying types</li>
+<li>Those which preserve them, for example by enumeration</li>
+<li>Those which preserve them opaquely</li>
+</ul>
+<p>Errors which use type-erasure (e.g. <code>Box&lt;dyn Error&gt;</code> and <code>anyhow::Error</code>) are often easier to use when writing code, however things become very problematic later on when attempting to inspect errors—with less help from the compiler comes far more places for subtle breakages to occur, both now and in future.
+Type-erased errors should only be used in prototypes where maintenance will never be a concern, otherwise, use concrete types.
+As a general rule, type erased errors <em>must not be used in library crates.</em>
+Type erasure is a very strong opinion and one which may not be shared by a crate’s dependants and the process of converting from erased errors back to a concrete one is unreliable and unpleasant, and hence will irritate consumers.</p>
+<p>Errors which preserve types (e.g those annotated with <code>#[derive(thiserror::Error)]</code>) give Rust a unique advantage—not only can the golden path receive first-class support, but so too can the error path, thus allowing an even higher level of quality to be attained.
+In particular, the process of responding to particular errors is far more robust with enumerated errors.</p>
+<p>Errors which preserve types but which represent unrecoverable errors should represent their error condition as a contained <code>String</code> which is assigned where the error is constructed.
+(Note that although <code>&amp;‘static str</code> may be applicable, <code>String</code> offers more flexibility and can be expected to have a negligible performance impact.)
+When constructing these errors, special care must be taken to ensure that the message is consistent with other errors in the codebase.
+The field used to hold the reason for the error in these cases should be named <code>reason</code>.</p>
+<pre><code class="language-rust">#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    // ...
+
+    #[error("invalid {credential}: {reason}")]
+    InvalidCredentials{
+        credential: String,
+        reason: String,
+    },
+}</code></pre>
+<p>If one error wraps another, the inner error should be held in a field named <code>source</code>.</p>
+<pre><code class="language-rust">#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    // ...
+
+    #[error("cannot access {path}: {source}")]
+    IO {
+        path: PathBuf,
+        source: io::Error,
+    },
+}</code></pre>
+<p>Note that exposing the error type originating from dependencies as these may accidentally expose internal details in a public API.
+In these cases, if using enumerated errors, consider adding an <code>Internal</code> variant which holds a type which hides the internal details as follows—</p>
+<pre><code class="language-rust">#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    // ...
+
+    #[error(transparent)]
+    Internal(#[from] InternalError),
+}
+
+#[derive(Debug, thiserror::Error)]
+#[error(transparent)]
+pub struct InternalError(#[from] InternalErrorImpl);
+
+#[derive(Debug, thiserror::Error)]
+enum InternalErrorImpl {
+    // ...
+}</code></pre>
+<h2 id="error-conversion"><a class="header" href="#error-conversion">Error conversion</a></h2>
+<p>Errors returned from other crates should be converted to current the crate’s <code>Error</code> type at the earliest reasonable opportunity.
+The intuition here is that within our crates, we should be talking our own error language and that calling functions and methods in other crates crosses an interface boundary, so to propagate their errors for too long creates a slow transition rather than a clean, abrupt change.
+Long call-chains often handle many different error types and converting early into the common crate-local error type will allow natural error propagation.
+By maintaining the same convention with short chains, our code becomes more predictable and hence easier to read.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let override_url = env::var("URL")
+    .ok()
+    .map(|override| {
+        Url::parse(&amp;override).map_err(|source| Error::MalformedEnvUrl {
+            env_var: "URL",
+            source,
+        })
+    })
+    .transpose()?;</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let override_url = env::var("URL")
+    .ok()
+    .map(|override_url| url::Url::parse(&amp;override_url))
+    .transpose()
+    .map_err(|source| Error::MalformedEnvUrl { // The error to be mapped comes from somewhere in the chain above!
+        env_var: "URL",
+        source,
+    })?;</code></pre>
+<h2 id="panic-calmly"><a class="header" href="#panic-calmly">Panic calmly</a></h2>
+<p>Panics must only be used if a program enters an unrecoverable state.
+Further, that unrecoverable state must not be as a result of user input—a program which a user can easily crash is not a good program.</p>
+<p>In Rust, panics are very aggressive, especially as if the default panic strategy is overridden (e.g. by a user who wants a smaller binary and hence sets <code>profile.release.panic = "abort"</code> in their <code>Cargo.toml</code>), we have no guarantee that the usual cleanup is performed.
+In such a situation, we must rely on the OS to do its best with the resources it understands but we have no guarantee that this will be sufficient.
+By default therefore, don’t panic.</p>
+<p>If, however, a panic is inevitable, be sure that the message signals who is at fault—if it’s an internal error, start the message with <code>internal error:</code>.</p>
+<p>The over-use of <code>.unwrap()</code> is a major red flag, as the resulting code is likely very fragile, relying on possibly-unclear preconditions in the code above it.
+If that code changes—as is very likely in code still under active development—production code may panic.
+As a rule of thumb, <code>.unwrap()</code> should only be used in code in tiny scopes, where errors can only possibly originate from the programmer—e.g. in <code>Regex::new("...").unwrap()</code>, where a panic can only occur if the raw regex constant is invalid.
+In general though, unwrapping should be replaced with either:</p>
+<ul>
+<li>Good use of the type system to allow the compiler to enforce preconditions</li>
+<li>Calls to <code>.expect</code> which document the required preconditions (these must follow the same convention as panic messages)</li>
+</ul>
+<p>The first option is very much preferable.
+What follows is two common situations and solutions.</p>
+<p>We can remove panics originating from <code>.unwrap()</code> calls by using the <code>?</code> operator to pass errors up the call-stack.
+In the case of unwrapping options in a function which returns a result, calling the <code>.ok_or</code>/<code>.ok_or_else</code> methods may be required.</p>
+<p>We can also remove panics originating from <code>.unwrap()</code> calls by using pattern-matching.
+If a call to <code>x.unwrap()</code> is guarded by <code>if x.is_some()</code>/<code>if x.is_ok()</code>, instead make use of pattern matching: <code>if let Some(x) = x</code> or <code>if let Ok(x) = x</code>.</p>
+<p>When calls to <code>.unwrap()</code> are removed, the surrounding code is not only more robust, but you may notice that it is often visually cleaner.
+This is not a coincidence—it is a nudge from the Rust developers to encourage fault-tolorant code and practices.</p>
+<p>There are two exceptions to this avoidance of panicking: tests and panic-propagation.</p>
+<p>If the <code>?</code> operator is used in tests, the origin of the error is lost, making the test harder to debug.
+A failed <code>.unwrap()</code> will result in a trace pointing to where the panic occurred.</p>
+<p>If a thread panics whilst it has acquired a <code>Mutex</code> lock, we have no guarantee that the contents of the mutex represents a valid state and hence the lock gets <em>poisoned.</em>
+This means that any other thread which attempts to lock the mutex will get an error.
+In this case, panicking is acceptable it effectively propagates an existing panic from another thread.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="code-discipline.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="function-discipline.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="code-discipline.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="function-discipline.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

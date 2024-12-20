@@ -1,0 +1,333 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Naming discipline - Rust best practices</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="Rust best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item affix "><a href="preconditions.html">Preconditions</a></li><li class="chapter-item "><a href="cosmetic-discipline.html"><strong aria-hidden="true">1.</strong> Cosmetic discipline</a></li><li class="chapter-item expanded "><a href="naming-discipline.html" class="active"><strong aria-hidden="true">2.</strong> Naming discipline</a></li><li class="chapter-item "><a href="import-discipline.html"><strong aria-hidden="true">3.</strong> Import discipline</a></li><li class="chapter-item "><a href="pattern-matching-discipline.html"><strong aria-hidden="true">4.</strong> Pattern matching discipline</a></li><li class="chapter-item "><a href="code-discipline.html"><strong aria-hidden="true">5.</strong> Code discipline</a></li><li class="chapter-item "><a href="error-and-panic-discipline.html"><strong aria-hidden="true">6.</strong> Error and panic discipline</a></li><li class="chapter-item "><a href="function-discipline.html"><strong aria-hidden="true">7.</strong> Function discipline</a></li><li class="chapter-item "><a href="ordering-discipline.html"><strong aria-hidden="true">8.</strong> Ordering discipline</a></li><li class="chapter-item "><a href="unsafe-discipline.html"><strong aria-hidden="true">9.</strong> Unsafe discipline</a></li><li class="chapter-item "><a href="structural-discipline.html"><strong aria-hidden="true">10.</strong> Structural discipline</a></li><li class="chapter-item "><a href="comment-discipline.html"><strong aria-hidden="true">11.</strong> Comment discipline</a></li><li class="chapter-item "><a href="further-reading.html"><strong aria-hidden="true">12.</strong> Further reading</a></li><li class="chapter-item affix "><li class="spacer"></li><li class="chapter-item affix "><a href="contributing.html">Contributing</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust best practices</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/canonical/rust-best-practices" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/canonical/rust-best-practices/blob/main/docs/src/naming-discipline.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="naming-discipline"><a class="header" href="#naming-discipline">Naming discipline</a></h1>
+<h2 id="name-content"><a class="header" href="#name-content">Name content</a></h2>
+<p>Naming is one of the three hardest problems in programming (along with off-by-one errors).
+Every variable, every function, every type and every concept requires a good name which fits into a good naming scheme.
+There is no one optimal way to come up with a good name, however when attempting to do so, the first place to look is for similar names in your project and to try to mimic these.
+This should result in a name which intuitively feels like it belongs among the rest of the code.
+Even doing this has its pitfalls, however, so ideally your name should:</p>
+<ul>
+<li><strong>say what it means</strong>—make the name fit conceptually into the surrounding context.
+If a reader sees <code>fn is_in(a: &amp;str, b: &amp;str)</code>, the order is not as obvious as if they were to see <code>fn is_in(haystack: &amp;str, needle: &amp;str)</code>.</li>
+<li><strong>have a consistent word order</strong>—inconsistency makes an API look dishevelled, unplanned and hence unprofessional.
+If the rest of the API uses <code>verb_noun</code> then unless there is a very good reason not to, the next function should be of the form <code>verb_noun</code>.</li>
+<li><strong>be concise</strong>—a long name can almost always be shortened.
+More characters implies a need to disambiguate, so if no such need exists, reduce the cognitive load on the next reader by reducing the amount they must read.
+Of course, don’t take this too far—the next reader must not be expected to look elsewhere to understand the full meaning of a name, as may occur if nonstandard acronyms or abbreviations are used.</li>
+<li><strong>comprise simple words</strong>—a long word can often be replaced by a shorter one.
+A concise name will comprise the smallest list of the smallest words which do not lose the subject’s meaning.
+Remember: <a href="https://www.thesaurus.com/">thesaurus.com</a> and <a href="https://www.dictionary.com/">dictionary.com</a> are your friends!</li>
+<li><strong>comprise correct words</strong>—if there is any disagreement over the implications of chosen words, then there will be some reader who gets the wrong idea.
+It’s better to spend more time discussing internally than to confuse a user.
+(Example: we once had a 20-minute discussion on the choice between <code>NOT_SAFE</code> vs <code>UNSAFE</code> as an empty value for a set of safety flags, where each flag had a name like <code>FOO_SAFE</code>.)</li>
+<li><strong>be unified</strong>—there should be one and only one name for concepts used.
+If more are used haphazardly, it implies a difference where there is none and thus muddies the water.</li>
+<li><strong>avoid including types</strong>—type names should be omitted unless required to discriminate between two variables of different types which roughly hold the same value.
+Some examples: in a finder function <code>needleStr</code> and <code>haystackStr</code> can be more concisely expressed as <code>needle</code> and <code>haystack</code>.</li>
+</ul>
+<p>Canonical policy dictates that names should use UK spelling and not US or other spelling.</p>
+<p>Good names with the help of concise doc comments do a good job of explaining a good API.
+However, if after much consideration, there don’t seem to be any good names, this is likely caused by the API not being good.
+If an API cannot be easily and intuitively explained, it is not a good API and it’s time for a refactor.</p>
+<p>A good, semantically and behaviorally consistent API hidden behind a layer of bad naming is hard to distinguish from a bad API.
+Time spent getting the right naming will pay off.</p>
+<p>Great care should be taken over all names, but extreme care should be taken over publicly exposed ones.
+These names do not have the luxury of being able to be tweaked without consequence later—any appreciation for a slightly better name an external user may have will be completely overshadowed by their irritation of having to deal with a breaking change.</p>
+<h2 id="pattern-match-variable-naming"><a class="header" href="#pattern-match-variable-naming">Pattern match variable naming</a></h2>
+<p>To reduce cognitive load, pattern-matched variables should be named consistently, that is, the new variable must be either:</p>
+<ul>
+<li>The same as the variable/field it comes from</li>
+<li>The first letter of the variable/field it comes from</li>
+</ul>
+<p>When matching structs and struct-like enum variants, try to use the original field names.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">if let Some(response) = response { ... }
+if let Some(response) = event.response { ... }
+if let Some(event_response) = event.response { ... }
+
+let Self { name, path } = self;
+
+enum State {
+    Reading(fs::File),
+    Evaluating {
+        workload: Workload,
+        ...
+    }
+}
+match state {
+    State::Reading(file) =&gt; {...}
+    State::Evaluating{ workload, .. } =&gt; {...}
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">if let Some(r) = response { ... }
+if let Some(r) = event.response { ... }
+if let Some(er) = event.response { ... }
+
+let Self { name: some_name, path: name } = self;
+
+match state {
+    State::Reading(data_source) =&gt; {...}
+    State::Evaluating{ workload: to_eval, .. } =&gt; {...}
+}</code></pre>
+<h2 id="generic-type-parameter-naming"><a class="header" href="#generic-type-parameter-naming">Generic type parameter naming</a></h2>
+<p>To avoid them being mistaken for concrete types, generic type parameters must have single-letter names.</p>
+<h2 id="lifetime-parameter-naming"><a class="header" href="#lifetime-parameter-naming">Lifetime parameter naming</a></h2>
+<p>Lifetime parameters give a unique opportunity to link together different parts of an API in the mind of a user.
+If the same data is used in multiple places in an API, make sure the lifetime names match.</p>
+<p>Lifetime names should be derived from the reference they represent, not from the type they are passed to.
+Further, they should consist of either a single letter, short word or extremely well understood acronym.
+Numbers should not be used in lifetime names.</p>
+<p>Single-letter lifetime names are acceptable if a structure is expected to be used very many times (e.g. a script interface may make heavy use of some <code>Value&lt;'h&gt;</code> which contains a reference to a heap upon which it is allocated).
+NB: the compiler will occasionally recommend the use <code>'a</code> as it lacks wider context information.
+The name <code>'a</code> is nearly always a bad one.</p>
+<p>Lifetime parameters should aim to be concise without losing meaning.
+Given the difficulty new users face when understanding lifetimes in an interface, try to give them a hand by being explicit.
+Single-letter lifetime names should generally be avoided.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">struct ASTQueryMatch&lt;'cursor, 'tree&gt; { .. }
+
+struct Value&lt;'h&gt; { .. }</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">struct ASTQueryMatch&lt;'a, 'b&gt; { .. }
+
+struct Value&lt;'value&gt; { .. }</code></pre>
+<h2 id="builder-naming"><a class="header" href="#builder-naming">Builder naming</a></h2>
+<p>If a builder for a type <code>MyType</code> is provided, then it should have an associated function <code>builder()</code> which returns a <code>MyTypeBuilder</code>.
+This <code>MyTypeBuilder</code> must also have a fallible <code>.build()</code> method, which returns a <code>MyType</code>.</p>
+<p>Typical usage is hence—</p>
+<pre><code class="language-rust">let foo = Foo::builder()
+    .bar(bar)
+    // ...
+    .build()?;</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="cosmetic-discipline.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="import-discipline.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="cosmetic-discipline.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="import-discipline.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

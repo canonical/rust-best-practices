@@ -1,0 +1,706 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Code discipline - Rust best practices</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="Rust best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item affix "><a href="preconditions.html">Preconditions</a></li><li class="chapter-item "><a href="cosmetic-discipline.html"><strong aria-hidden="true">1.</strong> Cosmetic discipline</a></li><li class="chapter-item "><a href="naming-discipline.html"><strong aria-hidden="true">2.</strong> Naming discipline</a></li><li class="chapter-item "><a href="import-discipline.html"><strong aria-hidden="true">3.</strong> Import discipline</a></li><li class="chapter-item "><a href="pattern-matching-discipline.html"><strong aria-hidden="true">4.</strong> Pattern matching discipline</a></li><li class="chapter-item expanded "><a href="code-discipline.html" class="active"><strong aria-hidden="true">5.</strong> Code discipline</a></li><li class="chapter-item "><a href="error-and-panic-discipline.html"><strong aria-hidden="true">6.</strong> Error and panic discipline</a></li><li class="chapter-item "><a href="function-discipline.html"><strong aria-hidden="true">7.</strong> Function discipline</a></li><li class="chapter-item "><a href="ordering-discipline.html"><strong aria-hidden="true">8.</strong> Ordering discipline</a></li><li class="chapter-item "><a href="unsafe-discipline.html"><strong aria-hidden="true">9.</strong> Unsafe discipline</a></li><li class="chapter-item "><a href="structural-discipline.html"><strong aria-hidden="true">10.</strong> Structural discipline</a></li><li class="chapter-item "><a href="comment-discipline.html"><strong aria-hidden="true">11.</strong> Comment discipline</a></li><li class="chapter-item "><a href="further-reading.html"><strong aria-hidden="true">12.</strong> Further reading</a></li><li class="chapter-item affix "><li class="spacer"></li><li class="chapter-item affix "><a href="contributing.html">Contributing</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust best practices</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/canonical/rust-best-practices" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/canonical/rust-best-practices/blob/main/docs/src/code-discipline.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="code-discipline"><a class="header" href="#code-discipline">Code discipline</a></h1>
+<h2 id="when-to-use-self"><a class="header" href="#when-to-use-self">When to use <code>Self</code></a></h2>
+<p>Use <code>Self</code> wherever possible to reduce the number of types which the reader must keep in mind as instead of needing to remember an extra type which may or may not be important, the reader is instead reminded that the current code strongly relates to the <code>impl</code> block it is contained in.
+By maximising the use of <code>Self</code> it also highlights where it <em>isn’t</em> possible to use it, for example when the return type of a function has a slightly different set of generic parameters.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">impl Node {
+    pub fn new(parent: &amp;Self) -&gt; Self {
+        Self(..)
+    }
+}
+
+impl PartialOrd for Node {
+    fn cmp(&amp;self, other: &amp;Self) -&gt; Ordering;
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">impl Node {
+    pub fn new(parent: &amp;Node) -&gt; Node {
+        Foo(..)
+    }
+}
+
+impl PartialOrd&lt;Rhs=Node&gt; for Node { // NB: Rhs=Self is also the default for PartialOrd.
+    fn cmp(&amp;self, other: &amp;Node) -&gt; Ordering;
+}</code></pre>
+<h2 id="when-not-to-use-self"><a class="header" href="#when-not-to-use-self">When not to use <code>Self</code></a></h2>
+<p>Do not use <code>Self</code> when constructing associated types.</p>
+<p>Traits often include type fields as part of the interface they describe.
+These types may be referred to with <code>Self::AssociatedType</code>.
+Do not use these to construct values as it prevents the next reader from understanding which type is in use and which fields and methods are available.
+Use these <code>Self::*</code> types to define interfaces, but use concrete types to define implementations.</p>
+<p>The only exception is for trait items which return a <code>Result&lt;_, Self::Err&gt;</code>, where <code>Err</code> is set to the crate’s <code>Error</code> type.
+In this case, it is okay to use the crate’s <code>Result</code> type alias instead.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">impl Responder for MyType {
+    type Response = SomeStruct;
+    type Err = Error;
+
+    fn respond(&amp;self, _input: Input) -&gt; Result&lt;Self::Response&gt; {
+        Ok(SomeStruct{
+            some: ...,
+            fields: ...,
+        })
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">impl Responder for MyType {
+    type Response = SomeStruct;
+    type Err = Error;
+
+    fn respond(&amp;self, _input: I) -&gt; Result&lt;SomeStruct, Error&gt; {
+        Ok(Self::Response {
+            some: ...,
+            fields: ...,
+        })
+    }
+}</code></pre>
+<h2 id="struct-population"><a class="header" href="#struct-population">Struct population</a></h2>
+<p>Structs, like tuples, provide an excellent way to group together related information of different types.
+Unlike tuples however, they force values to be named, thus avoiding any forgettable-ordering problems.
+When each field is given a value, there are three possible forms to choose from:</p>
+<ul>
+<li>The field has its value moved in from a variable with the same name,</li>
+<li>The field has its value moved in from a variable with a different name,</li>
+<li>The field takes its value from the result of some computation.</li>
+</ul>
+<p>The first form is the cleanest for struct population as not only does it use the least characters, it also implies that the concepts being handled are very compatible and that there is a clear flow of data present.
+This makes the code easier to read, hence wherever reasonable, we should aim for this form.</p>
+<p>The second form is acceptable if the name of the field and the name of the value are similar, for example one name being a sub-string of the other.
+If it is not possible to tune naming to make this true, then this is a sign of messy concepts at play and hence that a refactor is needed.</p>
+<p>The third form can be the most problematic as large computations often draw too much attention, effectively hiding both smaller computations and the other two field-forms above.
+Drawing attention in this way indicates that the code awkwardly interleaves separate actions—the same section of code is both populating a struct and doing detailed computation to determine its contents.
+To avoid some fields sticking out like a sore thumb, either all fields of a struct should be computed or none should be.
+In case of a mix, refactor computations into a new <code>let</code> declarations, matching the order of the fields as closely as possible and use the first form above.
+This avoids the reader having to wade through alphabet soup.</p>
+<p>The order in which fields are populated must be the same as the type declaration.
+Each line which populates a field in a given struct must be independent.
+If there is a dependency between field declarations, for example if some shared state is mutated during their construction, use <code>let</code> declarations and the first form instead.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">struct Entry&lt;K, V&gt; {
+    id: u64,
+    key: K,
+    value: V,
+    pretty_date_modified: String,
+}
+
+fn get_entry(&amp;self, key: K) -&gt; Result&lt;Entry&lt;K, V&gt;&gt; {
+    let id = self.id_of(key)?;
+    let value = self.get(key)?;
+    let pretty_date_modified = self.date_modified(key)?
+        .format_as("yyyy-MM-dd@hh:mm:ss");
+    Entry {
+        id,
+        key,
+        value,
+        pretty_date_modified,
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">struct Entry&lt;K, V&gt; {
+    id: u64,
+    key: K,
+    value: V,
+    pretty_date_modified: String,
+}
+
+fn get_entry(&amp;self, key: K) -&gt; Result&lt;Entry&lt;K, V&gt;&gt; {
+    let value_stored_at_key = self.get(key)?;
+    Entry {
+        id: self.id_of(key)?,
+        pretty_date_modified: self.date_modified(key)?
+            .format_as("yyyy-MM-dd@hh:mm:ss"),
+        key,
+        value: value_stored_at_key,
+    }
+}</code></pre>
+<h2 id="tuple-population"><a class="header" href="#tuple-population">Tuple population</a></h2>
+<p>Tuples are most easily read when they are short as once line-breaks occur, the structure being created gets harder to discern.
+Keep things visually simple—if the formatter chooses to break tuple population into multiple lines, instead introduce new <code>let</code> declarations to move computation away from the tuple population.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let key = some_long_computation()?
+    .something_else()
+    .another_thing();
+let value = some_other_long_computation()
+    .chained_with_something_else()?;
+(key, value)</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">(
+    some_long_computation()?
+        .something_else()
+        .another_thing(),
+    some_other_long_computation()
+        .chained_with_something_else()?,
+)</code></pre>
+<h2 id="prefer-collect-when-interacting-with-fromiterator"><a class="header" href="#prefer-collect-when-interacting-with-fromiterator">Prefer <code>collect</code> when interacting with <code>FromIterator</code></a></h2>
+<p>The <code>FromIterator</code> trait defines a method <code>from_iter</code> which is called by <code>Iterator::collect</code>.
+We therefore have two methods of collecting into an iterator, <code>Foo::from_iter</code> and <code>collect()</code> with appropriate type bounds.
+Prefer the latter as this makes the order of operations the same as what is read from top to bottom.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let my_vec: Vec&lt;_&gt; = collection.into_iter()
+    .filter(...)
+    .collect();</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let my_vec = Vec::from_iter(collection.into_iter().filter(...))</code></pre>
+<h2 id="empty-vec-construction"><a class="header" href="#empty-vec-construction">Empty <code>Vec</code> construction</a></h2>
+<p>To construct an empty <code>Vec</code>, we have three options: <code>vec![]</code>, <code>Vec::new()</code> and <code>Vec::with_capacity(_)</code>.
+If the size of the <code>Vec</code> resulting from an operation can be reasonably estimated, prefer <code>Vec::with_capacity</code> as this will avoid unnecessary reallocations.
+Otherwise, if a zero-sized <code>Vec</code> is required, use <code>Vec::new()</code> as this indicates most clearly that no operation is being performed as the docs for <code>Vec::new</code> guarantee no allocations, but those for <code>vec!</code> do not.
+Consider also that <code>vec![expr; n]</code> where <code>n</code> is zero will still evaluate (and then immediately drop) <code>expr</code>.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let my_vec = Vec::new();</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let my_vec = vec![];
+let my_vec = Vec::with_capacity(0);</code></pre>
+<h2 id="avoid-loosely-scoped-let-mut"><a class="header" href="#avoid-loosely-scoped-let-mut">Avoid loosely-scoped <code>let mut</code></a></h2>
+<p>In many cases, mutability is used to create a given structure which is then used immutably for the remainder of its lifetime.
+Whenever this happens, scope the mutable declarations to just where they are needed, thus forcing a compiler error if this condition is broken in future.
+Doing this also makes code simpler to read as there are fewer things which can mutate at any one point.</p>
+<pre><code class="language-rust">let my_structure = {
+    let mut my_structure = MyStructure::new();
+    // Mutate `my_structure` as required to construct it.
+    my_structure
+};</code></pre>
+<p>For greatest clarity, make sure the name of the outer (immutable) and inner (mutable) declarations have the same name, here <code>my_structure</code>.</p>
+<p>If mutability is to retain some state whilst iterating through a structure, consider using a functional style instead.
+As a simple example, if presented with the following imperative code to count the number of spaces in a string</p>
+<pre><code class="language-rust">let mut num_spaces = 0;
+for c in my_string.chars() {
+    if c == ' ' {
+        num_speces += 1;
+    }
+}</code></pre>
+<p>Consider instead, using the functional style to avoid the mutation—</p>
+<pre><code class="language-rust">let num_spaces = my_string.chars()
+    .filter(|c| c == ' ')
+    .count();</code></pre>
+<h2 id="avoid-unassigned-let-declarations"><a class="header" href="#avoid-unassigned-let-declarations">Avoid unassigned <code>let</code> declarations</a></h2>
+<p>Let-declarations without values indicate an odd flow of data through a function.
+Instead, prefer to return the required value from the block which computes it.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let message = if result.is_ok() {
+    "success!"
+} else {
+    "failed!"
+}
+
+let mut retries = 0;
+let message = loop {
+    let resp = exec_web_request();
+    match resp {
+        Ok(m) =&gt; break m.text(),
+        Err(Error::NetworkUnavailable) =&gt; {},
+        Err(e) =&gt; return Err(e),
+    }
+
+    retries += 1;
+    if retries &gt; 5 {
+        return Err(Error::Unavailable);
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let message;
+if result.is_ok() {
+    message = "success!";
+} else {
+    message = "failed!";
+}
+
+let mut retries = 0;
+let message;
+loop {
+    let resp = exec_web_request();
+    match resp {
+        Ok(m) =&gt; {
+            message = m.text();
+            break;
+        },
+        Err(Error::NetworkUnavailable) =&gt; {},
+        Err(e) =&gt; return Err(e),
+    }
+
+    retries += 1;
+    if retries &gt; 5 {
+        return Err(Error::Unavailable);
+    }
+}</code></pre>
+<h2 id="reference-scope"><a class="header" href="#reference-scope">Reference scope</a></h2>
+<p>In many cases, the compiler is smart enough to create temporary storage locations to store variables which are given the value <code>&amp;expr</code>, however, when these are passed to functions, it becomes slightly harder to follow which type is being used, especially when handling <code>&amp;T</code> where <code>T</code> is <code>!Copy</code>.
+In this case, it is only a single character in the variable declaration, possibly many lines away which shows that the value <code>T</code> is not being moved, only its reference.</p>
+<p>Instead of relying on temporary storage locations, store the value explicitly and take a reference where needed.
+This way, the transfer of ownership is much more explicit.
+As a rule of thumb, only use <code>&amp;</code> at the start of the value of a <code>let</code> declaration when either indexing or slicing.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let foo = from_func();
+other_func(&amp;foo);</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let foo = &amp;from_func();
+other_func(foo);</code></pre>
+<h2 id="shadowing"><a class="header" href="#shadowing">Shadowing</a></h2>
+<p>When used in moderation, shadowing provides an excellent way to manipulate data or change its type whilst still highlighting that the ‘same’ data is being processed, however, too many levels of shadowing quickly makes code harder to follow.</p>
+<p>Let us consider name-shadowing with variables, for which there are three cases:</p>
+<ol>
+<li>Shadowing in contained scopes, such as <code>if let Some(x) = x { ... }</code></li>
+<li>Shadowing in the same scope with the same type, such as <code>let x = ...; let x = some_transform(x)</code></li>
+<li>Shadowing in the same scope with different types, such as <code>let x: T = x.into()</code></li>
+</ol>
+<p>In the first case when shadowing with different scopes, use at most one level of shadowing, for example when pattern matching enum variants—</p>
+<pre><code class="language-rust">if let Some(foo) = foo {
+    // The outer `foo` is now shadowed.
+    // The inner `foo` should not be shadowed.
+}</code></pre>
+<p>In the second case when shadowing in the same scope with the same type, there is no restriction placed on this and it may be done as many times as necessary.
+However, if this is being used to effectively mutate a value during construction with no other values being affected, instead use the scoped-mutability pattern—</p>
+<pre><code class="language-rust">let my_thing = {
+    let mut my_thing = ...;
+    // Mutate `my_thing` to construct it...
+    my_thing
+};</code></pre>
+<p>In the final case, when shadowing in the same but changing types (e.g. in a conversion method), shadowing can be done at most once per variable.
+This pattern is commonly seen in conversion functions—those which take ownership of their sole parameter and convert it into another type.</p>
+<pre><code class="language-rust">impl Store&lt;New&gt; {
+    fn init(self) -&gt; Store&lt;Inited&gt; {
+        let Self { some_field } = self,
+        // ...
+        let some_field = some_field.into();
+        // ...
+        InitedSelf {
+            // ...
+            some_field
+            // ...
+        }
+    }
+}</code></pre>
+<p>Now let us consider name-shadowing with types.
+Do not name-shadow with types.
+A key benefit of Rust’s strong type system is that for any valid program, each handled value has exactly one possible type and representation, which makes it easier for the programmer to understand what is happening.
+If we shadow types, the reader may think they understand what they are reading until they find something which seems impossible, because they have been quietly fooled by a definition possibly many lines away which they did not read.</p>
+<h2 id="generic-type-parameter-constraints"><a class="header" href="#generic-type-parameter-constraints">Generic type parameter constraints</a></h2>
+<p>Generic type parameter constraints should be grouped in the same place.
+If some constraints are complex enough to be placed into a <code>where</code> clause, then all constraints should be moved from angle-bracket declarations into the <code>where</code> clause also.</p>
+<p>If constraints are declared in angle brackets and that declaration is longer than 30 characters, move all constraints into a <code>where</code> clause.</p>
+<p>These rules ensure that the reader cannot miss any constraints.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">impl&lt;'a, 'b, I, T&gt; SomeStruct&lt;'a, 'b, I, T&gt;
+    where
+        'b: 'a,
+        I: IntoIterator&lt;T&gt; + 'a,
+        T: 'b,
+{ ... }</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">impl&lt;'a, 'b: 'a, I: IntoIterator&lt;T&gt; + 'a&gt; SomeStruct
+    where
+        T: 'b
+{ ... }</code></pre>
+<h2 id="type-annotations"><a class="header" href="#type-annotations">Type annotations</a></h2>
+<p>The compiler’s type inference is usually very good, but sometimes, it needs a little extra information.
+When adding the necessary annotations, we must be mindful of how much information we provide and where that information is provided.</p>
+<p>Provide only the minimum amount of information required to help the compiler.
+If the compiler does not complain if a type annotation is removed, then it should be removed.
+Always make note of the return type of the function currently being written as often this provides enough information to make many possible type annotations obselete.</p>
+<p>Let’s briefly consider collecting an iterator of <code>SomeLongType&lt;...&gt;</code> into a <code>Vec</code>.
+The compiler will complain that it does not know which collection type to collect into and although explicitly annotating <code>Vec&lt;SomeLongType&lt;...&gt;&gt;</code> works, the information the compiler needs is just that a <code>Vec</code> is being made, so it is better to use just <code>Vec&lt;_&gt;</code>.
+This has three benefits:</p>
+<ol>
+<li>The code is cleaner as unnecessary information does not draw the eye</li>
+<li>The code is more maintainable as the types we handle are allowed to change (the necessary properties are still implicitly enforced at function boundaries)</li>
+<li>The coder’s wrists ache less</li>
+</ol>
+<p>In a function implementation, Rust provides three main ways to insert annotations:</p>
+<ol>
+<li>On <code>let</code>/<code>static</code>/<code>const</code> declarations, e.g. <code>let foo: Type</code></li>
+<li>On functions using the turbofish, e.g. <code>func::&lt;T&gt;()</code></li>
+<li>On trait items using the fully-qualified syntax, e.g. <code>&lt;value as Trait&gt;::trait_item</code></li>
+</ol>
+<p>The above the order of preference in which these should be used; we shall explore each method presently.</p>
+<p>The best place to put annotations is on <code>let</code>/<code>static</code>/<code>const</code> declarations, as this not only makes it clearer what the values are being, but also if such a declaration involves a long chain of calls spanning many lines, it also makes it more obvious what’s being worked towards.
+This pattern is also the most flexible.</p>
+<p>Next, if type information must be given in the middle of the expression, the turbofish may be used (<code>::&lt;&gt;</code>).
+One place to be careful though is if the turbofish is required on a <code>collect</code> in the middle of an expression, there is often a cleaner and more efficient way to achieve the same thing.</p>
+<p>The tool of last-resort is the fully-qualified syntax which disambiguates between same-name items on the same type which come from different namespaces in scope.
+If an API you are making can cause an abundance of name-clashes, your consumers will be unhappy.
+In this case, refactor it as best you can.</p>
+<p>If a type parameter seems necessary as a variable name is not sufficiently descriptive, improve the name.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let some_meaningful_var_name: Vec&lt;_&gt; = foo.iter()
+    .filter(...)
+    .map(...)
+    // ...
+    .collect();</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let x = foo.iter()
+    .filter(...)
+    .map(...)
+    // ...
+    .collect::&lt;Vec&lt;SomeExtremelyLongType&lt;With, Generics, And&lt;'lifetimes&gt;&gt;&gt;&gt;();</code></pre>
+<h2 id="avoid-explicit-drop-calls"><a class="header" href="#avoid-explicit-drop-calls">Avoid explicit <code>drop</code> calls</a></h2>
+<p>If a value must be dropped early, create a new scope with curly braces rather than using an explicit <code>drop</code> call.
+This will highlight the lifetimes of the values in use whilst also avoiding the reader missing the <code>drop</code> call, which may be nestled among many busy-looking lines of code.</p>
+<p>The <code>drop</code> function should not be used to discard values in call chains.
+If a single value is to be ignored, use the ‘toilet operator,’ <code>|_| ()</code>, i.e.
+a closure which takes one argument, ignores it and returns a unit.
+This form is consistent with similar closures which ignore parts of their inputs, for example when extracting the key from a key-value pair—</p>
+<pre><code class="language-rust">    .map(|(key, _)| key)</code></pre>
+<p>There are two exceptions to this.</p>
+<p>If <code>|_| ...</code> is used and the ignored parameter is an <code>Error</code>, we should highlight that an error is intentionally being ignored, for example by using <code>.ok()</code> on a <code>Result</code> being handled.</p>
+<p>If converting from some <code>Result&lt;T&gt;</code> to a <code>Result&lt;()&gt;</code> at the end of the last expression of a function, instead of the ignore marker, use the <code>?</code> operator and an explicit <code>Ok(())</code>.
+This highlights that we care only about side-effects, and that no information is returned in the successful case.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">async fn log(&amp;self, message: String) -&gt; Result&lt;()&gt; {
+    {
+        let mut file = OpenOptions::new()
+            .append(true)
+            .open(&amp;self.log_file_path)?;
+        file.write_all(message.as_bytes())?;
+    }
+    self.transmit_log(message).await?;
+    Ok(())
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">async fn log(&amp;self, message: String) -&gt; Result&lt;()&gt; {
+    let mut file = OpenOptions::new()
+        .append(true)
+        .open(&amp;self.log_file_path)?;
+    file.write_all(message.as_bytes())?;
+    drop(file);
+    Ok(self.transmit_log(message)
+        .await
+        .map(drop))
+}</code></pre>
+<h2 id="constructors-vs-structs-with-all-fields-public"><a class="header" href="#constructors-vs-structs-with-all-fields-public">Constructors vs. structs with all fields public</a></h2>
+<p>For structs created by a consumer and which represent an ‘object’ in the code’s model (i.e. those which aren’t just used to transfer data between components), prefer to expose constructor functions or a builder rather than exposing public fields.
+There are several benefits here:</p>
+<ul>
+<li>They format more nicely in call chains</li>
+<li>They allow parameter type conversions to occur implicitly</li>
+<li>They allow some fields to be computed in terms of others using implementation-specific details</li>
+</ul>
+<p>Structs with all-public fields cannot benefit from any of the above and moreover, if it is later decided that any of these properties is beneficial, we face either a breaking change to fix it or extra complication to work around it.</p>
+<p>For structs created by the consumer which just transfer data (e.g. <code>FooConfig</code> may be passed to <code>fn foo</code>), if there is a reasonable <code>Default</code> implementation, prefer to make all fields public to reduce boilerplate.
+To defend against the future addition of new fields causing breaking changes, consider marking the struct as <code>#[non_exhaustive]</code>.
+If there is no reasonable <code>Default</code> implementation, use a builder instead.</p>
+<h2 id="method-specific-data-structures"><a class="header" href="#method-specific-data-structures">Method-specific data-structures</a></h2>
+<p>Avoid namespace pollution by putting helper types into the most local scope they may be reasonably defined in.
+Further, if common patterns start to arise, make sure to use standard names for each type, for example <code>Test</code> for test-specific builder-pattern test cases or <code>Message</code>/<code>Response</code> for serde-structs which represent a foreign API.
+Note that by using predictable names in very predictable, local-scale patterns, the reader is able to safely forget details unimportant to them.
+When helper types are local to a function, place the definitions at the bottom, below a marker comment such as <code>// test types</code> or <code>// serde types</code>.
+Such marker comments let the reader know that unless they wish to know the finer details about how a test works or how a foreign API is handled, they do not need to read any further.</p>
+<p>This pattern is particularly useful to significantly reduce the blast-radius of incoming remote API changes by closely matching the expected form with a set of local (de)serialization types independent to those understood internally by our crate.
+Let’s say we have a function called <code>get_image_info</code>, which makes a web-request to get information associated with given container image name (e.g.
+author, description, latest version).
+To nicely transfer data from some remote format into one we govern, say <code>ImageInfo</code>, add an explicit <code>return</code> at the end of <code>get_image_info</code> and <em>below</em> this, create a new type called <code>Response</code>, which implements <code>Deserialize</code>.
+Add a comment which says <code>// serde types.</code> to let the reader know that everything beyond this point only relates to modelling the remote API—thus saving them time as they will likely only care about these details if something is broken.
+Add as many new local types as are necessary to maintain a 1:1 relationship between Rust types and the remote’s format—</p>
+<pre><code class="language-rust">async fn get_image_info(&amp;self, name: &amp;str) -&gt; Result&lt;ImageInfo&gt; {
+    let response: Response = serde_json::from_str(get_response(...).await?.text());
+    let info = ImageInfo {
+        name,
+        version: response.metadata.version,
+        authors: response.metadata.authors,
+        latest_release: response.releases.last()
+            .map(|release| ...),
+    }
+    return Ok(info);
+
+    // serde types.
+    #[derive(Deserialize)]
+    struct Response {
+        metadata: Metadata,
+        releases: Vec&lt;Release&gt;,
+    }
+
+    #[derive(Deserialize)]
+    struct Metadata {
+        version: String,
+        authors: Vec&lt;String&gt;,
+    }
+
+    #[derive(Deserialize)]
+    struct Release {
+        ...
+    }
+}</code></pre>
+<p>As a rule of thumb, <code>serde</code> annotations should not be present on the types used in the core of a crate, where the content of those types is taken entirely from a remote API or is destined to be sent to one.
+Remote APIs should not govern internal representation.</p>
+<h2 id="method-calls-on-closing-brackets-and-braces"><a class="header" href="#method-calls-on-closing-brackets-and-braces">Method calls on closing brackets and braces</a></h2>
+<p>Expressions which end in a <code>}</code> such as control structures and struct literals should not have methods called upon them as the formatter moves method calls onto the line below.
+This adds an unwelcome surprise as the scope of what the reader is currently looking at will appear to increase, adding to cognitive load and potential confusion.
+To avoid this, use a binding (<code>let some_var = ...; some_var.foo()</code>).</p>
+<p>When designing APIs, if a public struct will be filled by consumers for the purpose of calling a single method on it, consider instead reversing the dependency by using a free function which takes the struct as its first parameter in the fashion of a config struct.</p>
+<p>Expressions which end in a <code>)</code> or <code>]</code> follow the same rule unless that expression is quite short.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">foo(FooConfig {
+    bar: "asdf",
+    baz: "fdsa",
+})?;
+
+let value = if some_condition {
+    value_a
+} else {
+    value b
+};
+value.to_string()
+
+// ...
+    .filter(|c| {
+        let exceptions = [ 'a', 'b', 'c', 'd', ... ];
+        !exceptions.contains(c)
+    })
+// ...</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">Foo {
+    bar: "asdf",
+    baz: "fdsa",
+}
+.do_thing()?;
+
+if some_condition {
+    value_a
+} else {
+    value_b
+}
+.to_string()
+
+// ...
+    .filter(|c| ![ 'a', 'b', 'c', 'd', ... ].contains(c))
+// ...</code></pre>
+<h2 id="format-arg-inlining"><a class="header" href="#format-arg-inlining">Format arg inlining</a></h2>
+<p>Arguments to <code>format!</code>-like macros should aim to be as similar as possible to the string they are intended to produce.
+Whenever a single variable is used in a format argument, it should be inlined to avoid the reader needing to dart back and forth between the format string and its arguments (both of which may stretch over multiple lines).</p>
+<p><em>NB: older Rust versions may not support this syntax.</em></p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">format!("{path}/{file}")</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">format!("{}/{}", path, file)</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="pattern-matching-discipline.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="error-and-panic-discipline.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="pattern-matching-discipline.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="error-and-panic-discipline.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

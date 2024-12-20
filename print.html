@@ -1,0 +1,1497 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rust best practices</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="Rust best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item affix "><a href="preconditions.html">Preconditions</a></li><li class="chapter-item "><a href="cosmetic-discipline.html"><strong aria-hidden="true">1.</strong> Cosmetic discipline</a></li><li class="chapter-item "><a href="naming-discipline.html"><strong aria-hidden="true">2.</strong> Naming discipline</a></li><li class="chapter-item "><a href="import-discipline.html"><strong aria-hidden="true">3.</strong> Import discipline</a></li><li class="chapter-item "><a href="pattern-matching-discipline.html"><strong aria-hidden="true">4.</strong> Pattern matching discipline</a></li><li class="chapter-item "><a href="code-discipline.html"><strong aria-hidden="true">5.</strong> Code discipline</a></li><li class="chapter-item "><a href="error-and-panic-discipline.html"><strong aria-hidden="true">6.</strong> Error and panic discipline</a></li><li class="chapter-item "><a href="function-discipline.html"><strong aria-hidden="true">7.</strong> Function discipline</a></li><li class="chapter-item "><a href="ordering-discipline.html"><strong aria-hidden="true">8.</strong> Ordering discipline</a></li><li class="chapter-item "><a href="unsafe-discipline.html"><strong aria-hidden="true">9.</strong> Unsafe discipline</a></li><li class="chapter-item "><a href="structural-discipline.html"><strong aria-hidden="true">10.</strong> Structural discipline</a></li><li class="chapter-item "><a href="comment-discipline.html"><strong aria-hidden="true">11.</strong> Comment discipline</a></li><li class="chapter-item "><a href="further-reading.html"><strong aria-hidden="true">12.</strong> Further reading</a></li><li class="chapter-item affix "><li class="spacer"></li><li class="chapter-item affix "><a href="contributing.html">Contributing</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust best practices</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/canonical/rust-best-practices" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>This book provides a list of best-practices which originate from discussions with both our CTO and the company’s other tech leads.
+All points listed here are strongly considered before merging code at Canonical.
+Individually, the things written here may seem unimportant or even trivial, but each of these is a crucial building block for writing good, clean code.
+You wouldn’t want to hire a builder who has a reputation for installing rotten beams.</p>
+<p>This book aims to facilitate peaceful collaboration by expressing an opinion on many common discrepancies, allowing debate to focus on more interesting areas.
+It encourages uniformity between projects and teams with the aim of allowing engineers in one part of an organisation to feel reasonably at-home in codebases from other parts.
+This goal is notably different from individual works in unique contexts, where the use of highly novel approaches is a healthy form of self-expression.
+These guidelines should be considered as a style guide for ‘Canonical Rust,’ and are intended to complement both the idiomatic advice laid out in Rust for Rustaceans and well thought-out, consistent API design.</p>
+<p>If you spot any of the problems detailed here in our existing code-bases or patches, don’t be afraid to fix them—a good codebase is inherently more maintainable and will cause fewer headaches and annoyances later.
+Remember that all code should aim to be locally-consistent—new code shouldn’t stick out like a sore thumb.</p>
+<p><em>Disclaimer: this is not a complete list, more items can and likely will be added in future.</em>
+<em>If you find an item which you believe should be in this document, please do open an <a href="https://github.com/canonical/rust-best-practices/issues/new/choose">RFC</a>.</em></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="preconditions"><a class="header" href="#preconditions">Preconditions</a></h1>
+<p>All new code should abide by <code>cargo fmt</code>, <code>cargo clippy</code>, and <code>cargo clippy --tests</code>.
+If your crate uses features, be careful to ensure that <code>clippy</code> is definitely being run on all of your code, for example by using <code>--all-features</code>.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="cosmetic-discipline"><a class="header" href="#cosmetic-discipline">Cosmetic discipline</a></h1>
+<h2 id="spacing"><a class="header" href="#spacing">Spacing</a></h2>
+<p>Use blank lines semantically, rather than aesthetically.
+They should be used consistently, regardless of the size of a section of code, to delimit <em>strongly associated</em> sections.
+There are no hard and fast rules for this strong association, but the following heuristics are quite effective.</p>
+<ul>
+<li>If a variable is declared and only used in the block of code which follows it, that declaration and block are strongly associated.
+Do not put a blank line here.</li>
+<li>If a variable is used in multiple blocks of code, not just the one which follows it, that declaration is not strongly associated with the block immediately after it.
+Put a blank line here.</li>
+<li>If a variable is declared and then checked, the declaration and check are strongly associated and must not be separated by a blank line.
+If the check contains more than three lines, the declaration and check start to form their own strongly associated block so require a blank line after.</li>
+</ul>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let x = foo();
+if !x.is_valid() {
+    return Err(Error::Invalid);
+}
+println!("{x}");
+
+let y = baz();
+if !y.is_valid() {
+    return Err(Error::Invalid);
+}
+return Ok(y);</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let x = foo();
+
+if !x.is_valid() {
+    return Err(Error::Invalid);
+}
+
+println!("{x}");
+let y = baz();
+if !y.is_valid() {
+    return Err(Error::Invalid);
+}
+
+return Ok(y);</code></pre>
+<h2 id="grouping"><a class="header" href="#grouping">Grouping</a></h2>
+<p>Don’t interleave unrelated code.
+Remember, to a new reader, this will look deliberate and they become confused about how variables relate.
+Keep it clean and group together strongly intradependent sections of code.</p>
+<p>This is particularly significant where closures are bound to variables—if a closure is defined as such halfway through a function, does not capture anything and then is only used at the end, the reader will have to keep more things in mind for no good reason.
+If values are captured, declare such closures close as possible to where they’re needed.
+Otherwise, define an <code>fn</code> function, rather than a closure with <code>|| ...</code>.
+Also, consider whether a closure is required at all—although it may be tempting to define helper closures, code may feel cleaner with a simpler, more top-to-bottom flow control pattern.
+Logic should always feel clean and be easy to follow.</p>
+<p><em>The following snippets assume that functions <code>foo</code>, <code>bar</code> and <code>baz</code> are free of side-effects.</em></p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let x = foo();
+let b = baz();
+if !b.is_valid() {
+    return Err(Error::Invalid)
+}
+let z = x + b;
+
+let y = bar();
+if !y.is_valid() {
+    return Err(Error::Invalid)
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let x = foo()
+let check = |x| {
+    if !x.valid() {
+        return Err(Error::Invalid)
+    }
+    Ok(x)
+};
+let y = bar();
+let z = x + check(baz())?;
+check(y)?;</code></pre>
+<h2 id="hex-values"><a class="header" href="#hex-values">Hex values</a></h2>
+<p>Unless there is an existing convention, hex values should be lowercase as this avoids creating visually-impenetrable rectangles.
+By using lowercase, we provide more ‘handles’ for the eye to use.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">const SOME_SPECIFIC_IMPORTANT_VALUE: u64 = 0xab5c4d320974a3bc;</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">const SOME_SPECIFIC_IMPORTANT_VALUE: u64 = 0xAB5C4D320974A3BC;</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="naming-discipline"><a class="header" href="#naming-discipline">Naming discipline</a></h1>
+<h2 id="name-content"><a class="header" href="#name-content">Name content</a></h2>
+<p>Naming is one of the three hardest problems in programming (along with off-by-one errors).
+Every variable, every function, every type and every concept requires a good name which fits into a good naming scheme.
+There is no one optimal way to come up with a good name, however when attempting to do so, the first place to look is for similar names in your project and to try to mimic these.
+This should result in a name which intuitively feels like it belongs among the rest of the code.
+Even doing this has its pitfalls, however, so ideally your name should:</p>
+<ul>
+<li><strong>say what it means</strong>—make the name fit conceptually into the surrounding context.
+If a reader sees <code>fn is_in(a: &amp;str, b: &amp;str)</code>, the order is not as obvious as if they were to see <code>fn is_in(haystack: &amp;str, needle: &amp;str)</code>.</li>
+<li><strong>have a consistent word order</strong>—inconsistency makes an API look dishevelled, unplanned and hence unprofessional.
+If the rest of the API uses <code>verb_noun</code> then unless there is a very good reason not to, the next function should be of the form <code>verb_noun</code>.</li>
+<li><strong>be concise</strong>—a long name can almost always be shortened.
+More characters implies a need to disambiguate, so if no such need exists, reduce the cognitive load on the next reader by reducing the amount they must read.
+Of course, don’t take this too far—the next reader must not be expected to look elsewhere to understand the full meaning of a name, as may occur if nonstandard acronyms or abbreviations are used.</li>
+<li><strong>comprise simple words</strong>—a long word can often be replaced by a shorter one.
+A concise name will comprise the smallest list of the smallest words which do not lose the subject’s meaning.
+Remember: <a href="https://www.thesaurus.com/">thesaurus.com</a> and <a href="https://www.dictionary.com/">dictionary.com</a> are your friends!</li>
+<li><strong>comprise correct words</strong>—if there is any disagreement over the implications of chosen words, then there will be some reader who gets the wrong idea.
+It’s better to spend more time discussing internally than to confuse a user.
+(Example: we once had a 20-minute discussion on the choice between <code>NOT_SAFE</code> vs <code>UNSAFE</code> as an empty value for a set of safety flags, where each flag had a name like <code>FOO_SAFE</code>.)</li>
+<li><strong>be unified</strong>—there should be one and only one name for concepts used.
+If more are used haphazardly, it implies a difference where there is none and thus muddies the water.</li>
+<li><strong>avoid including types</strong>—type names should be omitted unless required to discriminate between two variables of different types which roughly hold the same value.
+Some examples: in a finder function <code>needleStr</code> and <code>haystackStr</code> can be more concisely expressed as <code>needle</code> and <code>haystack</code>.</li>
+</ul>
+<p>Canonical policy dictates that names should use UK spelling and not US or other spelling.</p>
+<p>Good names with the help of concise doc comments do a good job of explaining a good API.
+However, if after much consideration, there don’t seem to be any good names, this is likely caused by the API not being good.
+If an API cannot be easily and intuitively explained, it is not a good API and it’s time for a refactor.</p>
+<p>A good, semantically and behaviorally consistent API hidden behind a layer of bad naming is hard to distinguish from a bad API.
+Time spent getting the right naming will pay off.</p>
+<p>Great care should be taken over all names, but extreme care should be taken over publicly exposed ones.
+These names do not have the luxury of being able to be tweaked without consequence later—any appreciation for a slightly better name an external user may have will be completely overshadowed by their irritation of having to deal with a breaking change.</p>
+<h2 id="pattern-match-variable-naming"><a class="header" href="#pattern-match-variable-naming">Pattern match variable naming</a></h2>
+<p>To reduce cognitive load, pattern-matched variables should be named consistently, that is, the new variable must be either:</p>
+<ul>
+<li>The same as the variable/field it comes from</li>
+<li>The first letter of the variable/field it comes from</li>
+</ul>
+<p>When matching structs and struct-like enum variants, try to use the original field names.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">if let Some(response) = response { ... }
+if let Some(response) = event.response { ... }
+if let Some(event_response) = event.response { ... }
+
+let Self { name, path } = self;
+
+enum State {
+    Reading(fs::File),
+    Evaluating {
+        workload: Workload,
+        ...
+    }
+}
+match state {
+    State::Reading(file) =&gt; {...}
+    State::Evaluating{ workload, .. } =&gt; {...}
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">if let Some(r) = response { ... }
+if let Some(r) = event.response { ... }
+if let Some(er) = event.response { ... }
+
+let Self { name: some_name, path: name } = self;
+
+match state {
+    State::Reading(data_source) =&gt; {...}
+    State::Evaluating{ workload: to_eval, .. } =&gt; {...}
+}</code></pre>
+<h2 id="generic-type-parameter-naming"><a class="header" href="#generic-type-parameter-naming">Generic type parameter naming</a></h2>
+<p>To avoid them being mistaken for concrete types, generic type parameters must have single-letter names.</p>
+<h2 id="lifetime-parameter-naming"><a class="header" href="#lifetime-parameter-naming">Lifetime parameter naming</a></h2>
+<p>Lifetime parameters give a unique opportunity to link together different parts of an API in the mind of a user.
+If the same data is used in multiple places in an API, make sure the lifetime names match.</p>
+<p>Lifetime names should be derived from the reference they represent, not from the type they are passed to.
+Further, they should consist of either a single letter, short word or extremely well understood acronym.
+Numbers should not be used in lifetime names.</p>
+<p>Single-letter lifetime names are acceptable if a structure is expected to be used very many times (e.g. a script interface may make heavy use of some <code>Value&lt;'h&gt;</code> which contains a reference to a heap upon which it is allocated).
+NB: the compiler will occasionally recommend the use <code>'a</code> as it lacks wider context information.
+The name <code>'a</code> is nearly always a bad one.</p>
+<p>Lifetime parameters should aim to be concise without losing meaning.
+Given the difficulty new users face when understanding lifetimes in an interface, try to give them a hand by being explicit.
+Single-letter lifetime names should generally be avoided.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">struct ASTQueryMatch&lt;'cursor, 'tree&gt; { .. }
+
+struct Value&lt;'h&gt; { .. }</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">struct ASTQueryMatch&lt;'a, 'b&gt; { .. }
+
+struct Value&lt;'value&gt; { .. }</code></pre>
+<h2 id="builder-naming"><a class="header" href="#builder-naming">Builder naming</a></h2>
+<p>If a builder for a type <code>MyType</code> is provided, then it should have an associated function <code>builder()</code> which returns a <code>MyTypeBuilder</code>.
+This <code>MyTypeBuilder</code> must also have a fallible <code>.build()</code> method, which returns a <code>MyType</code>.</p>
+<p>Typical usage is hence—</p>
+<pre><code class="language-rust">let foo = Foo::builder()
+    .bar(bar)
+    // ...
+    .build()?;</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="import-discipline"><a class="header" href="#import-discipline">Import discipline</a></h1>
+<h2 id="dont-import-all"><a class="header" href="#dont-import-all">Don’t import all</a></h2>
+<p>In general, do not use <code>*</code> from a crate.
+Consider a source file which does this twice from two different dependencies, making use of items from each.
+Now, consider what happens when these crates are updated and some of these items are removed—the compiler will complain of undefined symbols, but will have absolutely no idea where these came from.
+Even more concerning is the fact that updates can now cause name-clashes!
+By sticking to explicit imports only, we help both ourselves and our future maintainers.</p>
+<p>A corollary of this is that preludes, regardless of their initial convenience, should not be used by us in production code.
+Nevertheless, they remain a handy tool for others to use when prototyping, so we should still consider creating and exposing them where appropriate.</p>
+<p>The only exception to these rules is that in the context of a unit test module, inserting use <code>super::*</code> is acceptable as it is a well-defined idiom.</p>
+<p>The rule for using <code>*</code> from enums is slightly different.
+Here, it is acceptable to import <code>*</code> to bring all variants of an enum into scope.
+However, this should not be done at the top level, only locally to improve the readability of long match statements.
+There, they should be placed as close as possible to the relevant match, preferably on the line immediately preceding it.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">use some_crate::{SpecificItem1, SpecificItem2};
+use some_other_crate::SpecificItem3;
+
+// ...
+
+fn some_fn(some_enum: SomeEnum) -&gt; {
+    // ...
+
+    use SomeEnum::*;
+        Variant2 =&gt; {...},
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">use some_crate::*;
+use some_other_crate::prelude::*;
+use another_crate::SomeEnum::*;
+
+// ...
+
+fn some_fn(some_enum: SomeEnum) -&gt; {
+    // ...
+
+    match {
+        Variant1 =&gt; {...},
+        Variant2 =&gt; {...},
+    }
+}</code></pre>
+<h2 id="import-grouping"><a class="header" href="#import-grouping">Import grouping</a></h2>
+<p>At the time of writing, stable <code>rustfmt</code> does not yet express an opinion on the order of imports, hence for now we must do this ourselves.
+To clearly delimit whether an import is from the standard library, from a third party library or our own work, these imports should be split into three blocks, ordered as follows:</p>
+<ul>
+<li><code>std</code>, <code>core</code>, <code>alloc</code></li>
+<li>Third party crates</li>
+<li><code>self</code>, <code>super</code>, <code>crate</code></li>
+</ul>
+<p>Note that this order follows the currently-unstable <code>rustfmt</code> option—</p>
+<pre><code>import_group = "StdExternCrate"
+</code></pre>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">use std::path::PathBuf;
+
+use camino::Utf8PathBuf;
+use tokio::runtime::Runtime;
+
+use crate::{Error, Result};</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">use camino::Utf8PathBuf;
+use crate::{Error, Result};
+use std::path::PathBuf;
+use tokio::runtime::Runtime;</code></pre>
+<h2 id="import-form"><a class="header" href="#import-form">Import form</a></h2>
+<p>Excessive repetition harms readability by adding lots of visual noise.
+For this reason, avoid Java-style imports where every single imported item gets its own line with a complete and exhaustive path and instead use the cleaner nested syntax.
+If a path contains <em>n</em> parts, merge the first <em>n-1,</em> so that only the final part is grouped with its siblings.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">use allocative::Allocative;
+use derive_more::Display;
+use starlark::environment::{FrozenModule, Module};
+use starlark::eval::Evaluator;
+use starlark::values::{AllocValue, Freeze, ProvidesStaticType, StarlarkValue, ValueLike};
+use starlark_derive::{starlark_value, NoSerialize, Trace};</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">use allocative::Allocative;
+use derive_more::Display;
+use starlark::environment::FrozenModule;
+use starlark::environment::Module;
+use starlark::eval::Evaluator;
+use starlark::values::AllocValue;
+use starlark::values::Freeze;
+use starlark::values::ProvidesStaticType;
+use starlark::values::StarlarkValue;
+use starlark::values::ValueLike;
+use starlark_derive::starlark_value;
+use starlark_derive::NoSerialize;
+use starlark_derive::Trace;</code></pre>
+<h2 id="import-self-explicitly"><a class="header" href="#import-self-explicitly">Import <code>self</code> explicitly</a></h2>
+<p>When importing from a child module <code>foo</code>, always <code>use self::foo</code> as this avoids future name-clashes with a dependency also called <code>foo</code>.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">mod foo;
+mod bar;
+
+pub use self::foo::Foo;
+pub use self::bar::Bar;</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">mod foo;
+mod bar;
+
+pub use foo::Foo;
+pub use bar::Bar;</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="pattern-matching-discipline"><a class="header" href="#pattern-matching-discipline">Pattern matching discipline</a></h1>
+<h2 id="exhaustively-match-to-draw-attention"><a class="header" href="#exhaustively-match-to-draw-attention">Exhaustively match to draw attention</a></h2>
+<p>Pattern matching is an excellent way to ensure that all items of data in internal structures have been considered, not only by the author of the current change, but also by the authors of any future changes.
+When using internal interfaces, always consider using pattern-matching to force useful compiler errors in case important, possibly new, parts of a structure haven’t been considered.
+This in turn will draw the attention of the next maintainer and help them correctly do what they need.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">impl Ord for MyStruct {
+    fn cmp(&amp;self, other: &amp;Self) -&gt; Ordering {
+        let Self {
+            my,
+            thing,
+            with,
+            some,
+            unused: _,
+            fields: _,
+        } = self;
+        (my, thing, with, some)
+            .cmp(&amp;(other.my, other.thing, other.with, other.some))
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">impl Ord for MyStruct {
+    fn cmp(&amp;self, other: &amp;Self) -&gt; Ordering {
+        (self.my, self.thing, self.with, self.some)
+            .cmp(&amp;(other.my, other.type, other.with, other.some))
+    }
+}</code></pre>
+<h2 id="dont-pattern-match-pointers"><a class="header" href="#dont-pattern-match-pointers">Don’t pattern-match pointers</a></h2>
+<p>It is possible to pattern-match the pointer to a <code>Copy</code> type to obtain the value at the other end.
+Although it may seem convenient, it ultimately harms readability—it is clearer to explicitly dereference the pointer we are given.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">    .map(|x| *x)</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">    .map(|&amp;x| x)</code></pre>
+<h2 id="avoid-numeric-tuple-indexing"><a class="header" href="#avoid-numeric-tuple-indexing">Avoid numeric tuple-indexing</a></h2>
+<p>Although sometimes a handy shorthand, indexing tuples with <code>.0</code>, <code>.1</code> etc. deprives us of the opportunity to insert a good name in the same way that field-access on a struct would.
+Instead, prefer to use pattern-matching to give human-friendly names to the data being handled.
+Note that this advice does not apply in the <code>impl</code> blocks of newtype-pattern structs, i.e. tuple-structs with a single element (commonly used for wrapper types).</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">fn line_through(point1: (f64, f64), point2: (f64, f64)) -&gt; Line {
+	let (x1, y1) = point1;
+	let (x2, y2) = point2;
+	let gradient = (y2 - y1) / (x2 - x1);
+	let y_intercept = y1 - gradient * x1;
+	Line {
+		gradient,
+		y_intercept,
+	}
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">fn line_through(point1: (f64, f64), point2: (f64, f64)) -&gt; Line {
+	let gradient = (point2.1 - point1.1) / (point2.0 - point1.0);
+	let y_intercept = point1.1 - gradient * point1.0;
+	Line {
+		gradient,
+		y_intercept,
+	}
+}</code></pre>
+<h2 id="pattern-matched-parameters"><a class="header" href="#pattern-matched-parameters">Pattern-matched parameters</a></h2>
+<p>Using pattern matching in <code>fn</code> parameters adds extra noise to a function’s signature by duplicating definitions held elsewhere.
+Indeed, the fact that a particular parameter is to be pattern-matched inside of the function is not important to the user—it is an unwelcome implementation detail and should be hidden as such.</p>
+<p>If parameters are to be unpacked, do this at the first line of a particular function.</p>
+<p>Note that this guidance does not apply to closures, which are commonly used as small, locally-scoped helper functions, whose types are inferred.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">impl Server {
+    fn new(config: ServerConfig) -&gt; Result&lt;Self&gt; {
+        let Config { db_path, working_path } = config;
+        // ...
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">impl Server {
+    fn new(ServerConfig { db_path, working_path }: ServerConfig) -&gt; Result&lt;Self&gt; {
+        // ...
+    }
+}</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="code-discipline"><a class="header" href="#code-discipline">Code discipline</a></h1>
+<h2 id="when-to-use-self"><a class="header" href="#when-to-use-self">When to use <code>Self</code></a></h2>
+<p>Use <code>Self</code> wherever possible to reduce the number of types which the reader must keep in mind as instead of needing to remember an extra type which may or may not be important, the reader is instead reminded that the current code strongly relates to the <code>impl</code> block it is contained in.
+By maximising the use of <code>Self</code> it also highlights where it <em>isn’t</em> possible to use it, for example when the return type of a function has a slightly different set of generic parameters.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">impl Node {
+    pub fn new(parent: &amp;Self) -&gt; Self {
+        Self(..)
+    }
+}
+
+impl PartialOrd for Node {
+    fn cmp(&amp;self, other: &amp;Self) -&gt; Ordering;
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">impl Node {
+    pub fn new(parent: &amp;Node) -&gt; Node {
+        Foo(..)
+    }
+}
+
+impl PartialOrd&lt;Rhs=Node&gt; for Node { // NB: Rhs=Self is also the default for PartialOrd.
+    fn cmp(&amp;self, other: &amp;Node) -&gt; Ordering;
+}</code></pre>
+<h2 id="when-not-to-use-self"><a class="header" href="#when-not-to-use-self">When not to use <code>Self</code></a></h2>
+<p>Do not use <code>Self</code> when constructing associated types.</p>
+<p>Traits often include type fields as part of the interface they describe.
+These types may be referred to with <code>Self::AssociatedType</code>.
+Do not use these to construct values as it prevents the next reader from understanding which type is in use and which fields and methods are available.
+Use these <code>Self::*</code> types to define interfaces, but use concrete types to define implementations.</p>
+<p>The only exception is for trait items which return a <code>Result&lt;_, Self::Err&gt;</code>, where <code>Err</code> is set to the crate’s <code>Error</code> type.
+In this case, it is okay to use the crate’s <code>Result</code> type alias instead.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">impl Responder for MyType {
+    type Response = SomeStruct;
+    type Err = Error;
+
+    fn respond(&amp;self, _input: Input) -&gt; Result&lt;Self::Response&gt; {
+        Ok(SomeStruct{
+            some: ...,
+            fields: ...,
+        })
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">impl Responder for MyType {
+    type Response = SomeStruct;
+    type Err = Error;
+
+    fn respond(&amp;self, _input: I) -&gt; Result&lt;SomeStruct, Error&gt; {
+        Ok(Self::Response {
+            some: ...,
+            fields: ...,
+        })
+    }
+}</code></pre>
+<h2 id="struct-population"><a class="header" href="#struct-population">Struct population</a></h2>
+<p>Structs, like tuples, provide an excellent way to group together related information of different types.
+Unlike tuples however, they force values to be named, thus avoiding any forgettable-ordering problems.
+When each field is given a value, there are three possible forms to choose from:</p>
+<ul>
+<li>The field has its value moved in from a variable with the same name,</li>
+<li>The field has its value moved in from a variable with a different name,</li>
+<li>The field takes its value from the result of some computation.</li>
+</ul>
+<p>The first form is the cleanest for struct population as not only does it use the least characters, it also implies that the concepts being handled are very compatible and that there is a clear flow of data present.
+This makes the code easier to read, hence wherever reasonable, we should aim for this form.</p>
+<p>The second form is acceptable if the name of the field and the name of the value are similar, for example one name being a sub-string of the other.
+If it is not possible to tune naming to make this true, then this is a sign of messy concepts at play and hence that a refactor is needed.</p>
+<p>The third form can be the most problematic as large computations often draw too much attention, effectively hiding both smaller computations and the other two field-forms above.
+Drawing attention in this way indicates that the code awkwardly interleaves separate actions—the same section of code is both populating a struct and doing detailed computation to determine its contents.
+To avoid some fields sticking out like a sore thumb, either all fields of a struct should be computed or none should be.
+In case of a mix, refactor computations into a new <code>let</code> declarations, matching the order of the fields as closely as possible and use the first form above.
+This avoids the reader having to wade through alphabet soup.</p>
+<p>The order in which fields are populated must be the same as the type declaration.
+Each line which populates a field in a given struct must be independent.
+If there is a dependency between field declarations, for example if some shared state is mutated during their construction, use <code>let</code> declarations and the first form instead.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">struct Entry&lt;K, V&gt; {
+    id: u64,
+    key: K,
+    value: V,
+    pretty_date_modified: String,
+}
+
+fn get_entry(&amp;self, key: K) -&gt; Result&lt;Entry&lt;K, V&gt;&gt; {
+    let id = self.id_of(key)?;
+    let value = self.get(key)?;
+    let pretty_date_modified = self.date_modified(key)?
+        .format_as("yyyy-MM-dd@hh:mm:ss");
+    Entry {
+        id,
+        key,
+        value,
+        pretty_date_modified,
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">struct Entry&lt;K, V&gt; {
+    id: u64,
+    key: K,
+    value: V,
+    pretty_date_modified: String,
+}
+
+fn get_entry(&amp;self, key: K) -&gt; Result&lt;Entry&lt;K, V&gt;&gt; {
+    let value_stored_at_key = self.get(key)?;
+    Entry {
+        id: self.id_of(key)?,
+        pretty_date_modified: self.date_modified(key)?
+            .format_as("yyyy-MM-dd@hh:mm:ss"),
+        key,
+        value: value_stored_at_key,
+    }
+}</code></pre>
+<h2 id="tuple-population"><a class="header" href="#tuple-population">Tuple population</a></h2>
+<p>Tuples are most easily read when they are short as once line-breaks occur, the structure being created gets harder to discern.
+Keep things visually simple—if the formatter chooses to break tuple population into multiple lines, instead introduce new <code>let</code> declarations to move computation away from the tuple population.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let key = some_long_computation()?
+    .something_else()
+    .another_thing();
+let value = some_other_long_computation()
+    .chained_with_something_else()?;
+(key, value)</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">(
+    some_long_computation()?
+        .something_else()
+        .another_thing(),
+    some_other_long_computation()
+        .chained_with_something_else()?,
+)</code></pre>
+<h2 id="prefer-collect-when-interacting-with-fromiterator"><a class="header" href="#prefer-collect-when-interacting-with-fromiterator">Prefer <code>collect</code> when interacting with <code>FromIterator</code></a></h2>
+<p>The <code>FromIterator</code> trait defines a method <code>from_iter</code> which is called by <code>Iterator::collect</code>.
+We therefore have two methods of collecting into an iterator, <code>Foo::from_iter</code> and <code>collect()</code> with appropriate type bounds.
+Prefer the latter as this makes the order of operations the same as what is read from top to bottom.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let my_vec: Vec&lt;_&gt; = collection.into_iter()
+    .filter(...)
+    .collect();</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let my_vec = Vec::from_iter(collection.into_iter().filter(...))</code></pre>
+<h2 id="empty-vec-construction"><a class="header" href="#empty-vec-construction">Empty <code>Vec</code> construction</a></h2>
+<p>To construct an empty <code>Vec</code>, we have three options: <code>vec![]</code>, <code>Vec::new()</code> and <code>Vec::with_capacity(_)</code>.
+If the size of the <code>Vec</code> resulting from an operation can be reasonably estimated, prefer <code>Vec::with_capacity</code> as this will avoid unnecessary reallocations.
+Otherwise, if a zero-sized <code>Vec</code> is required, use <code>Vec::new()</code> as this indicates most clearly that no operation is being performed as the docs for <code>Vec::new</code> guarantee no allocations, but those for <code>vec!</code> do not.
+Consider also that <code>vec![expr; n]</code> where <code>n</code> is zero will still evaluate (and then immediately drop) <code>expr</code>.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let my_vec = Vec::new();</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let my_vec = vec![];
+let my_vec = Vec::with_capacity(0);</code></pre>
+<h2 id="avoid-loosely-scoped-let-mut"><a class="header" href="#avoid-loosely-scoped-let-mut">Avoid loosely-scoped <code>let mut</code></a></h2>
+<p>In many cases, mutability is used to create a given structure which is then used immutably for the remainder of its lifetime.
+Whenever this happens, scope the mutable declarations to just where they are needed, thus forcing a compiler error if this condition is broken in future.
+Doing this also makes code simpler to read as there are fewer things which can mutate at any one point.</p>
+<pre><code class="language-rust">let my_structure = {
+    let mut my_structure = MyStructure::new();
+    // Mutate `my_structure` as required to construct it.
+    my_structure
+};</code></pre>
+<p>For greatest clarity, make sure the name of the outer (immutable) and inner (mutable) declarations have the same name, here <code>my_structure</code>.</p>
+<p>If mutability is to retain some state whilst iterating through a structure, consider using a functional style instead.
+As a simple example, if presented with the following imperative code to count the number of spaces in a string</p>
+<pre><code class="language-rust">let mut num_spaces = 0;
+for c in my_string.chars() {
+    if c == ' ' {
+        num_speces += 1;
+    }
+}</code></pre>
+<p>Consider instead, using the functional style to avoid the mutation—</p>
+<pre><code class="language-rust">let num_spaces = my_string.chars()
+    .filter(|c| c == ' ')
+    .count();</code></pre>
+<h2 id="avoid-unassigned-let-declarations"><a class="header" href="#avoid-unassigned-let-declarations">Avoid unassigned <code>let</code> declarations</a></h2>
+<p>Let-declarations without values indicate an odd flow of data through a function.
+Instead, prefer to return the required value from the block which computes it.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let message = if result.is_ok() {
+    "success!"
+} else {
+    "failed!"
+}
+
+let mut retries = 0;
+let message = loop {
+    let resp = exec_web_request();
+    match resp {
+        Ok(m) =&gt; break m.text(),
+        Err(Error::NetworkUnavailable) =&gt; {},
+        Err(e) =&gt; return Err(e),
+    }
+
+    retries += 1;
+    if retries &gt; 5 {
+        return Err(Error::Unavailable);
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let message;
+if result.is_ok() {
+    message = "success!";
+} else {
+    message = "failed!";
+}
+
+let mut retries = 0;
+let message;
+loop {
+    let resp = exec_web_request();
+    match resp {
+        Ok(m) =&gt; {
+            message = m.text();
+            break;
+        },
+        Err(Error::NetworkUnavailable) =&gt; {},
+        Err(e) =&gt; return Err(e),
+    }
+
+    retries += 1;
+    if retries &gt; 5 {
+        return Err(Error::Unavailable);
+    }
+}</code></pre>
+<h2 id="reference-scope"><a class="header" href="#reference-scope">Reference scope</a></h2>
+<p>In many cases, the compiler is smart enough to create temporary storage locations to store variables which are given the value <code>&amp;expr</code>, however, when these are passed to functions, it becomes slightly harder to follow which type is being used, especially when handling <code>&amp;T</code> where <code>T</code> is <code>!Copy</code>.
+In this case, it is only a single character in the variable declaration, possibly many lines away which shows that the value <code>T</code> is not being moved, only its reference.</p>
+<p>Instead of relying on temporary storage locations, store the value explicitly and take a reference where needed.
+This way, the transfer of ownership is much more explicit.
+As a rule of thumb, only use <code>&amp;</code> at the start of the value of a <code>let</code> declaration when either indexing or slicing.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let foo = from_func();
+other_func(&amp;foo);</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let foo = &amp;from_func();
+other_func(foo);</code></pre>
+<h2 id="shadowing"><a class="header" href="#shadowing">Shadowing</a></h2>
+<p>When used in moderation, shadowing provides an excellent way to manipulate data or change its type whilst still highlighting that the ‘same’ data is being processed, however, too many levels of shadowing quickly makes code harder to follow.</p>
+<p>Let us consider name-shadowing with variables, for which there are three cases:</p>
+<ol>
+<li>Shadowing in contained scopes, such as <code>if let Some(x) = x { ... }</code></li>
+<li>Shadowing in the same scope with the same type, such as <code>let x = ...; let x = some_transform(x)</code></li>
+<li>Shadowing in the same scope with different types, such as <code>let x: T = x.into()</code></li>
+</ol>
+<p>In the first case when shadowing with different scopes, use at most one level of shadowing, for example when pattern matching enum variants—</p>
+<pre><code class="language-rust">if let Some(foo) = foo {
+    // The outer `foo` is now shadowed.
+    // The inner `foo` should not be shadowed.
+}</code></pre>
+<p>In the second case when shadowing in the same scope with the same type, there is no restriction placed on this and it may be done as many times as necessary.
+However, if this is being used to effectively mutate a value during construction with no other values being affected, instead use the scoped-mutability pattern—</p>
+<pre><code class="language-rust">let my_thing = {
+    let mut my_thing = ...;
+    // Mutate `my_thing` to construct it...
+    my_thing
+};</code></pre>
+<p>In the final case, when shadowing in the same but changing types (e.g. in a conversion method), shadowing can be done at most once per variable.
+This pattern is commonly seen in conversion functions—those which take ownership of their sole parameter and convert it into another type.</p>
+<pre><code class="language-rust">impl Store&lt;New&gt; {
+    fn init(self) -&gt; Store&lt;Inited&gt; {
+        let Self { some_field } = self,
+        // ...
+        let some_field = some_field.into();
+        // ...
+        InitedSelf {
+            // ...
+            some_field
+            // ...
+        }
+    }
+}</code></pre>
+<p>Now let us consider name-shadowing with types.
+Do not name-shadow with types.
+A key benefit of Rust’s strong type system is that for any valid program, each handled value has exactly one possible type and representation, which makes it easier for the programmer to understand what is happening.
+If we shadow types, the reader may think they understand what they are reading until they find something which seems impossible, because they have been quietly fooled by a definition possibly many lines away which they did not read.</p>
+<h2 id="generic-type-parameter-constraints"><a class="header" href="#generic-type-parameter-constraints">Generic type parameter constraints</a></h2>
+<p>Generic type parameter constraints should be grouped in the same place.
+If some constraints are complex enough to be placed into a <code>where</code> clause, then all constraints should be moved from angle-bracket declarations into the <code>where</code> clause also.</p>
+<p>If constraints are declared in angle brackets and that declaration is longer than 30 characters, move all constraints into a <code>where</code> clause.</p>
+<p>These rules ensure that the reader cannot miss any constraints.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">impl&lt;'a, 'b, I, T&gt; SomeStruct&lt;'a, 'b, I, T&gt;
+    where
+        'b: 'a,
+        I: IntoIterator&lt;T&gt; + 'a,
+        T: 'b,
+{ ... }</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">impl&lt;'a, 'b: 'a, I: IntoIterator&lt;T&gt; + 'a&gt; SomeStruct
+    where
+        T: 'b
+{ ... }</code></pre>
+<h2 id="type-annotations"><a class="header" href="#type-annotations">Type annotations</a></h2>
+<p>The compiler’s type inference is usually very good, but sometimes, it needs a little extra information.
+When adding the necessary annotations, we must be mindful of how much information we provide and where that information is provided.</p>
+<p>Provide only the minimum amount of information required to help the compiler.
+If the compiler does not complain if a type annotation is removed, then it should be removed.
+Always make note of the return type of the function currently being written as often this provides enough information to make many possible type annotations obselete.</p>
+<p>Let’s briefly consider collecting an iterator of <code>SomeLongType&lt;...&gt;</code> into a <code>Vec</code>.
+The compiler will complain that it does not know which collection type to collect into and although explicitly annotating <code>Vec&lt;SomeLongType&lt;...&gt;&gt;</code> works, the information the compiler needs is just that a <code>Vec</code> is being made, so it is better to use just <code>Vec&lt;_&gt;</code>.
+This has three benefits:</p>
+<ol>
+<li>The code is cleaner as unnecessary information does not draw the eye</li>
+<li>The code is more maintainable as the types we handle are allowed to change (the necessary properties are still implicitly enforced at function boundaries)</li>
+<li>The coder’s wrists ache less</li>
+</ol>
+<p>In a function implementation, Rust provides three main ways to insert annotations:</p>
+<ol>
+<li>On <code>let</code>/<code>static</code>/<code>const</code> declarations, e.g. <code>let foo: Type</code></li>
+<li>On functions using the turbofish, e.g. <code>func::&lt;T&gt;()</code></li>
+<li>On trait items using the fully-qualified syntax, e.g. <code>&lt;value as Trait&gt;::trait_item</code></li>
+</ol>
+<p>The above the order of preference in which these should be used; we shall explore each method presently.</p>
+<p>The best place to put annotations is on <code>let</code>/<code>static</code>/<code>const</code> declarations, as this not only makes it clearer what the values are being, but also if such a declaration involves a long chain of calls spanning many lines, it also makes it more obvious what’s being worked towards.
+This pattern is also the most flexible.</p>
+<p>Next, if type information must be given in the middle of the expression, the turbofish may be used (<code>::&lt;&gt;</code>).
+One place to be careful though is if the turbofish is required on a <code>collect</code> in the middle of an expression, there is often a cleaner and more efficient way to achieve the same thing.</p>
+<p>The tool of last-resort is the fully-qualified syntax which disambiguates between same-name items on the same type which come from different namespaces in scope.
+If an API you are making can cause an abundance of name-clashes, your consumers will be unhappy.
+In this case, refactor it as best you can.</p>
+<p>If a type parameter seems necessary as a variable name is not sufficiently descriptive, improve the name.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let some_meaningful_var_name: Vec&lt;_&gt; = foo.iter()
+    .filter(...)
+    .map(...)
+    // ...
+    .collect();</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let x = foo.iter()
+    .filter(...)
+    .map(...)
+    // ...
+    .collect::&lt;Vec&lt;SomeExtremelyLongType&lt;With, Generics, And&lt;'lifetimes&gt;&gt;&gt;&gt;();</code></pre>
+<h2 id="avoid-explicit-drop-calls"><a class="header" href="#avoid-explicit-drop-calls">Avoid explicit <code>drop</code> calls</a></h2>
+<p>If a value must be dropped early, create a new scope with curly braces rather than using an explicit <code>drop</code> call.
+This will highlight the lifetimes of the values in use whilst also avoiding the reader missing the <code>drop</code> call, which may be nestled among many busy-looking lines of code.</p>
+<p>The <code>drop</code> function should not be used to discard values in call chains.
+If a single value is to be ignored, use the ‘toilet operator,’ <code>|_| ()</code>, i.e.
+a closure which takes one argument, ignores it and returns a unit.
+This form is consistent with similar closures which ignore parts of their inputs, for example when extracting the key from a key-value pair—</p>
+<pre><code class="language-rust">    .map(|(key, _)| key)</code></pre>
+<p>There are two exceptions to this.</p>
+<p>If <code>|_| ...</code> is used and the ignored parameter is an <code>Error</code>, we should highlight that an error is intentionally being ignored, for example by using <code>.ok()</code> on a <code>Result</code> being handled.</p>
+<p>If converting from some <code>Result&lt;T&gt;</code> to a <code>Result&lt;()&gt;</code> at the end of the last expression of a function, instead of the ignore marker, use the <code>?</code> operator and an explicit <code>Ok(())</code>.
+This highlights that we care only about side-effects, and that no information is returned in the successful case.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">async fn log(&amp;self, message: String) -&gt; Result&lt;()&gt; {
+    {
+        let mut file = OpenOptions::new()
+            .append(true)
+            .open(&amp;self.log_file_path)?;
+        file.write_all(message.as_bytes())?;
+    }
+    self.transmit_log(message).await?;
+    Ok(())
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">async fn log(&amp;self, message: String) -&gt; Result&lt;()&gt; {
+    let mut file = OpenOptions::new()
+        .append(true)
+        .open(&amp;self.log_file_path)?;
+    file.write_all(message.as_bytes())?;
+    drop(file);
+    Ok(self.transmit_log(message)
+        .await
+        .map(drop))
+}</code></pre>
+<h2 id="constructors-vs-structs-with-all-fields-public"><a class="header" href="#constructors-vs-structs-with-all-fields-public">Constructors vs. structs with all fields public</a></h2>
+<p>For structs created by a consumer and which represent an ‘object’ in the code’s model (i.e. those which aren’t just used to transfer data between components), prefer to expose constructor functions or a builder rather than exposing public fields.
+There are several benefits here:</p>
+<ul>
+<li>They format more nicely in call chains</li>
+<li>They allow parameter type conversions to occur implicitly</li>
+<li>They allow some fields to be computed in terms of others using implementation-specific details</li>
+</ul>
+<p>Structs with all-public fields cannot benefit from any of the above and moreover, if it is later decided that any of these properties is beneficial, we face either a breaking change to fix it or extra complication to work around it.</p>
+<p>For structs created by the consumer which just transfer data (e.g. <code>FooConfig</code> may be passed to <code>fn foo</code>), if there is a reasonable <code>Default</code> implementation, prefer to make all fields public to reduce boilerplate.
+To defend against the future addition of new fields causing breaking changes, consider marking the struct as <code>#[non_exhaustive]</code>.
+If there is no reasonable <code>Default</code> implementation, use a builder instead.</p>
+<h2 id="method-specific-data-structures"><a class="header" href="#method-specific-data-structures">Method-specific data-structures</a></h2>
+<p>Avoid namespace pollution by putting helper types into the most local scope they may be reasonably defined in.
+Further, if common patterns start to arise, make sure to use standard names for each type, for example <code>Test</code> for test-specific builder-pattern test cases or <code>Message</code>/<code>Response</code> for serde-structs which represent a foreign API.
+Note that by using predictable names in very predictable, local-scale patterns, the reader is able to safely forget details unimportant to them.
+When helper types are local to a function, place the definitions at the bottom, below a marker comment such as <code>// test types</code> or <code>// serde types</code>.
+Such marker comments let the reader know that unless they wish to know the finer details about how a test works or how a foreign API is handled, they do not need to read any further.</p>
+<p>This pattern is particularly useful to significantly reduce the blast-radius of incoming remote API changes by closely matching the expected form with a set of local (de)serialization types independent to those understood internally by our crate.
+Let’s say we have a function called <code>get_image_info</code>, which makes a web-request to get information associated with given container image name (e.g.
+author, description, latest version).
+To nicely transfer data from some remote format into one we govern, say <code>ImageInfo</code>, add an explicit <code>return</code> at the end of <code>get_image_info</code> and <em>below</em> this, create a new type called <code>Response</code>, which implements <code>Deserialize</code>.
+Add a comment which says <code>// serde types.</code> to let the reader know that everything beyond this point only relates to modelling the remote API—thus saving them time as they will likely only care about these details if something is broken.
+Add as many new local types as are necessary to maintain a 1:1 relationship between Rust types and the remote’s format—</p>
+<pre><code class="language-rust">async fn get_image_info(&amp;self, name: &amp;str) -&gt; Result&lt;ImageInfo&gt; {
+    let response: Response = serde_json::from_str(get_response(...).await?.text());
+    let info = ImageInfo {
+        name,
+        version: response.metadata.version,
+        authors: response.metadata.authors,
+        latest_release: response.releases.last()
+            .map(|release| ...),
+    }
+    return Ok(info);
+
+    // serde types.
+    #[derive(Deserialize)]
+    struct Response {
+        metadata: Metadata,
+        releases: Vec&lt;Release&gt;,
+    }
+
+    #[derive(Deserialize)]
+    struct Metadata {
+        version: String,
+        authors: Vec&lt;String&gt;,
+    }
+
+    #[derive(Deserialize)]
+    struct Release {
+        ...
+    }
+}</code></pre>
+<p>As a rule of thumb, <code>serde</code> annotations should not be present on the types used in the core of a crate, where the content of those types is taken entirely from a remote API or is destined to be sent to one.
+Remote APIs should not govern internal representation.</p>
+<h2 id="method-calls-on-closing-brackets-and-braces"><a class="header" href="#method-calls-on-closing-brackets-and-braces">Method calls on closing brackets and braces</a></h2>
+<p>Expressions which end in a <code>}</code> such as control structures and struct literals should not have methods called upon them as the formatter moves method calls onto the line below.
+This adds an unwelcome surprise as the scope of what the reader is currently looking at will appear to increase, adding to cognitive load and potential confusion.
+To avoid this, use a binding (<code>let some_var = ...; some_var.foo()</code>).</p>
+<p>When designing APIs, if a public struct will be filled by consumers for the purpose of calling a single method on it, consider instead reversing the dependency by using a free function which takes the struct as its first parameter in the fashion of a config struct.</p>
+<p>Expressions which end in a <code>)</code> or <code>]</code> follow the same rule unless that expression is quite short.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">foo(FooConfig {
+    bar: "asdf",
+    baz: "fdsa",
+})?;
+
+let value = if some_condition {
+    value_a
+} else {
+    value b
+};
+value.to_string()
+
+// ...
+    .filter(|c| {
+        let exceptions = [ 'a', 'b', 'c', 'd', ... ];
+        !exceptions.contains(c)
+    })
+// ...</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">Foo {
+    bar: "asdf",
+    baz: "fdsa",
+}
+.do_thing()?;
+
+if some_condition {
+    value_a
+} else {
+    value_b
+}
+.to_string()
+
+// ...
+    .filter(|c| ![ 'a', 'b', 'c', 'd', ... ].contains(c))
+// ...</code></pre>
+<h2 id="format-arg-inlining"><a class="header" href="#format-arg-inlining">Format arg inlining</a></h2>
+<p>Arguments to <code>format!</code>-like macros should aim to be as similar as possible to the string they are intended to produce.
+Whenever a single variable is used in a format argument, it should be inlined to avoid the reader needing to dart back and forth between the format string and its arguments (both of which may stretch over multiple lines).</p>
+<p><em>NB: older Rust versions may not support this syntax.</em></p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">format!("{path}/{file}")</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">format!("{}/{}", path, file)</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="error-and-panic-discipline"><a class="header" href="#error-and-panic-discipline">Error and panic discipline</a></h1>
+<h2 id="error-messages"><a class="header" href="#error-messages">Error messages</a></h2>
+<p>In Rust, it is a good idea to start writing a project by first making its <code>Error</code> type, this no only encourages message consistency, but also highlights the necessary information for these good error messages.
+This in turn, makes it clearer which information should be plumbed where, avoiding the awkward and altogether too-common situation where an error condition is identified, but much work must be done to get the right information there.</p>
+<p>Error messages should be concise.
+Every second longer a user spends reading an error message and not understanding what went wrong is a second longer of their frustration.
+The form of the phrases used in error messages should be consistent—if, likely from previous messages, the user is expecting—</p>
+<pre><code>cannot foo the bar
+</code></pre>
+<p>but instead reads—</p>
+<pre><code>bar is not fooable
+</code></pre>
+<p>they will experience unnecessary discomfort.
+Keep it nice and clean.</p>
+<p>A majority of the time, error messages should start with a verb and in most cases that verb should be prefixed with ‘cannot.’</p>
+<p>Capitalisation of error messages should be consistent.
+If it is possible that an error will not be a top-level error (e.g. it may be wrapped), then the first letter should be lowercase.
+Unexpected capital letters in the middle of a line of logging look dishevelled and imply that little thought has gone into the overall design of the implementation.
+This couldn’t be further from the truth so let’s make it appear as such.</p>
+<p>Remember: the latin alphabet is optimised for many contiguous lowercase letters, hence lowercase is a good default to maintain.
+However, uppercase should be used for acronyms and standard names such as: TCP and NixOS.</p>
+<p>When writing error messages, think about the background of the expected user/consumer of the project.
+Consider whether the person reading it will have good technical knowledge and tailor your approach as such.</p>
+<p>If the reader of these error messages is expected to be a (Rust) developer (e.g. code in question is in a library or building block for something else), they will be familiar with how to fix simple problems and as such may not benefit from unnecessary advice.
+For these readers, a good concise error message will contain all the information needed to point them towards how to fix it.
+In this case, suggestions are at best superfluous and at worst unhelpful.</p>
+<p>If the reader of these error messages is not expected to be a developer (e.g. these messages will appear in some GUI), think carefully about where you want to send that reader next.
+Whereas a developer might be okay to submit an issue, a non-developer will appreciate being explicitly pointed in the right direction.</p>
+<p>Going up the stack, the reader’s knowledge of low-level details becomes less reliable hence they must lean more heavily on the help we give them.</p>
+<p>As an error passes further and further up the stack, more context messages may be added to it.
+Be aware of how errors will bubble up to avoid repeating the same information multiple times.</p>
+<p>Note that all this advice applies to both error messages associated with error types and panic messages.</p>
+<h2 id="error-types"><a class="header" href="#error-types">Error types</a></h2>
+<p>All reasonable types which implement <code>Error</code> fall into one of three categories:</p>
+<ul>
+<li>Those which erase the underlying types</li>
+<li>Those which preserve them, for example by enumeration</li>
+<li>Those which preserve them opaquely</li>
+</ul>
+<p>Errors which use type-erasure (e.g. <code>Box&lt;dyn Error&gt;</code> and <code>anyhow::Error</code>) are often easier to use when writing code, however things become very problematic later on when attempting to inspect errors—with less help from the compiler comes far more places for subtle breakages to occur, both now and in future.
+Type-erased errors should only be used in prototypes where maintenance will never be a concern, otherwise, use concrete types.
+As a general rule, type erased errors <em>must not be used in library crates.</em>
+Type erasure is a very strong opinion and one which may not be shared by a crate’s dependants and the process of converting from erased errors back to a concrete one is unreliable and unpleasant, and hence will irritate consumers.</p>
+<p>Errors which preserve types (e.g those annotated with <code>#[derive(thiserror::Error)]</code>) give Rust a unique advantage—not only can the golden path receive first-class support, but so too can the error path, thus allowing an even higher level of quality to be attained.
+In particular, the process of responding to particular errors is far more robust with enumerated errors.</p>
+<p>Errors which preserve types but which represent unrecoverable errors should represent their error condition as a contained <code>String</code> which is assigned where the error is constructed.
+(Note that although <code>&amp;‘static str</code> may be applicable, <code>String</code> offers more flexibility and can be expected to have a negligible performance impact.)
+When constructing these errors, special care must be taken to ensure that the message is consistent with other errors in the codebase.
+The field used to hold the reason for the error in these cases should be named <code>reason</code>.</p>
+<pre><code class="language-rust">#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    // ...
+
+    #[error("invalid {credential}: {reason}")]
+    InvalidCredentials{
+        credential: String,
+        reason: String,
+    },
+}</code></pre>
+<p>If one error wraps another, the inner error should be held in a field named <code>source</code>.</p>
+<pre><code class="language-rust">#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    // ...
+
+    #[error("cannot access {path}: {source}")]
+    IO {
+        path: PathBuf,
+        source: io::Error,
+    },
+}</code></pre>
+<p>Note that exposing the error type originating from dependencies as these may accidentally expose internal details in a public API.
+In these cases, if using enumerated errors, consider adding an <code>Internal</code> variant which holds a type which hides the internal details as follows—</p>
+<pre><code class="language-rust">#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    // ...
+
+    #[error(transparent)]
+    Internal(#[from] InternalError),
+}
+
+#[derive(Debug, thiserror::Error)]
+#[error(transparent)]
+pub struct InternalError(#[from] InternalErrorImpl);
+
+#[derive(Debug, thiserror::Error)]
+enum InternalErrorImpl {
+    // ...
+}</code></pre>
+<h2 id="error-conversion"><a class="header" href="#error-conversion">Error conversion</a></h2>
+<p>Errors returned from other crates should be converted to current the crate’s <code>Error</code> type at the earliest reasonable opportunity.
+The intuition here is that within our crates, we should be talking our own error language and that calling functions and methods in other crates crosses an interface boundary, so to propagate their errors for too long creates a slow transition rather than a clean, abrupt change.
+Long call-chains often handle many different error types and converting early into the common crate-local error type will allow natural error propagation.
+By maintaining the same convention with short chains, our code becomes more predictable and hence easier to read.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">let override_url = env::var("URL")
+    .ok()
+    .map(|override| {
+        Url::parse(&amp;override).map_err(|source| Error::MalformedEnvUrl {
+            env_var: "URL",
+            source,
+        })
+    })
+    .transpose()?;</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">let override_url = env::var("URL")
+    .ok()
+    .map(|override_url| url::Url::parse(&amp;override_url))
+    .transpose()
+    .map_err(|source| Error::MalformedEnvUrl { // The error to be mapped comes from somewhere in the chain above!
+        env_var: "URL",
+        source,
+    })?;</code></pre>
+<h2 id="panic-calmly"><a class="header" href="#panic-calmly">Panic calmly</a></h2>
+<p>Panics must only be used if a program enters an unrecoverable state.
+Further, that unrecoverable state must not be as a result of user input—a program which a user can easily crash is not a good program.</p>
+<p>In Rust, panics are very aggressive, especially as if the default panic strategy is overridden (e.g. by a user who wants a smaller binary and hence sets <code>profile.release.panic = "abort"</code> in their <code>Cargo.toml</code>), we have no guarantee that the usual cleanup is performed.
+In such a situation, we must rely on the OS to do its best with the resources it understands but we have no guarantee that this will be sufficient.
+By default therefore, don’t panic.</p>
+<p>If, however, a panic is inevitable, be sure that the message signals who is at fault—if it’s an internal error, start the message with <code>internal error:</code>.</p>
+<p>The over-use of <code>.unwrap()</code> is a major red flag, as the resulting code is likely very fragile, relying on possibly-unclear preconditions in the code above it.
+If that code changes—as is very likely in code still under active development—production code may panic.
+As a rule of thumb, <code>.unwrap()</code> should only be used in code in tiny scopes, where errors can only possibly originate from the programmer—e.g. in <code>Regex::new("...").unwrap()</code>, where a panic can only occur if the raw regex constant is invalid.
+In general though, unwrapping should be replaced with either:</p>
+<ul>
+<li>Good use of the type system to allow the compiler to enforce preconditions</li>
+<li>Calls to <code>.expect</code> which document the required preconditions (these must follow the same convention as panic messages)</li>
+</ul>
+<p>The first option is very much preferable.
+What follows is two common situations and solutions.</p>
+<p>We can remove panics originating from <code>.unwrap()</code> calls by using the <code>?</code> operator to pass errors up the call-stack.
+In the case of unwrapping options in a function which returns a result, calling the <code>.ok_or</code>/<code>.ok_or_else</code> methods may be required.</p>
+<p>We can also remove panics originating from <code>.unwrap()</code> calls by using pattern-matching.
+If a call to <code>x.unwrap()</code> is guarded by <code>if x.is_some()</code>/<code>if x.is_ok()</code>, instead make use of pattern matching: <code>if let Some(x) = x</code> or <code>if let Ok(x) = x</code>.</p>
+<p>When calls to <code>.unwrap()</code> are removed, the surrounding code is not only more robust, but you may notice that it is often visually cleaner.
+This is not a coincidence—it is a nudge from the Rust developers to encourage fault-tolorant code and practices.</p>
+<p>There are two exceptions to this avoidance of panicking: tests and panic-propagation.</p>
+<p>If the <code>?</code> operator is used in tests, the origin of the error is lost, making the test harder to debug.
+A failed <code>.unwrap()</code> will result in a trace pointing to where the panic occurred.</p>
+<p>If a thread panics whilst it has acquired a <code>Mutex</code> lock, we have no guarantee that the contents of the mutex represents a valid state and hence the lock gets <em>poisoned.</em>
+This means that any other thread which attempts to lock the mutex will get an error.
+In this case, panicking is acceptable it effectively propagates an existing panic from another thread.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="function-discipline"><a class="header" href="#function-discipline">Function discipline</a></h1>
+<h2 id="no-information-returns"><a class="header" href="#no-information-returns">No-information returns</a></h2>
+<p>Any expression or statement which returns the unit (i.e. <code>()</code> such as <code>println!</code>) or which never returns anything (i.e. <code>!</code> such as <code>std::process::exit</code>) should end with a semicolon.</p>
+<p>In the case of <code>()</code>, any block which ends with a function call which returns <code>()</code> relies on the return type of that function to never be changed to return something more useful.
+This is a strange dependency which may cause needless compiler errors in future, hence is best avoided.
+Using an explicit <code>;</code> reinforces the fact that we expect to obtain no information from a particular call.</p>
+<p>A similar arguments holds for <code>!</code> as we expect to return no information from such a call.</p>
+<p>If a function which returns <code>Result&lt;()&gt;</code> ends in a function call which also returns <code>Result&lt;()&gt;</code>, instead use the <code>?</code> operator and an explicit <code>Ok(())</code> return.
+The intuition here is that in the expected case on the golden path, we expect no information to be returned, hence we should make our code reinforce this fact.</p>
+<p>If a <code>match</code> statement is expected to return <code>()</code>, then it is being used as a control-flow structure.
+Therefore, do-nothing <code>match</code> branches should be written as <code>.. =&gt; {}</code> rather than <code>.. =&gt; ()</code>.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">fn setup_foo(&amp;self) -&gt; Result&lt;()&gt; {
+    match self.foo_type {
+        FooType::A =&gt; {}
+        ...
+    }
+    self.setup_bar()?;
+    Ok(())
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">fn setup_foo(&amp;self) -&gt; Result&lt;()&gt; {
+    match self.foo_type {
+        FooType::A =&gt; ()
+        ...
+    }
+    self.setup_bar()
+}</code></pre>
+<h2 id="hide-generic-type-parameters"><a class="header" href="#hide-generic-type-parameters">Hide generic type parameters</a></h2>
+<p>Generic type parameters add complication to an API.
+Where possible, hide generic parameters either through elision, syntactic sugar (<code>impl Trait</code>) or by leaving them unbound.</p>
+<p>On <code>impl</code> blocks, only introduce strictly-necessary type-constraints.
+Not only will this reduce the cognitive overhead of understanding large blocks, it will also help make code more easily applicable in new scenarios.</p>
+<p>On functions, if a generic <em>lifetime</em> parameter can be <a href="https://doc.rust-lang.org/nomicon/lifetime-elision.html">elided</a>, it should be by using <code>'_</code>.
+If a generic <em>type</em> parameter is only used once and isn’t too complicated, use <code>impl Trait</code> to hide it.</p>
+<p>Note that although it is possible to omit the unnamed lifetime (i.e. it may be possible to write <code>MyRef&lt;'_&gt;</code> as <code>MyRef</code>), this should never be done.
+A type without lifetime parameters looks completely self-contained and hence as though may be freely passed around.
+If a lifetime is present, <em>always</em> communicate that fact (i.e. always prefer <code>MyRef&lt;'_&gt;</code> to <code>MyRef</code>).</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">fn transmit(tx: impl Transmitter&lt;'_&gt;, message: &amp;[u8]) -&gt; Result&lt;()&gt; { ... }</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">fn transmit&lt;'a, T: Transmitter&lt;’a&gt;&gt;(tx: T, message: &amp;[u8]) -&gt; Result&lt;()&gt; { ... }</code></pre>
+<h2 id="unused-parameters-in-default-implementations"><a class="header" href="#unused-parameters-in-default-implementations">Unused parameters in default implementations</a></h2>
+<p>Occasionally, when a default trait function implementation is provided, not all of its parameters are used.
+To avoid a compiler warning, explicitly add <code>let _ = unused_param;</code> lines until all these warnings are removed.</p>
+<p>Briefly considering other approaches, it is possible to rename the parameter to something like <code>_unused_param</code>, however this will appear in docs and look dishevelled.
+It is possible to use <code>#[allow(unused_variables)]</code> to suppress all unused-parameter warnings for the given function, however this will also affect the parameters we <em>do</em> expect to use, possibly causing issues later.
+Similarly, we could individually annotate each unused parameter, however this would make the overall signature much more difficult to read.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">trait CustomScriptValue&lt;'v&gt; {
+    fn at(&amp;self, index: Value&lt;'v&gt;) -&gt; Result&lt;Value&lt;'v&gt;&gt; {
+        let _ = index;
+        Err(Error::Unsupported { .. })
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">trait CustomScriptValue&lt;'v&gt; {
+    fn at(&amp;self, _index: Value&lt;'v&gt;) -&gt; Result&lt;Value&lt;'v&gt;&gt; {
+        Err(Error::Unsupported { .. })
+    }
+
+    // OR
+
+    #[allow(unused_variables)]
+    fn at(&amp;self, index: Value&lt;'v&gt;) -&gt; Result&lt;Value&lt;'v&gt;&gt; {
+        Err(Error::Unsupported { .. })
+    }
+}</code></pre>
+<h2 id="builder-visibility"><a class="header" href="#builder-visibility">Builder visibility</a></h2>
+<p>The type <code>MyTypeBuilder</code> should not have a public constructor.
+In typical usage, users of <code>MyType</code> shouldn’t need to import <code>MyTypeBuilder</code>, it should be a seamless part of <code>MyType</code>.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">use crate::Foo;
+
+let foo = Foo::builder()
+    .bar(bar)
+    // ...
+    .build()?;</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">use crate::{Foo, FooBuilder}
+
+let foo = FooBuilder::new()
+    .bar(bar)
+    // ...
+    .build()?;</code></pre>
+<h2 id="builder-ownership"><a class="header" href="#builder-ownership">Builder ownership</a></h2>
+<p>In Rust, there are two forms of the builder pattern, depending on the receiver type used.
+Consider the following builder—</p>
+<pre><code class="language-rust">let frobnicator = Frobnicator::builder()
+    .foo("foo")
+    .bar("bar")
+    .build()?;</code></pre>
+<p>The methods <code>foo</code>, <code>bar</code> and <code>build</code> can either take ownership of <code>self</code> or take <code>&amp;mut self</code> by value.</p>
+<p>If <code>self</code> is used, it encourages a simple flow of data, with values being neatly moved from one place to another.
+This should be the default ownership model.</p>
+<p>If <code>&amp;mut self</code> is used, it makes conditional use of each of the builder methods simpler, however either the builder must be bound to a variable or all contained data must be cloned during <code>.build()</code>.
+Although the optimiser may remove some unnecessary cloning, this should not be relied upon.
+Besides, if the <code>.build</code> method takes a reference to the builder—allowing it to be called multiple times—this feels more like a <em>factory</em> than a <em>builder.</em></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="ordering-discipline"><a class="header" href="#ordering-discipline">Ordering discipline</a></h1>
+<h2 id="general-definition-ordering"><a class="header" href="#general-definition-ordering">General definition ordering</a></h2>
+<p>When read from top to bottom, a file should feel like a tour of the APIs it defines.
+The most important items should be defined further up the file, with their helpers below.
+No <code>impl</code> block should come before the type or trait to which it relates.
+In this way, lower-level implementation details are hidden from the reader until they wish to know more, at which point, having gained a good knowledge of the overall form of the code, they can read on to understand how it functions.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">impl Foo {
+    pub fn some_func(&amp;self) {
+        self.some_helper_func();
+    }
+
+    fn some_helper_func(&amp;self) {
+        // ...
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">impl Foo {
+    fn some_helper_func(&amp;self) {
+        // ...
+    }
+
+    pub fn some_func(&amp;self) {
+        self.some_helper_func();
+    }
+}</code></pre>
+<h2 id="impl-block-placement"><a class="header" href="#impl-block-placement">Impl block placement</a></h2>
+<p>By default, <code>impl SomeType</code> blocks for a given type should be in the same file, immediately below where that type is defined.
+Trait implementations <code>impl SomeTrait for SomeType</code> should go in the file where <code>SomeTrait</code> or <code>SomeType</code> is defined.
+This is effectively the orphan rule but applied within crates.</p>
+<h2 id="impl-block-ordering"><a class="header" href="#impl-block-ordering">Impl block ordering</a></h2>
+<p>The <code>impl</code> blocks in the same file for <code>MyType</code> should be ordered as follows:</p>
+<ul>
+<li><code>impl MyType</code></li>
+<li><code>unsafe impl StandardTrait for MyType</code></li>
+<li><code>unsafe impl MyTrait for MyType</code></li>
+<li><code>unsafe impl ThirdPartyTrait for MyType</code></li>
+<li><code>impl StandardTrait for MyType</code></li>
+<li><code>impl MyTrait for MyType</code></li>
+<li><code>impl ThirdPartyTrait for MyType</code></li>
+</ul>
+<p>The <code>impl</code> blocks in the same file for <code>MyTrait</code> should be ordered as follows:</p>
+<ul>
+<li><code>impl MyTrait for StandardType</code></li>
+<li><code>impl MyTrait for MyType</code></li>
+<li><code>impl MyTrait for ThirdPartyType</code></li>
+</ul>
+<h2 id="derive-ordering"><a class="header" href="#derive-ordering">Derive ordering</a></h2>
+<p>Put all derive items in a single <code>#[derive(...)]</code> (the formatter will preserve readability by introducing line-breaks as it deems fit).
+Derived items should be ordered as follows:</p>
+<ul>
+<li><code>Copy</code></li>
+<li><code>Clone</code></li>
+<li><code>Debug</code></li>
+<li><code>PartialEq</code></li>
+<li><code>Eq</code></li>
+<li><code>PartialOrd</code></li>
+<li><code>Ord</code></li>
+<li>Other standard traits, ordered lexicographically</li>
+<li>Third party traits, ordered lexicographically</li>
+</ul>
+<h2 id="declaration-ordering"><a class="header" href="#declaration-ordering">Declaration ordering</a></h2>
+<p>Rust provides several different types of declaration and where these are declared consecutively in the same block, they should be ordered for visual consistency.
+This will help draw the reader’s eye to the important parts of each declaration, rather than getting lost in some superfluous ordering.</p>
+<p>Declarations should be ordered as follows:</p>
+<ul>
+<li><code>const</code></li>
+<li><code>static</code></li>
+<li><code>lazy_static!</code></li>
+<li><code>let</code></li>
+<li><code>let mut</code></li>
+</ul>
+<h2 id="struct-field-ordering"><a class="header" href="#struct-field-ordering">Struct field ordering</a></h2>
+<p>The more public a field, the more likely a user will to want to know more about it and understand it.
+Therefore, we should put the items they are most likely to care about nearer the top of our code, avoiding them having to skip over parts uninteresting to them.
+Specifically, this means that we should place:</p>
+<ul>
+<li><code>pub</code> fields first,</li>
+<li><code>pub(crate)</code> fields next,</li>
+<li>private fields last.</li>
+</ul>
+<p>Structs neatly organised in this way make it clear when the reader has entered implementation details and hence when they are less likely to glean useful information.</p>
+<p>If the reason for ordering fields in a different way to the above is due to a derivation such as <code>Ord</code> or <code>PartialOrd</code>, this is not a good reason for deviation from the norm.
+Maintaining consistency is of a higher priority than a single derivation, hence the relevant implementations should be written out by hand.
+The reader is more likely to be looking at the entire struct rather than just one trait implementation.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">struct ScriptExecutionContext&lt;'h, T&gt; {
+    pub user_data: T,
+
+    pub(crate) global_vars: BTreeMap&lt;String, Value&lt;'h&gt;&gt;,
+
+    stack: Vec&lt;StackFrame&gt;,
+    max_steps: Option&lt;u64&gt;,
+    steps: u64,
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">struct ScriptExecutionContext&lt;'h, T&gt; {
+    stack: Vec&lt;StackFrame&gt;,
+    pub(crate) global_vars: BTreeMap&lt;String, Value&lt;'h&gt;&gt;,
+    pub user_data: T,
+    steps: u64,
+    max_steps: Option&lt;u64&gt;,
+}</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="unsafe-discipline"><a class="header" href="#unsafe-discipline">Unsafe discipline</a></h1>
+<h2 id="minimise-unsafe"><a class="header" href="#minimise-unsafe">Minimise unsafe</a></h2>
+<p>Rust’s <code>unsafe</code> keyword enables a small but important number of additional powers which the compiler is unable to check.
+In effect, it is a ‘hold my beer’ marker—you tell the compiler to trust you and just watch whilst you do something either incredibly impressive or incredibly harmful.
+But the compiler is not the only one whose trust we require—when we use <code>unsafe</code>, we also ask our <em>users</em> to trust that we know exactly what we are doing.
+Under no circumstance do we want to break that trust.</p>
+<p>Therefore, we must endeavour to minimise the use of unsafe constructs in our code.
+If there is a place where <code>unsafe</code> is used but not required for a strict functional requirement, drop it and replace it with a safe equivalent.
+If left, such a section is inherently much harder to maintain as it require not only excellent documentation but also dilligence, careful consideration of preconditions and actions, and above all time.
+The more unsafe code a project contains, the slower it will be able to move forward in the long-run.</p>
+<p>If <code>unsafe</code> is mandatory, minimise the scope of the <code>unsafe</code> blocks and functions in use.
+Even if this means adding an extra line or two, maximise the amount of help the compiler can give us whilst minimising the number of unsafe interactions which will require audit.
+A function of 50 lines wrapped in a single large <code>unsafe</code> block is far harder to maintain than a 56 line function containing three one-line <code>unsafe</code> blocks.</p>
+<p>Note that ‘because it’s faster’ is not a good reason alone to use <code>unsafe</code> constructs.
+Even if true, unless profiling can categorically show that safety checks add a <em>globally-significant</em> cost safety should always take a higher priority.
+Rust is an extremely fast language anyway.</p>
+<h2 id="document-preconditions"><a class="header" href="#document-preconditions">Document preconditions</a></h2>
+<p>Both <code>unsafe</code> functions and <code>unsafe</code> blocks must document their preconditions in a comment with the prefix <code>// SAFETY: </code>.
+If something goes wrong in future, this will help the future maintainer understand which conditions have been violated.
+These comments must be carefully maintained and updated as changes are made.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="structural-discipline"><a class="header" href="#structural-discipline">Structural discipline</a></h1>
+<h2 id="how-to-structure-modrs"><a class="header" href="#how-to-structure-modrs">How to structure <code>mod.rs</code></a></h2>
+<p>Files named <code>mod.rs</code> must only be used to specify the structure of a project, if definitions are added, they quickly become messy, ultimately detracting from their core purpose of declaring sub-modules and the current module’s interface.</p>
+<p>The <code>mod.rs</code> file must be separated into distinct blocks in the following order, keeping the most public items first:</p>
+<ol>
+<li><code>pub mod _</code> declarations</li>
+<li><code>pub(crate) mod _</code> declarations</li>
+<li><code>mod _</code> declarations</li>
+<li><code>pub use _</code> declarations</li>
+<li><code>pub(crate) use _</code> declarations</li>
+<li><code>pub use _</code> declarations</li>
+</ol>
+<p>Any items gated behind a <code>#[cfg(...)]</code> must be placed at the end of the file, in the same order as the above.
+Like-gated items should be wrapped in a block, i.e. <code>#[cfg(...)] { /* items here */ }</code>.</p>
+<p>No other items should be present.</p>
+<p>Note that these guidelines also hold for <code>lib.rs</code>, with the one exception that a crate’s <code>Error</code> and <code>Result</code> types are permitted in <code>lib.rs</code>, given their central importance.</p>
+<h2 id="use-modrs-to-declare-a-module-root"><a class="header" href="#use-modrs-to-declare-a-module-root">Use <code>mod.rs</code> to declare a module-root</a></h2>
+<p>When declaring a module <code>foo</code> which comprises multiple files, Rust allows two directory structures as follows.</p>
+<p>Firstly, all files can be grouped into a single directory containing a <code>mod.rs</code>—</p>
+<pre><code>foo/
+├── mod.rs
+├── file_in_foo.rs
+└── another_file_in_foo.rs
+</code></pre>
+<p>Secondly, all files can be grouped into a single directory, except for the module root which is stored next to the directory and shares its name—</p>
+<pre><code>foo.rs
+foo/
+├── file_in_foo.rs
+└── another_file_in_foo.rs
+</code></pre>
+<p>Always prefer the first way as <code>mod.rs</code> files are expected to have a specific structure, hence the reader knows what they’ll see when opening one of these, unlike some arbitrary <code>foo.rs</code>.
+Some editors group files and folders separately, so in the above example, the fact that <code>foo.rs</code> is related to the <code>foo/</code> directory will not be obvious when there are many other entries in between.</p>
+<h2 id="define-error-and-result-in-a-standard-location"><a class="header" href="#define-error-and-result-in-a-standard-location">Define <code>Error</code> and <code>Result</code> in a standard location</a></h2>
+<p>A crate’s <code>Error</code> and <code>Result</code> types are likely the most important types it contains and should therefore be declared in a standard, outward-facing place.</p>
+<p>In library crates, the <code>Error</code> type should be defined in the crate-root, <code>lib.rs</code> immediately below the <code>mod</code> and <code>use</code> declarations.
+The custom <code>Result</code> type alias, <code>type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;</code> must be immediately below <code>Error</code>.</p>
+<p>In binary crates, the <code>Error</code> type should be defined <code>error.rs</code> and the <code>Result</code> alias in <code>result.rs</code>, both in the crate’s root directory.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="comment-discipline"><a class="header" href="#comment-discipline">Comment discipline</a></h1>
+<h2 id="first-doc-sentence-form"><a class="header" href="#first-doc-sentence-form">First doc-sentence form</a></h2>
+<p>When wrapped, the first sentence of a doc comment should be at most two lines.
+It should clearly and concisely explain the whole of the golden path of a function.
+After reading this first sentence, it should be clear <em>when</em> to use the given function/type—don’t fall into the trap of just explaining <em>what</em> the given item does.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">/// This function reports an increase in the number of steps taken by this
+/// thread.
+fn add_steps(&amp;self, delta: i64) -&gt; Result&lt;()&gt; { .. }</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">/// This function adds a given delta to the current step counter.
+fn add_steps(&amp;self, delta: i64) -&gt; Result&lt;()&gt; { .. }</code></pre>
+<h2 id="definite-vs-indefinite-articles"><a class="header" href="#definite-vs-indefinite-articles">Definite vs. Indefinite articles</a></h2>
+<p>When referring to parameters, be concrete and specific.
+Where possible, refer parameters by their name and if an article must be used (i.e. ‘a’/‘an’ and ‘the’), always prefer the definite article, ‘the.’
+Leave no room for ambiguity and hence misunderstanding.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">/// Increments this counter by the given `delta`.
+fn incr_by(&amp;self, delta: u64) -&gt; Result&lt;()&gt; { .. }</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">/// Increments a counter by a given amount.
+fn incr_by(&amp;self, delta: u64) -&gt; Result&lt;()&gt; { .. }</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="further-reading"><a class="header" href="#further-reading">Further reading</a></h1>
+<p>Checkout the <a href="https://github.com/rust-lang/rust-analyzer/blob/master/docs/dev/style.md"><code>rust-analyzer</code> style guide</a>.
+Note that those style guidelines are intended for a single project, hence it is possible for its developers to make more specific requirements which only make sense in the context of that project, unlike the guidelines provided here.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="contributing"><a class="header" href="#contributing">Contributing</a></h1>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>

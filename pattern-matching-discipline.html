@@ -1,0 +1,309 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Pattern matching discipline - Rust best practices</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="Rust best practices">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('light')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item affix "><a href="preconditions.html">Preconditions</a></li><li class="chapter-item "><a href="cosmetic-discipline.html"><strong aria-hidden="true">1.</strong> Cosmetic discipline</a></li><li class="chapter-item "><a href="naming-discipline.html"><strong aria-hidden="true">2.</strong> Naming discipline</a></li><li class="chapter-item "><a href="import-discipline.html"><strong aria-hidden="true">3.</strong> Import discipline</a></li><li class="chapter-item expanded "><a href="pattern-matching-discipline.html" class="active"><strong aria-hidden="true">4.</strong> Pattern matching discipline</a></li><li class="chapter-item "><a href="code-discipline.html"><strong aria-hidden="true">5.</strong> Code discipline</a></li><li class="chapter-item "><a href="error-and-panic-discipline.html"><strong aria-hidden="true">6.</strong> Error and panic discipline</a></li><li class="chapter-item "><a href="function-discipline.html"><strong aria-hidden="true">7.</strong> Function discipline</a></li><li class="chapter-item "><a href="ordering-discipline.html"><strong aria-hidden="true">8.</strong> Ordering discipline</a></li><li class="chapter-item "><a href="unsafe-discipline.html"><strong aria-hidden="true">9.</strong> Unsafe discipline</a></li><li class="chapter-item "><a href="structural-discipline.html"><strong aria-hidden="true">10.</strong> Structural discipline</a></li><li class="chapter-item "><a href="comment-discipline.html"><strong aria-hidden="true">11.</strong> Comment discipline</a></li><li class="chapter-item "><a href="further-reading.html"><strong aria-hidden="true">12.</strong> Further reading</a></li><li class="chapter-item affix "><li class="spacer"></li><li class="chapter-item affix "><a href="contributing.html">Contributing</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rust best practices</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/canonical/rust-best-practices" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/canonical/rust-best-practices/blob/main/docs/src/pattern-matching-discipline.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="pattern-matching-discipline"><a class="header" href="#pattern-matching-discipline">Pattern matching discipline</a></h1>
+<h2 id="exhaustively-match-to-draw-attention"><a class="header" href="#exhaustively-match-to-draw-attention">Exhaustively match to draw attention</a></h2>
+<p>Pattern matching is an excellent way to ensure that all items of data in internal structures have been considered, not only by the author of the current change, but also by the authors of any future changes.
+When using internal interfaces, always consider using pattern-matching to force useful compiler errors in case important, possibly new, parts of a structure haven’t been considered.
+This in turn will draw the attention of the next maintainer and help them correctly do what they need.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">impl Ord for MyStruct {
+    fn cmp(&amp;self, other: &amp;Self) -&gt; Ordering {
+        let Self {
+            my,
+            thing,
+            with,
+            some,
+            unused: _,
+            fields: _,
+        } = self;
+        (my, thing, with, some)
+            .cmp(&amp;(other.my, other.thing, other.with, other.some))
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">impl Ord for MyStruct {
+    fn cmp(&amp;self, other: &amp;Self) -&gt; Ordering {
+        (self.my, self.thing, self.with, self.some)
+            .cmp(&amp;(other.my, other.type, other.with, other.some))
+    }
+}</code></pre>
+<h2 id="dont-pattern-match-pointers"><a class="header" href="#dont-pattern-match-pointers">Don’t pattern-match pointers</a></h2>
+<p>It is possible to pattern-match the pointer to a <code>Copy</code> type to obtain the value at the other end.
+Although it may seem convenient, it ultimately harms readability—it is clearer to explicitly dereference the pointer we are given.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">    .map(|x| *x)</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">    .map(|&amp;x| x)</code></pre>
+<h2 id="avoid-numeric-tuple-indexing"><a class="header" href="#avoid-numeric-tuple-indexing">Avoid numeric tuple-indexing</a></h2>
+<p>Although sometimes a handy shorthand, indexing tuples with <code>.0</code>, <code>.1</code> etc. deprives us of the opportunity to insert a good name in the same way that field-access on a struct would.
+Instead, prefer to use pattern-matching to give human-friendly names to the data being handled.
+Note that this advice does not apply in the <code>impl</code> blocks of newtype-pattern structs, i.e. tuple-structs with a single element (commonly used for wrapper types).</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">fn line_through(point1: (f64, f64), point2: (f64, f64)) -&gt; Line {
+	let (x1, y1) = point1;
+	let (x2, y2) = point2;
+	let gradient = (y2 - y1) / (x2 - x1);
+	let y_intercept = y1 - gradient * x1;
+	Line {
+		gradient,
+		y_intercept,
+	}
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">fn line_through(point1: (f64, f64), point2: (f64, f64)) -&gt; Line {
+	let gradient = (point2.1 - point1.1) / (point2.0 - point1.0);
+	let y_intercept = point1.1 - gradient * point1.0;
+	Line {
+		gradient,
+		y_intercept,
+	}
+}</code></pre>
+<h2 id="pattern-matched-parameters"><a class="header" href="#pattern-matched-parameters">Pattern-matched parameters</a></h2>
+<p>Using pattern matching in <code>fn</code> parameters adds extra noise to a function’s signature by duplicating definitions held elsewhere.
+Indeed, the fact that a particular parameter is to be pattern-matched inside of the function is not important to the user—it is an unwelcome implementation detail and should be hidden as such.</p>
+<p>If parameters are to be unpacked, do this at the first line of a particular function.</p>
+<p>Note that this guidance does not apply to closures, which are commonly used as small, locally-scoped helper functions, whose types are inferred.</p>
+<p>✅ Do this:</p>
+<pre><code class="language-rust">impl Server {
+    fn new(config: ServerConfig) -&gt; Result&lt;Self&gt; {
+        let Config { db_path, working_path } = config;
+        // ...
+    }
+}</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust">impl Server {
+    fn new(ServerConfig { db_path, working_path }: ServerConfig) -&gt; Result&lt;Self&gt; {
+        // ...
+    }
+}</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="import-discipline.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="code-discipline.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="import-discipline.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="code-discipline.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
