@@ -519,7 +519,7 @@ These rules ensure that the reader cannot miss any constraints.
 ✅ Do this:
 
 ```rust
-# struct IterWrapper<I>(std::marker::PhantomData<I>);
+# struct IterWrapper<I>(I);
 impl<'a, 'b, I, T> IterWrapper<I>
     where
         'b: 'a,
@@ -531,7 +531,7 @@ impl<'a, 'b, I, T> IterWrapper<I>
 ⚠️ Avoid this:
 
 ```rust
-# struct IterWrapper<I>(std::marker::PhantomData<I>);
+# struct IterWrapper<I>(I);
 impl<'a, 'b: 'a, I: Iterator<Item=T> + 'a, T> IterWrapper<I>
     where
         T: 'b
@@ -592,7 +592,7 @@ let some_meaningful_var_name: Vec<_> = foo.iter()
 
 ```rust
 # fn snippet<'lifetimes, With, Generics>() {
-# struct And<'l>(std::marker::PhantomData<&'l ()>);
+# struct And<'l>(&'l ());
 # let foo = [0];
 # let filter_closure = |_: &&i32| true;
 # let map_closure = |x| SomeExtremelyLongType(std::marker::PhantomData);

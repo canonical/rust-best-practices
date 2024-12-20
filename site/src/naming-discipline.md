@@ -146,12 +146,12 @@ Single-letter lifetime names should generally be avoided.
 ```rust
 struct ASTQueryMatch<'cursor, 'tree> {
     /* ... */
-# ignore: std::marker::PhantomData<&'cursor &'tree ()>,
+# ignore: &'cursor &'tree (),
 }
 
 struct Value<'h> {
     /* ... */
-# ignore: std::marker::PhantomData<&'h ()>,
+# ignore: &'h (),
 }
 ```
 
@@ -160,12 +160,12 @@ struct Value<'h> {
 ```rust
 struct ASTQueryMatch<'a, 'b> {
     /* ... */
-# ignore: std::marker::PhantomData<&'a &'b ()>,
+# ignore: &'a &'b (),
 }
 
 struct Value<'value> {
     /* ... */
-# ignore: std::marker::PhantomData<&'value ()>,
+# ignore: &'value (),
 }
 ```
 
