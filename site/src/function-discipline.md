@@ -156,24 +156,32 @@ In typical usage, users of `MyType` shouldn’t need to import `MyTypeBuilder`, 
 
 ✅ Do this:
 
-```rust,ignore
-use crate::Foo;
+```rust
+{{#include snippet_helpers/function_discipline.rs}}
+# fn snippet() -> std::result::Result<(), Box<dyn std::error::Error>> {
+use some_crate::Foo;
 
 let foo = Foo::builder()
     .foo("foo")
     .bar("bar")
     .build()?;
+# Ok(())
+# }
 ```
 
 ⚠️ Avoid this:
 
-```rust,ignore
-use some_crate::{Foo, FooBuilder}
+```rust
+{{#include snippet_helpers/function_discipline.rs}}
+# fn snippet() -> std::result::Result<(), Box<dyn std::error::Error>> {
+use some_crate::{Foo, FooBuilder};
 
 let foo = FooBuilder::new()
     .foo("foo")
     .bar("bar")
     .build()?;
+# Ok(())
+# }
 ```
 
 ## Builder ownership
