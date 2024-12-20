@@ -223,7 +223,7 @@ Keep things visually simple—if the formatter chooses to break tuple population
 
 ✅ Do this:
 
-```rust,ignore
+```rust
 {{#include snippet_helpers/code_discipline.rs}}
 # fn snippet() -> Result<(Arbitrary, Arbitrary)> {
 let key = some_long_computation()?
