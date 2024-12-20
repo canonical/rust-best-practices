@@ -7,6 +7,7 @@
 #         env_var: &'static str,
 #         source: Box<dyn std::error::Error>,
 #     },
+#     Unsupported,
 #     Unknown(Box<dyn std::error::Error>),
 # }
 #
