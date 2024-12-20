@@ -1,0 +1,50 @@
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v1
+        with:
+          mdbook-version: '0.4.40'
+
+      - name: Source cargo environment
+        run: |
+          if [[ -f ~/.cargo/env ]]; then
+            source ~/.cargo/env
+          fi
+
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: 1.83.0
+          default: true
+
+      - name: Install linkcheck
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: mdbook-linkcheck
+
+      - run: mdbook build site
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+        if: ${{ github.ref == 'refs/heads/main' }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site/book/html
