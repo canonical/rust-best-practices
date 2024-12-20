@@ -19,26 +19,52 @@ Therefore, do-nothing `match` branches should be written as `.. => {}` rather th
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/function_discipline.rs}}
+# struct Foo {
+#     foo_type: FooType
+# }
+# enum FooType {
+#     A,
+# }
+# impl Foo {
 fn setup_foo(&self) -> Result<()> {
     match self.foo_type {
         FooType::A => {}
-        ...
+        // ...
     }
     self.setup_bar()?;
     Ok(())
 }
+#
+#   fn setup_bar(&self) -> Result<()> {
+#       Ok(())
+#   }
+# }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/function_discipline.rs}}
+# struct Foo {
+#     foo_type: FooType
+# }
+# enum FooType {
+#     A,
+# }
+# impl Foo {
 fn setup_foo(&self) -> Result<()> {
     match self.foo_type {
         FooType::A => ()
-        ...
+        // ...
     }
     self.setup_bar()
 }
+#
+#   fn setup_bar(&self) -> Result<()> {
+#       Ok(())
+#   }
+# }
 ```
 
 ## Hide generic type parameters
@@ -59,13 +85,25 @@ If a lifetime is present, _always_ communicate that fact (i.e. always prefer `My
 ✅ Do this:
 
 ```rust
-fn transmit(tx: impl Transmitter<'_>, message: &[u8]) -> Result<()> { ... }
+{{#include snippet_helpers/function_discipline.rs}}
+# trait Transmitter {}
+# struct Message<'a>(&'a ());
+fn transmit(tx: impl Transmitter, message: &Message<'_>) -> Result<()> {
+    // ...
+#   Ok(())
+}
 ```
 
 ⚠️ Avoid this:
 
 ```rust
-fn transmit<'a, T: Transmitter<’a>>(tx: T, message: &[u8]) -> Result<()> { ... }
+{{#include snippet_helpers/function_discipline.rs}}
+# trait Transmitter {}
+# struct Message<'a>(&'a ());
+fn transmit<'a, T: Transmitter>(tx: T, message: &Message<'a>) -> Result<()> {
+    // ...
+#   Ok(())
+}
 ```
 
 ## Unused parameters in default implementations
@@ -80,10 +118,12 @@ Similarly, we could individually annotate each unused parameter, however this wo
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/function_discipline.rs}}
+# struct Value<'v>(&'v ());
 trait CustomScriptValue<'v> {
     fn at(&self, index: Value<'v>) -> Result<Value<'v>> {
         let _ = index;
-        Err(Error::Unsupported { .. })
+        Err(Error::Unsupported)
     }
 }
 ```
@@ -91,16 +131,20 @@ trait CustomScriptValue<'v> {
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/function_discipline.rs}}
+# struct Value<'v>(&'v ());
 trait CustomScriptValue<'v> {
     fn at(&self, _index: Value<'v>) -> Result<Value<'v>> {
-        Err(Error::Unsupported { .. })
+        Err(Error::Unsupported)
     }
+# }
 
     // OR
 
+# trait CustomScriptValue2<'v> {
     #[allow(unused_variables)]
     fn at(&self, index: Value<'v>) -> Result<Value<'v>> {
-        Err(Error::Unsupported { .. })
+        Err(Error::Unsupported)
     }
 }
 ```
@@ -113,23 +157,31 @@ In typical usage, users of `MyType` shouldn’t need to import `MyTypeBuilder`, 
 ✅ Do this:
 
 ```rust
-use crate::Foo;
+{{#include snippet_helpers/function_discipline.rs}}
+# fn snippet() -> std::result::Result<(), Box<dyn std::error::Error>> {
+use some_crate::Foo;
 
 let foo = Foo::builder()
-    .bar(bar)
-    // ...
+    .foo("foo")
+    .bar("bar")
     .build()?;
+# Ok(())
+# }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
-use crate::{Foo, FooBuilder}
+{{#include snippet_helpers/function_discipline.rs}}
+# fn snippet() -> std::result::Result<(), Box<dyn std::error::Error>> {
+use some_crate::{Foo, FooBuilder};
 
 let foo = FooBuilder::new()
-    .bar(bar)
-    // ...
+    .foo("foo")
+    .bar("bar")
     .build()?;
+# Ok(())
+# }
 ```
 
 ## Builder ownership
@@ -138,10 +190,15 @@ In Rust, there are two forms of the builder pattern, depending on the receiver t
 Consider the following builder—
 
 ```rust
-let frobnicator = Frobnicator::builder()
+{{#include snippet_helpers/function_discipline.rs}}
+# fn snippet() -> Result<()> {
+# type Foo = Arbitrary;
+let frobnicator = Foo::builder()
     .foo("foo")
     .bar("bar")
     .build()?;
+# Ok(())
+# }
 ```
 
 The methods `foo`, `bar` and `build` can either take ownership of `self` or take `&mut self` by value.

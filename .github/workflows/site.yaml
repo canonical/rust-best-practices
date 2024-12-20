@@ -40,6 +40,8 @@ jobs:
           command: install
           args: mdbook-linkcheck
 
+      - run: mdbook test site
+
       - run: mdbook build site
 
       - name: Deploy

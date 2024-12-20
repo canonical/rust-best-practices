@@ -10,6 +10,8 @@ In this way, lower-level implementation details are hidden from the reader until
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/ordering_discipline.rs}}
+# type Foo = Arbitrary;
 impl Foo {
     pub fn some_func(&self) {
         self.some_helper_func();
@@ -24,6 +26,8 @@ impl Foo {
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/ordering_discipline.rs}}
+# type Foo = Arbitrary;
 impl Foo {
     fn some_helper_func(&self) {
         // ...
@@ -106,6 +110,9 @@ The reader is more likely to be looking at the entire struct rather than just on
 ✅ Do this:
 
 ```rust
+# use std::collections::BTreeMap;
+# type StackFrame = ();
+# type Value<'h> = &'h ();
 struct ScriptExecutionContext<'h, T> {
     pub user_data: T,
 
@@ -120,6 +127,9 @@ struct ScriptExecutionContext<'h, T> {
 ⚠️ Avoid this:
 
 ```rust
+# use std::collections::BTreeMap;
+# type StackFrame = ();
+# type Value<'h> = &'h ();
 struct ScriptExecutionContext<'h, T> {
     stack: Vec<StackFrame>,
     pub(crate) global_vars: BTreeMap<String, Value<'h>>,

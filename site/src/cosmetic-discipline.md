@@ -16,6 +16,8 @@ There are no hard and fast rules for this strong association, but the following 
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/cosmetic_discipline.rs}}
+# fn snippet() -> Result<Arbitrary> {
 let x = foo();
 if !x.is_valid() {
     return Err(Error::Invalid);
@@ -27,11 +29,14 @@ if !y.is_valid() {
     return Err(Error::Invalid);
 }
 return Ok(y);
+# }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/cosmetic_discipline.rs}}
+# fn snippet() -> Result<Arbitrary> {
 let x = foo();
 
 if !x.is_valid() {
@@ -45,6 +50,7 @@ if !y.is_valid() {
 }
 
 return Ok(y);
+# }
 ```
 
 ## Grouping
@@ -64,25 +70,32 @@ _The following snippets assume that functions `foo`, `bar` and `baz` are free of
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/cosmetic_discipline.rs}}
+# fn snippet() -> Result<()> {
 let x = foo();
 let b = baz();
 if !b.is_valid() {
-    return Err(Error::Invalid)
+    return Err(Error::Invalid);
 }
 let z = x + b;
 
 let y = bar();
 if !y.is_valid() {
-    return Err(Error::Invalid)
+    return Err(Error::Invalid);
 }
+# Ok(())
+# }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
-let x = foo()
-let check = |x| {
-    if !x.valid() {
+{{#include snippet_helpers/cosmetic_discipline.rs}}
+# fn snippet() -> Result<()> {
+# type X = Arbitrary;
+let x = foo();
+let check = |x: X| {
+    if !x.is_valid() {
         return Err(Error::Invalid)
     }
     Ok(x)
@@ -90,6 +103,8 @@ let check = |x| {
 let y = bar();
 let z = x + check(baz())?;
 check(y)?;
+# Ok(())
+# }
 ```
 
 ## Hex values

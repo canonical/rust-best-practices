@@ -6,6 +6,9 @@ language = "en"
 multilingual = false
 src = "src"
 
+[rust]
+edition = "2021"
+
 [build]
 create-missing = false
 

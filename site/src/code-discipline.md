@@ -8,28 +8,43 @@ By maximising the use of `Self` it also highlights where it _isn’t_ possible t
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# use std::cmp::Ordering;
+# #[derive(Eq, PartialEq)]
+# struct Node;
 impl Node {
     pub fn new(parent: &Self) -> Self {
-        Self(..)
+        // ...
+#       Node
     }
 }
 
 impl PartialOrd for Node {
-    fn cmp(&self, other: &Self) -> Ordering;
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+#       Some(Ordering::Less)
+    }
 }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# use std::cmp::Ordering;
+# #[derive(Eq, PartialEq)]
+# struct Node;
 impl Node {
     pub fn new(parent: &Node) -> Node {
-        Foo(..)
+        // ...
+#       Node
     }
 }
 
-impl PartialOrd<Rhs=Node> for Node { // NB: Rhs=Self is also the default for PartialOrd.
-    fn cmp(&self, other: &Node) -> Ordering;
+impl PartialOrd<Node> for Node { // NB: Rhs=Self is also the default for PartialOrd.
+    fn partial_cmp(&self, other: &Node) -> Option<Ordering> {
+        // ...
+#       Some(Ordering::Less)
+    }
 }
 ```
 
@@ -48,14 +63,22 @@ In this case, it is okay to use the crate’s `Result` type alias instead.
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# type MyType = Arbitrary;
+# struct SomeStruct {
+#     some: (),
+#     fields: (),
+# }
 impl Responder for MyType {
     type Response = SomeStruct;
     type Err = Error;
 
     fn respond(&self, _input: Input) -> Result<Self::Response> {
+        let some = ();
+        let fields = ();
         Ok(SomeStruct{
-            some: ...,
-            fields: ...,
+            some,
+            fields,
         })
     }
 }
@@ -64,17 +87,28 @@ impl Responder for MyType {
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# type MyType = Arbitrary;
+# struct SomeStruct {
+#     some: (),
+#     fields: (),
+# }
+# {
+# type Result<T, E> = std::result::Result<T, E>;
 impl Responder for MyType {
     type Response = SomeStruct;
     type Err = Error;
 
-    fn respond(&self, _input: I) -> Result<SomeStruct, Error> {
+    fn respond(&self, _input: Input) -> Result<SomeStruct, Error> {
+        let some = ();
+        let fields = ();
         Ok(Self::Response {
-            some: ...,
-            fields: ...,
+            some,
+            fields,
         })
     }
 }
+# }
 ```
 
 ## Struct population
@@ -106,6 +140,7 @@ If there is a dependency between field declarations, for example if some shared 
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
 struct Entry<K, V> {
     id: u64,
     key: K,
@@ -113,23 +148,40 @@ struct Entry<K, V> {
     pretty_date_modified: String,
 }
 
-fn get_entry(&self, key: K) -> Result<Entry<K, V>> {
-    let id = self.id_of(key)?;
-    let value = self.get(key)?;
-    let pretty_date_modified = self.date_modified(key)?
+# type V = Arbitrary;
+# impl<K: Clone> Entry<K, V> {
+fn get_entry(&self, key: &K) -> Result<Entry<K, V>> {
+    let key = key.clone();
+    let id = self.id_of(&key)?;
+    let value = self.get(&key)?;
+    let pretty_date_modified = self.date_modified(&key)?
         .format_as("yyyy-MM-dd@hh:mm:ss");
-    Entry {
+    Ok(Entry {
         id,
         key,
         value,
         pretty_date_modified,
-    }
+    })
 }
+#
+#   fn get(&self, _: &K) -> Result<V> {
+#       Ok(Arbitrary)
+#   }
+#
+#   fn id_of(&self, _: &K) -> Result<u64> {
+#       Ok(0)
+#   }
+#
+#   fn date_modified(&self, _: &K) -> Result<Arbitrary> {
+#       Ok(Arbitrary)
+#   }
+# }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
 struct Entry<K, V> {
     id: u64,
     key: K,
@@ -137,16 +189,31 @@ struct Entry<K, V> {
     pretty_date_modified: String,
 }
 
-fn get_entry(&self, key: K) -> Result<Entry<K, V>> {
+# type V = Arbitrary;
+# impl<K: Clone> Entry<K, V> {
+fn get_entry(&self, key: &K) -> Result<Entry<K, V>> {
     let value_stored_at_key = self.get(key)?;
-    Entry {
+    Ok(Entry {
         id: self.id_of(key)?,
         pretty_date_modified: self.date_modified(key)?
             .format_as("yyyy-MM-dd@hh:mm:ss"),
-        key,
+        key: key.clone(),
         value: value_stored_at_key,
-    }
+    })
 }
+#
+#   fn get(&self, _: &K) -> Result<V> {
+#       Ok(Arbitrary)
+#   }
+#
+#   fn id_of(&self, _: &K) -> Result<u64> {
+#       Ok(0)
+#   }
+#
+#   fn date_modified(&self, _: &K) -> Result<Arbitrary> {
+#       Ok(Arbitrary)
+#   }
+# }
 ```
 
 ## Tuple population
@@ -157,17 +224,26 @@ Keep things visually simple—if the formatter chooses to break tuple population
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# fn snippet() -> Result<(Arbitrary, Arbitrary)> {
 let key = some_long_computation()?
     .something_else()
     .another_thing();
 let value = some_other_long_computation()
     .chained_with_something_else()?;
+# let ret =
 (key, value)
+# ;
+# Ok(ret)
+# }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# fn snippet() -> Result<(Arbitrary, Arbitrary)> {
+# let ret =
 (
     some_long_computation()?
         .something_else()
@@ -175,6 +251,9 @@ let value = some_other_long_computation()
     some_other_long_computation()
         .chained_with_something_else()?,
 )
+# ;
+# Ok(ret)
+# }
 ```
 
 ## Prefer `collect` when interacting with `FromIterator`
@@ -186,15 +265,22 @@ Prefer the latter as this makes the order of operations the same as what is read
 ✅ Do this:
 
 ```rust
+# let collection = [0];
+# let filter_closure = |_: &i32| true;
 let my_vec: Vec<_> = collection.into_iter()
-    .filter(...)
+    .filter(filter_closure)
     .collect();
 ```
 
 ⚠️ Avoid this:
 
 ```rust
-let my_vec = Vec::from_iter(collection.into_iter().filter(...))
+# let collection = [0];
+# let filter_closure = |_: &i32| true;
+let my_vec = Vec::from_iter(
+    collection.into_iter()
+        .filter(filter_closure)
+);
 ```
 
 ## Empty `Vec` construction
@@ -208,13 +294,16 @@ Consider also that `vec![expr; n]` where `n` is zero will still evaluate (and th
 
 ```rust
 let my_vec = Vec::new();
+# let my_vec_constraint: Vec<i32> = my_vec;
 ```
 
 ⚠️ Avoid this:
 
 ```rust
 let my_vec = vec![];
+# let my_vec_constraint: Vec<i32> = my_vec;
 let my_vec = Vec::with_capacity(0);
+# let my_vec_constraint: Vec<i32> = my_vec;
 ```
 
 ## Avoid loosely-scoped `let mut`
@@ -224,6 +313,8 @@ Whenever this happens, scope the mutable declarations to just where they are nee
 Doing this also makes code simpler to read as there are fewer things which can mutate at any one point.
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# type MyStructure = Arbitrary;
 let my_structure = {
     let mut my_structure = MyStructure::new();
     // Mutate `my_structure` as required to construct it.
@@ -237,10 +328,11 @@ If mutability is to retain some state whilst iterating through a structure, cons
 As a simple example, if presented with the following imperative code to count the number of spaces in a string
 
 ```rust
+# let my_string = "";
 let mut num_spaces = 0;
 for c in my_string.chars() {
     if c == ' ' {
-        num_speces += 1;
+        num_spaces += 1;
     }
 }
 ```
@@ -248,8 +340,9 @@ for c in my_string.chars() {
 Consider instead, using the functional style to avoid the mutation—
 
 ```rust
+# let my_string = "";
 let num_spaces = my_string.chars()
-    .filter(|c| c == ' ')
+    .filter(|c| *c == ' ')
     .count();
 ```
 
@@ -261,12 +354,16 @@ Instead, prefer to return the required value from the block which computes it.
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# fn snippet() -> Result<()> {
+# let result = Result::Ok(());
 let message = if result.is_ok() {
     "success!"
 } else {
     "failed!"
-}
+};
 
+# fn exec_web_request() -> Result<Message> { Ok(Message) }
 let mut retries = 0;
 let message = loop {
     let resp = exec_web_request();
@@ -278,14 +375,19 @@ let message = loop {
 
     retries += 1;
     if retries > 5 {
-        return Err(Error::Unavailable);
+        return Err(Error::NetworkUnavailable);
     }
-}
+};
+# Ok(())
+# }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# fn snippet() -> Result<()> {
+# let result = Result::Ok(());
 let message;
 if result.is_ok() {
     message = "success!";
@@ -293,6 +395,7 @@ if result.is_ok() {
     message = "failed!";
 }
 
+# fn exec_web_request() -> Result<Message> { Ok(Message) }
 let mut retries = 0;
 let message;
 loop {
@@ -308,9 +411,11 @@ loop {
 
     retries += 1;
     if retries > 5 {
-        return Err(Error::Unavailable);
+        return Err(Error::NetworkUnavailable);
     }
 }
+# Ok(())
+# }
 ```
 
 ## Reference scope
@@ -325,6 +430,8 @@ As a rule of thumb, only use `&` at the start of the value of a `let` declaratio
 ✅ Do this:
 
 ```rust
+# fn from_func() {}
+# fn other_func(_: &()) {}
 let foo = from_func();
 other_func(&foo);
 ```
@@ -332,6 +439,8 @@ other_func(&foo);
 ⚠️ Avoid this:
 
 ```rust
+# fn from_func() {}
+# fn other_func(_: &()) {}
 let foo = &from_func();
 other_func(foo);
 ```
@@ -349,6 +458,7 @@ Let us consider name-shadowing with variables, for which there are three cases:
 In the first case when shadowing with different scopes, use at most one level of shadowing, for example when pattern matching enum variants—
 
 ```rust
+let foo = Some(());
 if let Some(foo) = foo {
     // The outer `foo` is now shadowed.
     // The inner `foo` should not be shadowed.
@@ -359,8 +469,10 @@ In the second case when shadowing in the same scope with the same type, there is
 However, if this is being used to effectively mutate a value during construction with no other values being affected, instead use the scoped-mutability pattern—
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# type MyThing = Arbitrary;
 let my_thing = {
-    let mut my_thing = ...;
+    let mut my_thing = MyThing::new();
     // Mutate `my_thing` to construct it...
     my_thing
 };
@@ -370,16 +482,21 @@ In the final case, when shadowing in the same but changing types (e.g. in a conv
 This pattern is commonly seen in conversion functions—those which take ownership of their sole parameter and convert it into another type.
 
 ```rust
+# struct Store<S> {
+#     some_field: (),
+#     state: S,
+# }
+# struct New;
+# struct Inited;
 impl Store<New> {
     fn init(self) -> Store<Inited> {
-        let Self { some_field } = self,
-        // ...
+        let Self { some_field, .. } = self;
         let some_field = some_field.into();
         // ...
-        InitedSelf {
+        Store {
+            some_field,
             // ...
-            some_field
-            // ...
+#           state: Inited,
         }
     }
 }
@@ -402,21 +519,23 @@ These rules ensure that the reader cannot miss any constraints.
 ✅ Do this:
 
 ```rust
-impl<'a, 'b, I, T> SomeStruct<'a, 'b, I, T>
+# struct IterWrapper<I>(I);
+impl<'a, 'b, I, T> IterWrapper<I>
     where
         'b: 'a,
-        I: IntoIterator<T> + 'a,
+        I: Iterator<Item=T> + 'a,
         T: 'b,
-{ ... }
+{ /* ... */ }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
-impl<'a, 'b: 'a, I: IntoIterator<T> + 'a> SomeStruct
+# struct IterWrapper<I>(I);
+impl<'a, 'b: 'a, I: Iterator<Item=T> + 'a, T> IterWrapper<I>
     where
         T: 'b
-{ ... }
+{ /* ... */ }
 ```
 
 ## Type annotations
@@ -459,9 +578,12 @@ If a type parameter seems necessary as a variable name is not sufficiently descr
 ✅ Do this:
 
 ```rust
+# let foo = [0];
+# let filter_closure = |_: &&i32| true;
+# let map_closure = |_| ();
 let some_meaningful_var_name: Vec<_> = foo.iter()
-    .filter(...)
-    .map(...)
+    .filter(filter_closure)
+    .map(map_closure)
     // ...
     .collect();
 ```
@@ -469,11 +591,18 @@ let some_meaningful_var_name: Vec<_> = foo.iter()
 ⚠️ Avoid this:
 
 ```rust
+# fn snippet<'lifetimes, With, Generics>() {
+# struct And<'l>(&'l ());
+# let foo = [0];
+# let filter_closure = |_: &&i32| true;
+# let map_closure = |x| SomeExtremelyLongType(std::marker::PhantomData);
+# struct SomeExtremelyLongType<W, G, A>(std::marker::PhantomData<(W, G, A)>);
 let x = foo.iter()
-    .filter(...)
-    .map(...)
+    .filter(filter_closure)
+    .map(map_closure)
     // ...
     .collect::<Vec<SomeExtremelyLongType<With, Generics, And<'lifetimes>>>>();
+# }
 ```
 
 ## Avoid explicit `drop` calls
@@ -487,7 +616,9 @@ a closure which takes one argument, ignores it and returns a unit.
 This form is consistent with similar closures which ignore parts of their inputs, for example when extracting the key from a key-value pair—
 
 ```rust
+# [(1, 2)].iter()
     .map(|(key, _)| key)
+# ;
 ```
 
 There are two exceptions to this.
@@ -500,6 +631,10 @@ This highlights that we care only about side-effects, and that no information is
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# use std::fs::OpenOptions;
+# use std::io::Write;
+# impl Log {
 async fn log(&self, message: String) -> Result<()> {
     {
         let mut file = OpenOptions::new()
@@ -507,24 +642,30 @@ async fn log(&self, message: String) -> Result<()> {
             .open(&self.log_file_path)?;
         file.write_all(message.as_bytes())?;
     }
-    self.transmit_log(message).await?;
+    self.transmit_log(&message).await?;
     Ok(())
 }
+# }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# use std::fs::OpenOptions;
+# use std::io::Write;
+# impl Log {
 async fn log(&self, message: String) -> Result<()> {
     let mut file = OpenOptions::new()
         .append(true)
         .open(&self.log_file_path)?;
     file.write_all(message.as_bytes())?;
     drop(file);
-    Ok(self.transmit_log(message)
+    self.transmit_log(&message)
         .await
-        .map(drop))
+        .map(drop)
 }
+# }
 ```
 
 ## Constructors vs. structs with all fields public
@@ -557,11 +698,11 @@ To nicely transfer data from some remote format into one we govern, say `ImageIn
 Add a comment which says `// serde types.` to let the reader know that everything beyond this point only relates to modelling the remote API—thus saving them time as they will likely only care about these details if something is broken.
 Add as many new local types as are necessary to maintain a 1:1 relationship between Rust types and the remote’s format—
 
-```rust
+```rust,ignore
 async fn get_image_info(&self, name: &str) -> Result<ImageInfo> {
-    let response: Response = serde_json::from_str(get_response(...).await?.text());
+    let response: Response = serde_json::from_str(get_response().await?.text());
     let info = ImageInfo {
-        name,
+        name: name.to_owned(),
         version: response.metadata.version,
         authors: response.metadata.authors,
         latest_release: response.releases.last()
@@ -605,45 +746,81 @@ Expressions which end in a `)` or `]` follow the same rule unless that expressio
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# fn snippet() -> Result<()> {
+# struct FooConfig {
+#     bar: &'static str,
+#     baz: &'static str,
+# }
+# fn foo(_: FooConfig) -> Result<()> {
+#     Ok(())
+# }
 foo(FooConfig {
     bar: "asdf",
     baz: "fdsa",
 })?;
 
+# let some_condition = true;
+# let value_a = "";
+# let value_b = "";
 let value = if some_condition {
     value_a
 } else {
-    value b
+    value_b
 };
 value.to_string()
+# ;
 
 // ...
+# ['?'].iter()
     .filter(|c| {
-        let exceptions = [ 'a', 'b', 'c', 'd', ... ];
+        let exceptions = [ 'a', 'b', 'c', 'd' ];
         !exceptions.contains(c)
     })
+# ;
 // ...
+# Ok(())
+# }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/code_discipline.rs}}
+# fn snippet() -> Result<()> {
+# struct Foo {
+#     bar: &'static str,
+#     baz: &'static str,
+# }
+# impl Foo {
+#     fn do_thing(self) -> Result<()> {
+#         Ok(())
+#     }
+# }
 Foo {
     bar: "asdf",
     baz: "fdsa",
 }
 .do_thing()?;
 
+# let some_condition = true;
+# let value_a = "";
+# let value_b = "";
 if some_condition {
     value_a
 } else {
     value_b
 }
 .to_string()
+# ;
 
 // ...
-    .filter(|c| ![ 'a', 'b', 'c', 'd', ... ].contains(c))
+# ['?'].iter()
+    .filter(|c| ![ 'a', 'b', 'c', 'd' ].contains(c))
+# ;
 // ...
+# Ok(())
+# }
 ```
 
 ## Format arg inlining
@@ -656,11 +833,17 @@ _NB: older Rust versions may not support this syntax._
 ✅ Do this:
 
 ```rust
+# let path = "";
+# let file = "";
 format!("{path}/{file}")
+# ;
 ```
 
 ⚠️ Avoid this:
 
 ```rust
+# let path = "";
+# let file = "";
 format!("{}/{}", path, file)
+# ;
 ```

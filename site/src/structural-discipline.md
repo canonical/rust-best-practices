@@ -26,7 +26,7 @@ When declaring a module `foo` which comprises multiple files, Rust allows two di
 
 Firstly, all files can be grouped into a single directory containing a `mod.rs`—
 
-```
+```ignore
 foo/
 ├── mod.rs
 ├── file_in_foo.rs
@@ -35,7 +35,7 @@ foo/
 
 Secondly, all files can be grouped into a single directory, except for the module root which is stored next to the directory and shares its name—
 
-```
+```ignore
 foo.rs
 foo/
 ├── file_in_foo.rs

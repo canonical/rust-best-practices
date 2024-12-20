@@ -9,13 +9,13 @@ Error messages should be concise.
 Every second longer a user spends reading an error message and not understanding what went wrong is a second longer of their frustration.
 The form of the phrases used in error messages should be consistent—if, likely from previous messages, the user is expecting—
 
-```
+```ignore
 cannot foo the bar
 ```
 
 but instead reads—
 
-```
+```ignore
 bar is not fooable
 ```
 
@@ -70,7 +70,7 @@ Errors which preserve types but which represent unrecoverable errors should repr
 When constructing these errors, special care must be taken to ensure that the message is consistent with other errors in the codebase.
 The field used to hold the reason for the error in these cases should be named `reason`.
 
-```rust
+```rust,ignore
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     // ...
@@ -85,7 +85,7 @@ pub enum Error {
 
 If one error wraps another, the inner error should be held in a field named `source`.
 
-```rust
+```rust,ignore
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     // ...
@@ -101,7 +101,7 @@ pub enum Error {
 Note that exposing the error type originating from dependencies as these may accidentally expose internal details in a public API.
 In these cases, if using enumerated errors, consider adding an `Internal` variant which holds a type which hides the internal details as follows—
 
-```rust
+```rust,ignore
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     // ...
@@ -130,20 +130,29 @@ By maintaining the same convention with short chains, our code becomes more pred
 ✅ Do this:
 
 ```rust
+{{#include snippet_helpers/error_and_panic_discipline.rs}}
+# fn snippet() -> Result<()> {
+# use std::env;
+# use url::Url;
 let override_url = env::var("URL")
     .ok()
-    .map(|override| {
-        Url::parse(&override).map_err(|source| Error::MalformedEnvUrl {
+    .map(|override_url| {
+        Url::parse(&override_url).map_err(|source| Error::MalformedEnvUrl {
             env_var: "URL",
             source,
         })
     })
     .transpose()?;
+# Ok(())
+# }
 ```
 
 ⚠️ Avoid this:
 
 ```rust
+{{#include snippet_helpers/error_and_panic_discipline.rs}}
+# use std::env;
+# fn snippet() -> Result<()> {
 let override_url = env::var("URL")
     .ok()
     .map(|override_url| url::Url::parse(&override_url))
@@ -152,6 +161,8 @@ let override_url = env::var("URL")
         env_var: "URL",
         source,
     })?;
+# Ok(())
+# }
 ```
 
 ## Panic calmly
