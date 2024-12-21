@@ -3708,37 +3708,37 @@ Therefore, do-nothing <code>match</code> branches should be written as <code>.. 
 </span><span class="boring">        Ok(self)
 </span><span class="boring">    }
 </span><span class="boring">}
-</span>
-mod some_crate {
-    pub struct Foo;
-
-    impl Foo {
-        pub fn builder() -&gt; FooBuilder {
-            FooBuilder
-        }
-    }
-
-    pub struct FooBuilder;
-
-    impl FooBuilder {
-        pub fn new() -&gt; Self {
-            Self
-        }
-
-        pub fn foo(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn bar(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
-            Ok(Foo)
-        }
-    }
-}
-<span class="boring">struct Foo {
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct Foo;
+</span><span class="boring">
+</span><span class="boring">    impl Foo {
+</span><span class="boring">        pub fn builder() -&gt; FooBuilder {
+</span><span class="boring">            FooBuilder
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub struct FooBuilder;
+</span><span class="boring">
+</span><span class="boring">    impl FooBuilder {
+</span><span class="boring">        pub fn new() -&gt; Self {
+</span><span class="boring">            Self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">            Ok(Foo)
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">struct Foo {
 </span><span class="boring">    foo_type: FooType
 </span><span class="boring">}
 </span><span class="boring">enum FooType {
@@ -3804,37 +3804,37 @@ mod some_crate {
 </span><span class="boring">        Ok(self)
 </span><span class="boring">    }
 </span><span class="boring">}
-</span>
-mod some_crate {
-    pub struct Foo;
-
-    impl Foo {
-        pub fn builder() -&gt; FooBuilder {
-            FooBuilder
-        }
-    }
-
-    pub struct FooBuilder;
-
-    impl FooBuilder {
-        pub fn new() -&gt; Self {
-            Self
-        }
-
-        pub fn foo(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn bar(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
-            Ok(Foo)
-        }
-    }
-}
-<span class="boring">struct Foo {
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct Foo;
+</span><span class="boring">
+</span><span class="boring">    impl Foo {
+</span><span class="boring">        pub fn builder() -&gt; FooBuilder {
+</span><span class="boring">            FooBuilder
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub struct FooBuilder;
+</span><span class="boring">
+</span><span class="boring">    impl FooBuilder {
+</span><span class="boring">        pub fn new() -&gt; Self {
+</span><span class="boring">            Self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">            Ok(Foo)
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">struct Foo {
 </span><span class="boring">    foo_type: FooType
 </span><span class="boring">}
 </span><span class="boring">enum FooType {
@@ -3909,37 +3909,37 @@ If a lifetime is present, <em>always</em> communicate that fact (i.e. always pre
 </span><span class="boring">        Ok(self)
 </span><span class="boring">    }
 </span><span class="boring">}
-</span>
-mod some_crate {
-    pub struct Foo;
-
-    impl Foo {
-        pub fn builder() -&gt; FooBuilder {
-            FooBuilder
-        }
-    }
-
-    pub struct FooBuilder;
-
-    impl FooBuilder {
-        pub fn new() -&gt; Self {
-            Self
-        }
-
-        pub fn foo(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn bar(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
-            Ok(Foo)
-        }
-    }
-}
-<span class="boring">trait Transmitter {}
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct Foo;
+</span><span class="boring">
+</span><span class="boring">    impl Foo {
+</span><span class="boring">        pub fn builder() -&gt; FooBuilder {
+</span><span class="boring">            FooBuilder
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub struct FooBuilder;
+</span><span class="boring">
+</span><span class="boring">    impl FooBuilder {
+</span><span class="boring">        pub fn new() -&gt; Self {
+</span><span class="boring">            Self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">            Ok(Foo)
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">trait Transmitter {}
 </span><span class="boring">struct Message&lt;'a&gt;(&amp;'a ());
 </span>fn transmit(tx: impl Transmitter, message: &amp;Message&lt;'_&gt;) -&gt; Result&lt;()&gt; {
     // ...
@@ -3991,37 +3991,37 @@ mod some_crate {
 </span><span class="boring">        Ok(self)
 </span><span class="boring">    }
 </span><span class="boring">}
-</span>
-mod some_crate {
-    pub struct Foo;
-
-    impl Foo {
-        pub fn builder() -&gt; FooBuilder {
-            FooBuilder
-        }
-    }
-
-    pub struct FooBuilder;
-
-    impl FooBuilder {
-        pub fn new() -&gt; Self {
-            Self
-        }
-
-        pub fn foo(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn bar(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
-            Ok(Foo)
-        }
-    }
-}
-<span class="boring">trait Transmitter {}
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct Foo;
+</span><span class="boring">
+</span><span class="boring">    impl Foo {
+</span><span class="boring">        pub fn builder() -&gt; FooBuilder {
+</span><span class="boring">            FooBuilder
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub struct FooBuilder;
+</span><span class="boring">
+</span><span class="boring">    impl FooBuilder {
+</span><span class="boring">        pub fn new() -&gt; Self {
+</span><span class="boring">            Self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">            Ok(Foo)
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">trait Transmitter {}
 </span><span class="boring">struct Message&lt;'a&gt;(&amp;'a ());
 </span>fn transmit&lt;'a, T: Transmitter&gt;(tx: T, message: &amp;Message&lt;'a&gt;) -&gt; Result&lt;()&gt; {
     // ...
@@ -4079,37 +4079,37 @@ Similarly, we could individually annotate each unused parameter, however this wo
 </span><span class="boring">        Ok(self)
 </span><span class="boring">    }
 </span><span class="boring">}
-</span>
-mod some_crate {
-    pub struct Foo;
-
-    impl Foo {
-        pub fn builder() -&gt; FooBuilder {
-            FooBuilder
-        }
-    }
-
-    pub struct FooBuilder;
-
-    impl FooBuilder {
-        pub fn new() -&gt; Self {
-            Self
-        }
-
-        pub fn foo(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn bar(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
-            Ok(Foo)
-        }
-    }
-}
-<span class="boring">struct Value&lt;'v&gt;(&amp;'v ());
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct Foo;
+</span><span class="boring">
+</span><span class="boring">    impl Foo {
+</span><span class="boring">        pub fn builder() -&gt; FooBuilder {
+</span><span class="boring">            FooBuilder
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub struct FooBuilder;
+</span><span class="boring">
+</span><span class="boring">    impl FooBuilder {
+</span><span class="boring">        pub fn new() -&gt; Self {
+</span><span class="boring">            Self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">            Ok(Foo)
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">struct Value&lt;'v&gt;(&amp;'v ());
 </span>trait CustomScriptValue&lt;'v&gt; {
     fn at(&amp;self, index: Value&lt;'v&gt;) -&gt; Result&lt;Value&lt;'v&gt;&gt; {
         let _ = index;
@@ -4162,37 +4162,37 @@ mod some_crate {
 </span><span class="boring">        Ok(self)
 </span><span class="boring">    }
 </span><span class="boring">}
-</span>
-mod some_crate {
-    pub struct Foo;
-
-    impl Foo {
-        pub fn builder() -&gt; FooBuilder {
-            FooBuilder
-        }
-    }
-
-    pub struct FooBuilder;
-
-    impl FooBuilder {
-        pub fn new() -&gt; Self {
-            Self
-        }
-
-        pub fn foo(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn bar(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
-            Ok(Foo)
-        }
-    }
-}
-<span class="boring">struct Value&lt;'v&gt;(&amp;'v ());
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct Foo;
+</span><span class="boring">
+</span><span class="boring">    impl Foo {
+</span><span class="boring">        pub fn builder() -&gt; FooBuilder {
+</span><span class="boring">            FooBuilder
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub struct FooBuilder;
+</span><span class="boring">
+</span><span class="boring">    impl FooBuilder {
+</span><span class="boring">        pub fn new() -&gt; Self {
+</span><span class="boring">            Self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">            Ok(Foo)
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">struct Value&lt;'v&gt;(&amp;'v ());
 </span>trait CustomScriptValue&lt;'v&gt; {
     fn at(&amp;self, _index: Value&lt;'v&gt;) -&gt; Result&lt;Value&lt;'v&gt;&gt; {
         Err(Error::Unsupported)
@@ -4256,37 +4256,37 @@ In typical usage, users of <code>MyType</code> shouldn’t need to import <code>
 </span><span class="boring">        Ok(self)
 </span><span class="boring">    }
 </span><span class="boring">}
-</span>
-mod some_crate {
-    pub struct Foo;
-
-    impl Foo {
-        pub fn builder() -&gt; FooBuilder {
-            FooBuilder
-        }
-    }
-
-    pub struct FooBuilder;
-
-    impl FooBuilder {
-        pub fn new() -&gt; Self {
-            Self
-        }
-
-        pub fn foo(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn bar(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
-            Ok(Foo)
-        }
-    }
-}
-<span class="boring">fn snippet() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct Foo;
+</span><span class="boring">
+</span><span class="boring">    impl Foo {
+</span><span class="boring">        pub fn builder() -&gt; FooBuilder {
+</span><span class="boring">            FooBuilder
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub struct FooBuilder;
+</span><span class="boring">
+</span><span class="boring">    impl FooBuilder {
+</span><span class="boring">        pub fn new() -&gt; Self {
+</span><span class="boring">            Self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">            Ok(Foo)
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 </span>use some_crate::Foo;
 
 let foo = Foo::builder()
@@ -4341,37 +4341,37 @@ let foo = Foo::builder()
 </span><span class="boring">        Ok(self)
 </span><span class="boring">    }
 </span><span class="boring">}
-</span>
-mod some_crate {
-    pub struct Foo;
-
-    impl Foo {
-        pub fn builder() -&gt; FooBuilder {
-            FooBuilder
-        }
-    }
-
-    pub struct FooBuilder;
-
-    impl FooBuilder {
-        pub fn new() -&gt; Self {
-            Self
-        }
-
-        pub fn foo(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn bar(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
-            Ok(Foo)
-        }
-    }
-}
-<span class="boring">fn snippet() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct Foo;
+</span><span class="boring">
+</span><span class="boring">    impl Foo {
+</span><span class="boring">        pub fn builder() -&gt; FooBuilder {
+</span><span class="boring">            FooBuilder
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub struct FooBuilder;
+</span><span class="boring">
+</span><span class="boring">    impl FooBuilder {
+</span><span class="boring">        pub fn new() -&gt; Self {
+</span><span class="boring">            Self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">            Ok(Foo)
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 </span>use some_crate::{Foo, FooBuilder};
 
 let foo = FooBuilder::new()
@@ -4428,37 +4428,37 @@ Consider the following builder—</p>
 </span><span class="boring">        Ok(self)
 </span><span class="boring">    }
 </span><span class="boring">}
-</span>
-mod some_crate {
-    pub struct Foo;
-
-    impl Foo {
-        pub fn builder() -&gt; FooBuilder {
-            FooBuilder
-        }
-    }
-
-    pub struct FooBuilder;
-
-    impl FooBuilder {
-        pub fn new() -&gt; Self {
-            Self
-        }
-
-        pub fn foo(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn bar(self, _: &amp;'static str) -&gt; Self {
-            self
-        }
-
-        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
-            Ok(Foo)
-        }
-    }
-}
-<span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
+</span><span class="boring">
+</span><span class="boring">mod some_crate {
+</span><span class="boring">    pub struct Foo;
+</span><span class="boring">
+</span><span class="boring">    impl Foo {
+</span><span class="boring">        pub fn builder() -&gt; FooBuilder {
+</span><span class="boring">            FooBuilder
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">
+</span><span class="boring">    pub struct FooBuilder;
+</span><span class="boring">
+</span><span class="boring">    impl FooBuilder {
+</span><span class="boring">        pub fn new() -&gt; Self {
+</span><span class="boring">            Self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn foo(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn bar(self, _: &amp;'static str) -&gt; Self {
+</span><span class="boring">            self
+</span><span class="boring">        }
+</span><span class="boring">
+</span><span class="boring">        pub fn build(self) -&gt; std::result::Result&lt;Foo, Box&lt;dyn std::error::Error&gt;&gt; {
+</span><span class="boring">            Ok(Foo)
+</span><span class="boring">        }
+</span><span class="boring">    }
+</span><span class="boring">}
+</span><span class="boring">fn snippet() -&gt; Result&lt;()&gt; {
 </span><span class="boring">type Foo = Arbitrary;
 </span>let frobnicator = Foo::builder()
     .foo("foo")
