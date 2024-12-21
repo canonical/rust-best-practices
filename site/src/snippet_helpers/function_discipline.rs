@@ -23,33 +23,33 @@
 #         Ok(self)
 #     }
 # }
-
-mod some_crate {
-    pub struct Foo;
-
-    impl Foo {
-        pub fn builder() -> FooBuilder {
-            FooBuilder
-        }
-    }
-
-    pub struct FooBuilder;
-
-    impl FooBuilder {
-        pub fn new() -> Self {
-            Self
-        }
-
-        pub fn foo(self, _: &'static str) -> Self {
-            self
-        }
-
-        pub fn bar(self, _: &'static str) -> Self {
-            self
-        }
-
-        pub fn build(self) -> std::result::Result<Foo, Box<dyn std::error::Error>> {
-            Ok(Foo)
-        }
-    }
-}
+#
+# mod some_crate {
+#     pub struct Foo;
+#
+#     impl Foo {
+#         pub fn builder() -> FooBuilder {
+#             FooBuilder
+#         }
+#     }
+#
+#     pub struct FooBuilder;
+#
+#     impl FooBuilder {
+#         pub fn new() -> Self {
+#             Self
+#         }
+#
+#         pub fn foo(self, _: &'static str) -> Self {
+#             self
+#         }
+#
+#         pub fn bar(self, _: &'static str) -> Self {
+#             self
+#         }
+#
+#         pub fn build(self) -> std::result::Result<Foo, Box<dyn std::error::Error>> {
+#             Ok(Foo)
+#         }
+#     }
+# }
