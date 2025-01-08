@@ -12,7 +12,7 @@ A corollary of this is that preludes, regardless of their initial convenience, s
 Nevertheless, they remain a handy tool for others to use when prototyping, so we should still consider creating and exposing them where appropriate.
 
 Do not bring enum variants into scope using `*` as this obscures the types and in some cases the fact that an enum is being handled.
-If the name of an enum is too long, can't reasonably be changed and the problematic usage is in a small scope, it may be renamed locally using `use ... as ...`.
+If the name of an enum is too long, can't reasonably be edited and the problematic usage is in a small scope, it may be renamed locally using `use ... as ...`.
 The new name should be an acronym of the type used, e.g. `TaskStatus` would be shortened to `Ts`.
 Due to scoping rules around `use`, these renaming statements should be placed at the top of the function definition which requires it.
 
