@@ -44,7 +44,7 @@ use some_crate::*;
 use some_other_crate::prelude::*;
 use another_crate::{SomeEnum, SomeEnum::*};
 
-fn some_fn(some_enum: SomeEnum) -> SomeVariant{
+fn some_fn(some_enum: SomeEnum) -> SomeEnum {
     match some_enum {
         Variant1 => { /* ... */ }
         Variant2 => { /* ... */ }
