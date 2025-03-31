@@ -786,11 +786,11 @@ Even more concerning is the fact that updates can now cause name-clashes!
 By sticking to explicit imports only, we help both ourselves and our future maintainers.</p>
 <p>A corollary of this is that preludes, regardless of their initial convenience, should not be used by us in production code.
 Nevertheless, they remain a handy tool for others to use when prototyping, so we should still consider creating and exposing them where appropriate.</p>
+<p>Do not bring enum variants into scope using <code>*</code> as this obscures the types and in some cases the fact that an enum is being handled.
+If the name of an enum is too long, can’t reasonably be edited and the problematic usage is in a small scope, it may be renamed locally using <code>use ... as ...</code>.
+The new name should be an acronym of the type used, e.g. <code>TaskStatus</code> would be shortened to <code>Ts</code>.
+Due to scoping rules around <code>use</code>, these renaming statements should be placed at the top of the function definition which requires it.</p>
 <p>The only exception to these rules is that in the context of a unit test module, inserting use <code>super::*</code> is acceptable as it is a well-defined idiom.</p>
-<p>The rule for using <code>*</code> from enums is slightly different.
-Here, it is acceptable to import <code>*</code> to bring all variants of an enum into scope.
-However, this should not be done at the top level, only locally to improve the readability of long match statements.
-There, they should be placed as close as possible to the relevant match, preferably on the line immediately preceding it.</p>
 <p>✅ Do this:</p>
 <pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
 </span><span class="boring">
@@ -867,12 +867,13 @@ There, they should be placed as close as possible to the relevant match, prefera
 use some_other_crate::SpecificItem3;
 use another_crate::{SomeEnum, SomeEnum::*};
 
-fn some_fn(some_enum: SomeEnum) {
-    use SomeEnum::*;
+fn some_fn(some_enum: SomeEnum) -&gt; SomeEnum {
+    use SomeEnum as Se;
     match some_enum {
-        Variant1 =&gt; { /* ... */ }
-        Variant2 =&gt; { /* ... */ },
+        Se::Variant1 =&gt; { /* ... */ }
+        Se::Variant2 =&gt; { /* ... */ },
     }
+    Se::Variant2
 }</code></pre>
 <p>⚠️ Avoid this:</p>
 <pre><code class="language-rust"><span class="boring">type Result&lt;T&gt; = std::result::Result&lt;T, Error&gt;;
@@ -950,11 +951,12 @@ fn some_fn(some_enum: SomeEnum) {
 use some_other_crate::prelude::*;
 use another_crate::{SomeEnum, SomeEnum::*};
 
-fn some_fn(some_enum: SomeEnum) {
+fn some_fn(some_enum: SomeEnum) -&gt; SomeEnum {
     match some_enum {
         Variant1 =&gt; { /* ... */ }
         Variant2 =&gt; { /* ... */ }
     }
+    Variant2
 }</code></pre>
 <h2 id="import-grouping"><a class="header" href="#import-grouping">Import grouping</a></h2>
 <p>At the time of writing, stable <code>rustfmt</code> does not yet express an opinion on the order of imports, hence for now we must do this ourselves.
