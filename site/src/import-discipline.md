@@ -11,12 +11,12 @@ By sticking to explicit imports only, we help both ourselves and our future main
 A corollary of this is that preludes, regardless of their initial convenience, should not be used by us in production code.
 Nevertheless, they remain a handy tool for others to use when prototyping, so we should still consider creating and exposing them where appropriate.
 
-The only exception to these rules is that in the context of a unit test module, inserting use `super::*` is acceptable as it is a well-defined idiom.
+Do not bring enum variants into scope using `*` as this obscures the types and in some cases the fact that an enum is being handled.
+If the name of an enum is too long, can't reasonably be edited and the problematic usage is in a small scope, it may be renamed locally using `use ... as ...`.
+The new name should be an acronym of the type used, e.g. `TaskStatus` would be shortened to `Ts`.
+Due to scoping rules around `use`, these renaming statements should be placed at the top of the function definition which requires it.
 
-The rule for using `*` from enums is slightly different.
-Here, it is acceptable to import `*` to bring all variants of an enum into scope.
-However, this should not be done at the top level, only locally to improve the readability of long match statements.
-There, they should be placed as close as possible to the relevant match, preferably on the line immediately preceding it.
+The only exception to these rules is that in the context of a unit test module, inserting use `super::*` is acceptable as it is a well-defined idiom.
 
 ✅ Do this:
 
@@ -26,12 +26,13 @@ use some_crate::{SpecificItem1, SpecificItem2};
 use some_other_crate::SpecificItem3;
 use another_crate::{SomeEnum, SomeEnum::*};
 
-fn some_fn(some_enum: SomeEnum) {
-    use SomeEnum::*;
+fn some_fn(some_enum: SomeEnum) -> SomeEnum {
+    use SomeEnum as Se;
     match some_enum {
-        Variant1 => { /* ... */ }
-        Variant2 => { /* ... */ },
+        Se::Variant1 => { /* ... */ }
+        Se::Variant2 => { /* ... */ },
     }
+    Se::Variant2
 }
 ```
 
@@ -43,11 +44,12 @@ use some_crate::*;
 use some_other_crate::prelude::*;
 use another_crate::{SomeEnum, SomeEnum::*};
 
-fn some_fn(some_enum: SomeEnum) {
+fn some_fn(some_enum: SomeEnum) -> SomeEnum {
     match some_enum {
         Variant1 => { /* ... */ }
         Variant2 => { /* ... */ }
     }
+    Variant2
 }
 ```
 
