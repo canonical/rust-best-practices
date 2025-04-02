@@ -68,15 +68,9 @@ The `impl` blocks in the same file for `MyTrait` should be ordered as follows:
 Put all derive items in a single `#[derive(...)]` (the formatter will preserve readability by introducing line-breaks as it deems fit).
 Derived items should be ordered as follows:
 
-- `Copy`
-- `Clone`
-- `Debug`
-- `PartialEq`
-- `Eq`
-- `PartialOrd`
-- `Ord`
-- Other standard traits, ordered lexicographically
-- Third party traits, ordered lexicographically
+- `Copy` should come first (this has the most surprising effect on how the consumer will interact with values of the given type)
+- Standard library derives, ordered lexicographically (these form a common expectation for basic behaviour and missing items are surprising)
+- Third party items, ordered lexicographically
 
 ## Declaration ordering
 
