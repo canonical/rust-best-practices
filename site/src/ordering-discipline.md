@@ -87,7 +87,6 @@ Declarations should be ordered as follows:
 
 - `const`
 - `static`
-- `lazy_static!`
 - `let`
 - `let mut`
 
