@@ -72,6 +72,24 @@ Derived items should be ordered as follows:
 - Standard library derives, ordered lexicographically (these form a common expectation for basic behaviour and missing items are surprising)
 - Third party items, ordered lexicographically
 
+✅ Do this:
+
+```rust,ignore
+use external_crate::{Bar, Foo};
+
+#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Bar, Foo)]
+struct MyType;
+```
+
+⚠️ Avoid this:
+
+```rust,ignore
+use external_crate::{Bar, Foo};
+
+#[derive(Foo, Clone, Copy, PartialEq, Eq, Hash, Debug, Ord, PartialOrd, Bar)]
+struct MyType;
+```
+
 ## Declaration ordering
 
 Rust provides several different types of declaration and where these are declared consecutively in the same block, they should be ordered for visual consistency.
