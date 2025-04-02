@@ -69,7 +69,7 @@ Put all derive items in a single `#[derive(...)]` (the formatter will preserve r
 Derived items should be ordered as follows:
 
 - `Copy` should come first (this has the most surprising effect on how the consumer will interact with values of the given type)
-- Standard library derives, ordered lexicographically (these form a common expectation for basic behaviour and missing items are surprising)
+- Standard library items, ordered lexicographically (these form a common expectation for basic behaviour and missing items are surprising)
 - Third party items, ordered lexicographically
 
 ✅ Do this:
