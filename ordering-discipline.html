@@ -278,16 +278,20 @@ This is effectively the orphan rule but applied within crates.</p>
 <p>Put all derive items in a single <code>#[derive(...)]</code> (the formatter will preserve readability by introducing line-breaks as it deems fit).
 Derived items should be ordered as follows:</p>
 <ul>
-<li><code>Copy</code></li>
-<li><code>Clone</code></li>
-<li><code>Debug</code></li>
-<li><code>PartialEq</code></li>
-<li><code>Eq</code></li>
-<li><code>PartialOrd</code></li>
-<li><code>Ord</code></li>
-<li>Other standard traits, ordered lexicographically</li>
-<li>Third party traits, ordered lexicographically</li>
+<li><code>Copy</code> should come first (this has the most surprising effect on how the consumer will interact with values of the given type)</li>
+<li>Standard library items, ordered lexicographically (these form a common expectation for basic behaviour and missing items are surprising)</li>
+<li>Third party items, ordered lexicographically</li>
 </ul>
+<p>✅ Do this:</p>
+<pre><code class="language-rust ignore">use external_crate::{Bar, Foo};
+
+#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Bar, Foo)]
+struct MyType;</code></pre>
+<p>⚠️ Avoid this:</p>
+<pre><code class="language-rust ignore">use external_crate::{Bar, Foo};
+
+#[derive(Foo, Clone, Copy, PartialEq, Eq, Hash, Debug, Ord, PartialOrd, Bar)]
+struct MyType;</code></pre>
 <h2 id="declaration-ordering"><a class="header" href="#declaration-ordering">Declaration ordering</a></h2>
 <p>Rust provides several different types of declaration and where these are declared consecutively in the same block, they should be ordered for visual consistency.
 This will help draw the reader’s eye to the important parts of each declaration, rather than getting lost in some superfluous ordering.</p>
