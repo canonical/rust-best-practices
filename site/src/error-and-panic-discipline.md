@@ -2,7 +2,7 @@
 
 ## Error messages
 
-In Rust, it is a good idea to start writing a project by first making its `Error` type, this no only encourages message consistency, but also highlights the necessary information for these good error messages.
+In Rust, it is a good idea to start writing a project by first making its `Error` type. This not only encourages message consistency, but also highlights the necessary information for these good error messages.
 This in turn, makes it clearer which information should be plumbed where, avoiding the awkward and altogether too-common situation where an error condition is identified, but much work must be done to get the right information there.
 
 Error messages should be concise.
@@ -194,7 +194,7 @@ We can also remove panics originating from `.unwrap()` calls by using pattern-ma
 If a call to `x.unwrap()` is guarded by `if x.is_some()`/`if x.is_ok()`, instead make use of pattern matching: `if let Some(x) = x` or `if let Ok(x) = x`.
 
 When calls to `.unwrap()` are removed, the surrounding code is not only more robust, but you may notice that it is often visually cleaner.
-This is not a coincidence—it is a nudge from the Rust developers to encourage fault-tolorant code and practices.
+This is not a coincidence—it is a nudge from the Rust developers to encourage fault-tolerant code and practices.
 
 There are two exceptions to this avoidance of panicking: tests and panic-propagation.
 
@@ -203,4 +203,4 @@ A failed `.unwrap()` will result in a trace pointing to where the panic occurred
 
 If a thread panics whilst it has acquired a `Mutex` lock, we have no guarantee that the contents of the mutex represents a valid state and hence the lock gets _poisoned._
 This means that any other thread which attempts to lock the mutex will get an error.
-In this case, panicking is acceptable it effectively propagates an existing panic from another thread.
+In this case, panicking is acceptable because it effectively propagates an existing panic from another thread.
