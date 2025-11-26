@@ -40,10 +40,10 @@ impl Ord for MyStruct {
 }
 ```
 
-## Don’t pattern-match pointers
+## Don’t pattern-match references
 
-It is possible to pattern-match the pointer to a `Copy` type to obtain the value at the other end.
-Although it may seem convenient, it ultimately harms readability—it is clearer to explicitly dereference the pointer we are given.
+It is possible to pattern-match the references to a `Copy` type to obtain the value at the other end.
+Although it may seem convenient, it ultimately harms readability—it is clearer to explicitly dereference the reference we are given.
 
 ✅ Do this:
 
