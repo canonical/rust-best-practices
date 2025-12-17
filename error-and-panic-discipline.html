@@ -181,7 +181,7 @@
                     <main>
                         <h1 id="error-and-panic-discipline"><a class="header" href="#error-and-panic-discipline">Error and panic discipline</a></h1>
 <h2 id="error-messages"><a class="header" href="#error-messages">Error messages</a></h2>
-<p>In Rust, it is a good idea to start writing a project by first making its <code>Error</code> type, this no only encourages message consistency, but also highlights the necessary information for these good error messages.
+<p>In Rust, it is a good idea to start writing a project by first making its <code>Error</code> type. This not only encourages message consistency, but also highlights the necessary information for these good error messages.
 This in turn, makes it clearer which information should be plumbed where, avoiding the awkward and altogether too-common situation where an error condition is identified, but much work must be done to get the right information there.</p>
 <p>Error messages should be concise.
 Every second longer a user spends reading an error message and not understanding what went wrong is a second longer of their frustration.
@@ -384,13 +384,13 @@ In the case of unwrapping options in a function which returns a result, calling 
 <p>We can also remove panics originating from <code>.unwrap()</code> calls by using pattern-matching.
 If a call to <code>x.unwrap()</code> is guarded by <code>if x.is_some()</code>/<code>if x.is_ok()</code>, instead make use of pattern matching: <code>if let Some(x) = x</code> or <code>if let Ok(x) = x</code>.</p>
 <p>When calls to <code>.unwrap()</code> are removed, the surrounding code is not only more robust, but you may notice that it is often visually cleaner.
-This is not a coincidence—it is a nudge from the Rust developers to encourage fault-tolorant code and practices.</p>
+This is not a coincidence—it is a nudge from the Rust developers to encourage fault-tolerant code and practices.</p>
 <p>There are two exceptions to this avoidance of panicking: tests and panic-propagation.</p>
 <p>If the <code>?</code> operator is used in tests, the origin of the error is lost, making the test harder to debug.
 A failed <code>.unwrap()</code> will result in a trace pointing to where the panic occurred.</p>
 <p>If a thread panics whilst it has acquired a <code>Mutex</code> lock, we have no guarantee that the contents of the mutex represents a valid state and hence the lock gets <em>poisoned.</em>
 This means that any other thread which attempts to lock the mutex will get an error.
-In this case, panicking is acceptable it effectively propagates an existing panic from another thread.</p>
+In this case, panicking is acceptable because it effectively propagates an existing panic from another thread.</p>
 
                     </main>
 
