@@ -292,9 +292,9 @@ This in turn will draw the attention of the next maintainer and help them correc
             .cmp(&amp;(&amp;other.my, &amp;other.thing, &amp;other.with, &amp;other.some))
     }
 }</code></pre>
-<h2 id="dont-pattern-match-pointers"><a class="header" href="#dont-pattern-match-pointers">Don’t pattern-match pointers</a></h2>
-<p>It is possible to pattern-match the pointer to a <code>Copy</code> type to obtain the value at the other end.
-Although it may seem convenient, it ultimately harms readability—it is clearer to explicitly dereference the pointer we are given.</p>
+<h2 id="dont-pattern-match-references"><a class="header" href="#dont-pattern-match-references">Don’t pattern-match references</a></h2>
+<p>It is possible to pattern-match the references to a <code>Copy</code> type to obtain the value at the other end.
+Although it may seem convenient, it ultimately harms readability—it is clearer to explicitly dereference the reference we are given.</p>
 <p>✅ Do this:</p>
 <pre><code class="language-rust"><span class="boring">[0].iter()
 </span>    .map(|x| *x)
