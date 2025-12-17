@@ -24,7 +24,7 @@ The only exception to these rules is that in the context of a unit test module, 
 {{#include snippet_helpers/import_discipline.rs}}
 use some_crate::{SpecificItem1, SpecificItem2};
 use some_other_crate::SpecificItem3;
-use another_crate::{SomeEnum, SomeEnum::*};
+use another_crate::SomeEnum;
 
 fn some_fn(some_enum: SomeEnum) -> SomeEnum {
     use SomeEnum as Se;
