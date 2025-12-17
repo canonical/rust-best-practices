@@ -865,7 +865,7 @@ Due to scoping rules around <code>use</code>, these renaming statements should b
 </span><span class="boring">}
 </span>use some_crate::{SpecificItem1, SpecificItem2};
 use some_other_crate::SpecificItem3;
-use another_crate::{SomeEnum, SomeEnum::*};
+use another_crate::SomeEnum;
 
 fn some_fn(some_enum: SomeEnum) -&gt; SomeEnum {
     use SomeEnum as Se;
