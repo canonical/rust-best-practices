@@ -11,7 +11,7 @@ The `mod.rs` file must be separated into distinct blocks in the following order,
 3. `mod _` declarations
 4. `pub use _` declarations
 5. `pub(crate) use _` declarations
-6. `pub use _` declarations
+6. `use _` declarations
 
 Any items gated behind a `#[cfg(...)]` must be placed at the end of the file, in the same order as the above.
 Like-gated items should be wrapped in a block, i.e. `#[cfg(...)] { /* items here */ }`.
