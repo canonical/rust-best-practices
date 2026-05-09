@@ -9,7 +9,7 @@ Under no circumstance do we want to break that trust.
 
 Therefore, we must endeavour to minimise the use of unsafe constructs in our code.
 If there is a place where `unsafe` is used but not required for a strict functional requirement, drop it and replace it with a safe equivalent.
-If left, such a section is inherently much harder to maintain as it require not only excellent documentation but also dilligence, careful consideration of preconditions and actions, and above all time.
+If left, such a section is inherently much harder to maintain as it requires not only excellent documentation but also diligence, careful consideration of preconditions and actions, and above all time.
 The more unsafe code a project contains, the slower it will be able to move forward in the long-run.
 
 If `unsafe` is mandatory, minimise the scope of the `unsafe` blocks and functions in use.
