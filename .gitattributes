@@ -1,0 +1,2 @@
+# Tell GitHub that the snippet helpers are not RenderScript
+snippet_helpers/*.rs linguist-language=Text
